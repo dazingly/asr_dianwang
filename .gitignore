@@ -1,0 +1,27 @@
+# 本地大模型权重（约 900MB，用 download_model.py 拉取）
+models/**/*.pt
+models/**/*.onnx
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+venv/
+
+# 本地临时文件
+data/_tmp_*.txt
+data/_bench_*.py
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

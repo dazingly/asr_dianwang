@@ -1,0 +1,31 @@
+# 倒闸操作唱票复述校验系统依赖
+#
+# GPU 版 torch 不能直接 pip install，必须按显卡驱动的 CUDA 版本
+# 从 PyTorch 官方索引安装。本机 RTX 4060 (8GB) / 驱动 CUDA 12.8：
+#
+#   pip install --index-url https://download.pytorch.org/whl/cu128 torch torchaudio
+#
+# 装完用 `python -c "import torch; print(torch.cuda.is_available())"` 确认为 True。
+# 若只需 CPU 跑通，直接 pip install torch torchaudio 即可，代码会自动回退。
+
+torch>=2.1
+torchaudio>=2.1
+
+# ASR / VAD / 声纹
+funasr==1.4.2
+modelscope>=1.39.1
+onnxruntime>=1.17
+
+# 文本校验内核
+pypinyin>=0.53
+PyYAML>=6.0
+numpy>=1.24
+
+# 音频 IO
+soundfile>=0.12
+
+# 流式服务
+websockets>=12.0
+
+# 测试
+pytest>=8.0

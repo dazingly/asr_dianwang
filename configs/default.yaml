@@ -1,0 +1,135 @@
+# 倒闸操作唱票复述校验 - 主配置
+
+paths:
+  model_dir: models/SenseVoiceSmall
+  lexicon: configs/lexicon.yaml
+  dialect: configs/dialect_heze.yaml
+  # 现场设备台账，一行一个设备/间隔全称。文件不存在时自动降级为纯正则抽取。
+  asset_list: configs/asset_list.txt
+
+asr:
+  # auto = 有 CUDA 就用 GPU，否则回退 CPU
+  device: auto
+  # fp16 在这个模型上是负收益，实测见 PROGRESS.md，默认关闭。
+  # RTX 4060 上 13 个 clip / 111s 音频：
+  #   fp32          峰值显存 965MB   RTF 0.0104
+  #   fp16 autocast 峰值显存 1408MB  RTF 0.0280
+  # 模型只有 234M 参数，本来就不吃显存，开 autocast 反而要额外存权重的 fp16
+  # 副本，而且每次调用都要重新转换，得不偿失。
+  fp16: false
+  language: zh
+  # 逆文本正则化。开启后口语数字会转成阿拉伯数字。
+  # 归一化层对两种模式都做了兼容，P0 的 use_itn 对比实验用它来切换。
+  use_itn: true
+  batch_size_s: 60
+
+vad:
+  model: fsmn-vad
+  # 尾静音判定时长(ms)，直接决定实时链路的端点延迟。
+  # 默认 500ms 是 funasr 的值，实时场景压到 300ms 换取更低延迟。
+  max_end_silence_time: 300
+  max_single_segment_time: 30000
+  # 短于该时长的语音段直接丢弃（咳嗽、碰撞声）
+  min_speech_ms: 300
+
+speaker:
+  # 设备绑在操作人身上，操作人是近场高能量、唱票人是远场低能量。
+  # 段级 RMS 高于全局中位数这个倍数的判为操作人（近场）。
+  near_field_rms_ratio: 1.6
+  # 是否启用 CAM++ 声纹做二次校正。首次运行会联网下载约 7MB 模型。
+  use_speaker_embedding: false
+  embedding_model: iic/speech_campplus_sv_zh-cn_16k-common
+
+matcher:
+  # 槽位权重。required 的槽位缺失或矛盾会直接否决，权重只影响得分高低。
+  slot_weights:
+    voltage: 1.0
+    device: 2.0
+    handle: 1.5
+    object: 2.0
+    src_position: 1.5
+    dst_position: 2.0
+    action: 1.5
+    check_type: 1.0
+    panel: 0.5
+    state: 0.3
+    residual: 1.0
+
+  # 必要槽位：票面里出现了就必须在复述里命中，缺失即判不通过。
+  # 这些是"说错了会出事故"的要素。
+  required_slots:
+    - voltage
+    - device
+    - handle
+    - object
+    - src_position
+    - dst_position
+    - action
+
+  # 单个槽位判定命中的模糊相似度下限
+  slot_hit_threshold: 0.75
+
+  # 这些槽位里的数字必须逐位对上，不走模糊匹配。
+  # "桥100开关" 与 "桥200开关" 只差一个音节，编辑距离相似度高达 0.8，
+  # 按阈值判会直接放行 —— 而设备编号说错恰恰是后果最严重的一类错误。
+  exact_digit_slots:
+    - voltage
+    - device
+    - handle
+
+  # 整句相似度只作为辅助信号参与候选排序，不作为判据
+  sentence_similarity_weight: 0.25
+
+  # 复述里出现了票面没有的区分性要素时，每个扣多少分。
+  # 操作票第 3 条 "拉开110kV桥100开关" 的槽位是第 4 条
+  # "检查...电气位置指示确已拉开" 的子集，不扣分的话两条会打成平手。
+  extra_slot_penalty: 0.12
+  discriminative_slots:
+    - object
+    - check_type
+    - src_position
+    - dst_position
+    - handle
+
+verdict:
+  # 三档判定阈值。灰区交人工复核。
+  # 宁可多产生灰区，也不能漏报不合格 —— 阈值调优的目标函数是漏报率。
+  pass_threshold: 0.82
+  review_threshold: 0.60
+
+  # 必要槽位"缺失"时怎么处理。
+  #   review = 最高只能判到灰区（默认）—— 缺失可能只是简述省略
+  #   fail   = 直接判不通过 —— 要求逐字念全时用这个
+  # 注意必要槽位"矛盾"（念成了同组的另一个值）永远是直接不通过，
+  # 因为那不是省略，是说错了。
+  missing_required_action: review
+
+aligner:
+  # 严格按序执行，但留前瞻窗口容忍偶发的重复确认和返工
+  lookahead: 2
+  # 允许回看已完成的条目，用于识别"重复复述同一条"
+  lookback: 1
+  # 低于这个分数的语音段判为闲聊/无关，静默丢弃
+  chatter_threshold: 0.45
+
+  # 角色是否参与判定。
+  #   false（默认）不管唱票人还是操作人，谁说对了这个卡点就算过
+  #   true         只有操作人的复述能推动指针，唱票人仅作锚点
+  # 默认关闭是因为角色判定本身不够稳（相当一部分片段的能量倍率落在中间地带），
+  # 而同一条内容两人都会说一遍，"有人说对"比"指定的人说对"鲁棒得多。
+  # 代价是无法单独追究操作人复述的对错 —— 需要那个能力时再打开。
+  role_aware: false
+
+  # 唱票人的语音是否给操作人的灰区结果做佐证。仅在 role_aware 为 true 时有意义；
+  # 关闭角色判定后，这件事由 REPEAT 分支的"灰区可被后一段上调"取代。
+  # 只在操作人"只是漏说、没有说错"时才上调，有矛盾槽位一律不上调。
+  use_call_corroboration: true
+
+stream:
+  host: 0.0.0.0
+  port: 8765
+  sample_rate: 16000
+  # 增量提前触发：不等 VAD 端点，每隔这么久就对累积缓冲跑一次识别+匹配，
+  # 一旦必要槽位全部命中就立刻出结果。这是把端到端延迟压到 1s 以内的关键。
+  incremental_interval_ms: 300
+  enable_early_fire: true
