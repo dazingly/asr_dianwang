@@ -48,7 +48,7 @@ class ItemState(str, Enum):
     VERIFIED = "VERIFIED"    # 复述一致，已放行
     FLAGGED = "FLAGGED"      # 灰区，需人工复核
     FAILED = "FAILED"        # 复述与票面不符
-    SKIPPED = "SKIPPED"      # 被跳过没做
+    UNCONFIRMED = "UNCONFIRMED"  # 没听到匹配语音或被后续条目越过
 
 
 class EventKind(str, Enum):
@@ -167,6 +167,13 @@ class SequentialAligner:
         # 的条目不会因为后面一段含糊的复述被打回去，否则操作人随口一句确认
         # 就能把好好的结论搅成灰区。
         if record.state in (ItemState.VERIFIED, ItemState.FLAGGED):
+            if best.verdict is Verdict.FAIL and best.conflicts:
+                record.state = ItemState.FAILED
+                record.best = best
+                return self._emit(AlignEvent(
+                    EventKind.FAILED, utterance, role, item=best.item, match=best,
+                    message="已完成条目出现矛盾复述：" + "；".join(best.reasons),
+                ))
             upgraded = (record.state is ItemState.FLAGGED
                         and best.verdict is Verdict.PASS)
             if upgraded:
@@ -174,6 +181,22 @@ class SequentialAligner:
             return self._emit(AlignEvent(
                 EventKind.REPEAT, utterance, role, item=best.item, match=best,
                 message="重复复述，灰区上调为通过" if upgraded else "重复复述已完成的条目",
+            ))
+
+        # 先前被判疑似说错的条目，允许紧接着的清晰复述纠正结果。
+        # 指针已经前移，因此这里只改记录，不得把指针退回旧条目。
+        if record.state is ItemState.FAILED:
+            if best.verdict is Verdict.PASS:
+                record.state = ItemState.VERIFIED
+                record.best = best
+                return self._emit(AlignEvent(
+                    EventKind.REPEAT, utterance, role, item=best.item, match=best,
+                    message="后续清晰复述将疑似说错纠正为通过",
+                ))
+            return self._emit(AlignEvent(
+                EventKind.FAILED, utterance, role, item=best.item, match=best,
+                message="疑似说错条目的后续复述仍未通过：" +
+                        "；".join(best.reasons or ["得分不足"]),
             ))
 
         verdict = self._corroborate(best)
@@ -187,8 +210,12 @@ class SequentialAligner:
 
         if verdict is Verdict.FAIL:
             record.state = ItemState.FAILED
+            for seq in skipped:
+                self._record_of(seq).state = ItemState.UNCONFIRMED
+            self._advance_past(best.item.seq)
             return self._emit(AlignEvent(
                 EventKind.FAILED, utterance, role, item=best.item, match=best,
+                skipped=skipped,
                 message="复述与票面不符：" + "；".join(best.reasons or ["整体相似度过低"]),
             ))
 
@@ -196,7 +223,7 @@ class SequentialAligner:
 
         if skipped:
             for seq in skipped:
-                self._record_of(seq).state = ItemState.SKIPPED
+                self._record_of(seq).state = ItemState.UNCONFIRMED
             self._advance_past(best.item.seq)
             return self._emit(AlignEvent(
                 EventKind.SKIP_WARNING, utterance, role, item=best.item, match=best,
@@ -249,10 +276,10 @@ class SequentialAligner:
 
     # ------------------------------------------------------------------
     def finalize(self) -> None:
-        """录音结束时把还没做的条目标成跳过。"""
+        """录音结束时把始终没听到匹配语音的条目标成未确认。"""
         for record in self.records:
             if record.state is ItemState.PENDING:
-                record.state = ItemState.SKIPPED
+                record.state = ItemState.UNCONFIRMED
 
     def report(self) -> dict:
         counts: dict[str, int] = {}

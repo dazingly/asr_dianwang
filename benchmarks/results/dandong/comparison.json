@@ -1,0 +1,36 @@
+[
+  {
+    "ticket": "ticket7",
+    "baseline": {
+      "VERIFIED": 0,
+      "FLAGGED": 0,
+      "FAILED": 3,
+      "UNCONFIRMED": 6,
+      "alerts": 7
+    },
+    "optimized": {
+      "VERIFIED": 0,
+      "FLAGGED": 2,
+      "FAILED": 4,
+      "UNCONFIRMED": 3,
+      "alerts": 7
+    }
+  },
+  {
+    "ticket": "ticket11",
+    "baseline": {
+      "VERIFIED": 3,
+      "FLAGGED": 3,
+      "FAILED": 5,
+      "UNCONFIRMED": 0,
+      "alerts": 10
+    },
+    "optimized": {
+      "VERIFIED": 4,
+      "FLAGGED": 1,
+      "FAILED": 5,
+      "UNCONFIRMED": 1,
+      "alerts": 7
+    }
+  }
+]

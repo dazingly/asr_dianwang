@@ -1,0 +1,1133 @@
+schema_version: 1
+station: 110kV丹东变电站
+source: data/dandong/tickets/ticket*.json
+ticket_count: 13
+entry_count: 99
+categories:
+  substations:
+  - term: 110kV丹东变电站
+    count: 13
+    sources:
+    - ticket1
+    - ticket2
+    - ticket3
+    - ticket4
+    - ticket5
+    - ticket6
+    - ticket7
+    - ticket8
+    - ticket9
+    - ticket10
+    - ticket11
+    - ticket12
+    - ticket13
+  missions:
+  - term: 核对110kV丹东线线路在检修状态，110kV丹东线111开关在冷备用状态，现场具备操作条件
+    count: 1
+    sources:
+    - ticket12
+  - term: 110kV#1母线PT二次电压回路由110kV#1母线PT切至110kV#2母线PT运行
+    count: 1
+    sources:
+    - ticket2
+  - term: 核对110kV丹东线111开关在热备用状态，现场具备操作条件
+    count: 1
+    sources:
+    - ticket10
+  - term: 核对110kV丹东线线路及111开关相关保护正确投退
+    count: 1
+    sources:
+    - ticket11
+  - term: 110kV丹东线111开关由冷备用转热备用
+    count: 1
+    sources:
+    - ticket7
+  - term: 110kV丹东线111开关由热备用转冷备用
+    count: 1
+    sources:
+    - ticket8
+  - term: 110kV111丹东线线路由冷备用转检修
+    count: 1
+    sources:
+    - ticket6
+  - term: 110kV111丹东线线路由检修转冷备用
+    count: 1
+    sources:
+    - ticket5
+  - term: 110kV桥100开关由热备用转运行合环
+    count: 1
+    sources:
+    - ticket9
+  - term: 110kV#1母线PT由冷备用转运行
+    count: 1
+    sources:
+    - ticket3
+  - term: 110kV#1母线PT由运行转冷备用
+    count: 1
+    sources:
+    - ticket4
+  - term: 停用110kV备用电源自投装置
+    count: 1
+    sources:
+    - ticket13
+  - term: 投入110kV备用电源自投装置
+    count: 1
+    sources:
+    - ticket1
+  voltage_levels:
+  - term: 110kV
+    count: 42
+    sources:
+    - ticket1#1
+    - ticket1#2
+    - ticket1#3
+    - ticket1#4
+    - ticket1#6
+    - ticket1#7
+    - ticket1#8
+    - ticket1#9
+    - ticket1#10
+    - ticket1#11
+    - ticket2#1
+    - ticket2#2
+    - ticket3#1
+    - ticket3#2
+    - ticket3#3
+    - ticket3#4
+    - ticket4#1
+    - ticket4#2
+    - ticket4#3
+    - ticket4#4
+    - ticket6#1
+    - ticket9#1
+    - ticket9#2
+    - ticket9#3
+    - ticket9#4
+    - ticket9#5
+    - ticket9#6
+    - ticket9#7
+    - ticket11#1
+    - ticket13#1
+    - ticket13#2
+    - ticket13#3
+    - ticket13#4
+    - ticket13#5
+    - ticket13#6
+    - ticket13#7
+    - ticket13#8
+    - ticket13#9
+    - ticket13#10
+  lines_and_bays:
+  - term: 110kV丹东线111
+    count: 3
+    sources:
+    - ticket3#4
+    - ticket4#1
+    - ticket6#1
+  - term: 110kV丹东线线路
+    count: 1
+    sources:
+    - ticket11#1
+  - term: 110kV#1母线
+    count: 1
+    sources:
+    - ticket2#2
+  - term: 丹东线111间隔
+    count: 4
+    sources:
+    - ticket3#5
+    - ticket5#1
+    - ticket6#5
+    - ticket8#4
+  - term: '#1PT间隔'
+    count: 2
+    sources:
+    - ticket3#4
+    - ticket4#1
+  - term: 丹东线111
+    count: 46
+    sources:
+    - ticket3#5
+    - ticket5#1
+    - ticket5#2
+    - ticket5#3
+    - ticket5#4
+    - ticket6#2
+    - ticket6#3
+    - ticket6#4
+    - ticket6#5
+    - ticket7#1
+    - ticket7#2
+    - ticket7#3
+    - ticket7#4
+    - ticket7#5
+    - ticket7#6
+    - ticket7#7
+    - ticket7#8
+    - ticket7#9
+    - ticket8#1
+    - ticket8#2
+    - ticket8#3
+    - ticket8#4
+    - ticket8#5
+    - ticket8#6
+    - ticket8#7
+    - ticket8#8
+    - ticket8#9
+    - ticket8#10
+    - ticket10#1
+    - ticket10#2
+    - ticket10#3
+    - ticket10#4
+    - ticket10#5
+    - ticket10#6
+    - ticket12#1
+    - ticket12#2
+    - ticket12#3
+    - ticket12#4
+    - ticket12#5
+    - ticket12#6
+    - ticket12#7
+    - ticket12#8
+    - ticket12#9
+    - ticket12#10
+    - ticket12#11
+    - ticket12#12
+  devices:
+  - term: 110kV丹东线111、#1PT间隔汇控柜PT二次绕组保护空气开关
+    count: 2
+    sources:
+    - ticket3#4
+    - ticket4#1
+  - term: 31KLP3 110kV备投闭锁内桥备投方式投入压板
+    count: 2
+    sources:
+    - ticket1#2
+    - ticket13#10
+  - term: 1-1KLP2 111开关保护光纤通道一投入压板
+    count: 1
+    sources:
+    - ticket11#5
+  - term: 1-1KLP3 111开关保护光纤通道二投入压板
+    count: 1
+    sources:
+    - ticket11#6
+  - term: 31CLP1 110kV备投跳111开关出口压板
+    count: 2
+    sources:
+    - ticket1#6
+    - ticket13#2
+  - term: 31CLP2 110kV备投合111开关出口压板
+    count: 2
+    sources:
+    - ticket1#7
+    - ticket13#3
+  - term: 31CLP3 110kV备投跳112开关出口压板
+    count: 2
+    sources:
+    - ticket1#8
+    - ticket13#4
+  - term: 31CLP4 110kV备投合112开关出口压板
+    count: 2
+    sources:
+    - ticket1#9
+    - ticket13#5
+  - term: 31CLP5 110kV备投跳100开关出口压板
+    count: 2
+    sources:
+    - ticket1#10
+    - ticket13#6
+  - term: 31CLP6 110kV备投合100开关出口压板
+    count: 2
+    sources:
+    - ticket1#11
+    - ticket13#7
+  - term: 31KLP1 110kV备投进线备投方式投入压板
+    count: 2
+    sources:
+    - ticket1#3
+    - ticket13#8
+  - term: 31KLP2 110kV备投内桥备投方式投入压板
+    count: 2
+    sources:
+    - ticket1#4
+    - ticket13#9
+  - term: 丹东线111间隔汇控柜隔离、接地控制电源空气开关
+    count: 4
+    sources:
+    - ticket3#5
+    - ticket5#1
+    - ticket6#5
+    - ticket8#4
+  - term: 1-1KLP7 111开关保护远方操作投入压板
+    count: 1
+    sources:
+    - ticket11#10
+  - term: 1-1KLP6 111开关停用重合闸投入压板
+    count: 1
+    sources:
+    - ticket11#9
+  - term: 1-1KLP8 111开关保护装置置检修压板
+    count: 1
+    sources:
+    - ticket11#11
+  - term: 110kV丹东线线路及111开关相关保护压板
+    count: 1
+    sources:
+    - ticket11#1
+  - term: 1-1CLP1 111开关保护跳闸出口压板
+    count: 1
+    sources:
+    - ticket11#2
+  - term: 1-1KLP1 111开关差动保护投入压板
+    count: 1
+    sources:
+    - ticket11#4
+  - term: 1-1KLP4 111开关距离保护投入压板
+    count: 1
+    sources:
+    - ticket11#7
+  - term: 1-1KLP5 111开关零序保护投入压板
+    count: 1
+    sources:
+    - ticket11#8
+  - term: 1-1CLP2 111开关重合闸出口压板
+    count: 1
+    sources:
+    - ticket11#3
+  - term: 测控屏110kV桥100开关操作方式把手
+    count: 2
+    sources:
+    - ticket9#2
+    - ticket9#5
+  - term: 110kV备用电源自投装置相关保护压板
+    count: 2
+    sources:
+    - ticket1#1
+    - ticket13#1
+  - term: 汇控柜110kV#1PT P11刀闸
+    count: 2
+    sources:
+    - ticket3#2
+    - ticket4#3
+  - term: 110kV桥100开关操作方式把手
+    count: 2
+    sources:
+    - ticket9#2
+    - ticket9#5
+  - term: 测控屏丹东线111开关操作方式把手
+    count: 2
+    sources:
+    - ticket7#9
+    - ticket8#1
+  - term: 汇控柜丹东线111-D1接地刀闸
+    count: 1
+    sources:
+    - ticket12#4
+  - term: 汇控柜丹东线111-D2接地刀闸
+    count: 1
+    sources:
+    - ticket12#5
+  - term: 汇控柜丹东线111-D3接地刀闸
+    count: 3
+    sources:
+    - ticket5#3
+    - ticket6#3
+    - ticket12#6
+  - term: 110kV#1PT P11刀闸
+    count: 6
+    sources:
+    - ticket3#1
+    - ticket3#2
+    - ticket3#3
+    - ticket4#2
+    - ticket4#3
+    - ticket4#4
+  - term: 110kV丹东线111-3刀闸
+    count: 1
+    sources:
+    - ticket6#1
+  - term: 丹东线111开关操作方式把手
+    count: 2
+    sources:
+    - ticket7#9
+    - ticket8#1
+  - term: 测控屏110kV桥100开关
+    count: 2
+    sources:
+    - ticket9#3
+    - ticket9#4
+  - term: 110kV电压并列切换把手
+    count: 1
+    sources:
+    - ticket2#1
+  - term: 丹东线111-D1接地刀闸
+    count: 2
+    sources:
+    - ticket12#4
+    - ticket12#10
+  - term: 丹东线111-D2接地刀闸
+    count: 2
+    sources:
+    - ticket12#5
+    - ticket12#11
+  - term: 丹东线111-D3接地刀闸
+    count: 8
+    sources:
+    - ticket5#2
+    - ticket5#3
+    - ticket5#4
+    - ticket6#2
+    - ticket6#3
+    - ticket6#4
+    - ticket12#6
+    - ticket12#12
+  - term: 汇控柜丹东线111-1刀闸
+    count: 4
+    sources:
+    - ticket7#4
+    - ticket8#9
+    - ticket10#2
+    - ticket12#2
+  - term: 汇控柜丹东线111-3刀闸
+    count: 4
+    sources:
+    - ticket7#7
+    - ticket8#6
+    - ticket10#3
+    - ticket12#3
+  - term: 110kV桥100开关
+    count: 3
+    sources:
+    - ticket9#3
+    - ticket9#4
+    - ticket9#7
+  - term: 汇控柜丹东线111开关
+    count: 4
+    sources:
+    - ticket7#1
+    - ticket8#2
+    - ticket10#1
+    - ticket12#1
+  - term: 丹东线111-1刀闸
+    count: 10
+    sources:
+    - ticket7#3
+    - ticket7#4
+    - ticket7#5
+    - ticket8#8
+    - ticket8#9
+    - ticket8#10
+    - ticket10#2
+    - ticket10#5
+    - ticket12#2
+    - ticket12#8
+  - term: 丹东线111-3刀闸
+    count: 10
+    sources:
+    - ticket7#6
+    - ticket7#7
+    - ticket7#8
+    - ticket8#5
+    - ticket8#6
+    - ticket8#7
+    - ticket10#3
+    - ticket10#6
+    - ticket12#3
+    - ticket12#9
+  - term: 110kV#1母线
+    count: 1
+    sources:
+    - ticket2#2
+  - term: 丹东线111开关
+    count: 8
+    sources:
+    - ticket7#1
+    - ticket7#2
+    - ticket8#2
+    - ticket8#3
+    - ticket10#1
+    - ticket10#4
+    - ticket12#1
+    - ticket12#7
+  - term: 保护装置
+    count: 1
+    sources:
+    - ticket1#5
+  device_codes:
+  - term: 1-1CLP1
+    count: 1
+    sources:
+    - ticket11#2
+  - term: 1-1CLP2
+    count: 1
+    sources:
+    - ticket11#3
+  - term: 1-1KLP1
+    count: 1
+    sources:
+    - ticket11#4
+  - term: 1-1KLP2
+    count: 1
+    sources:
+    - ticket11#5
+  - term: 1-1KLP3
+    count: 1
+    sources:
+    - ticket11#6
+  - term: 1-1KLP4
+    count: 1
+    sources:
+    - ticket11#7
+  - term: 1-1KLP5
+    count: 1
+    sources:
+    - ticket11#8
+  - term: 1-1KLP6
+    count: 1
+    sources:
+    - ticket11#9
+  - term: 1-1KLP7
+    count: 1
+    sources:
+    - ticket11#10
+  - term: 1-1KLP8
+    count: 1
+    sources:
+    - ticket11#11
+  - term: 111-D1
+    count: 2
+    sources:
+    - ticket12#4
+    - ticket12#10
+  - term: 111-D2
+    count: 2
+    sources:
+    - ticket12#5
+    - ticket12#11
+  - term: 111-D3
+    count: 8
+    sources:
+    - ticket5#2
+    - ticket5#3
+    - ticket5#4
+    - ticket6#2
+    - ticket6#3
+    - ticket6#4
+    - ticket12#6
+    - ticket12#12
+  - term: 31CLP1
+    count: 2
+    sources:
+    - ticket1#6
+    - ticket13#2
+  - term: 31CLP2
+    count: 2
+    sources:
+    - ticket1#7
+    - ticket13#3
+  - term: 31CLP3
+    count: 2
+    sources:
+    - ticket1#8
+    - ticket13#4
+  - term: 31CLP4
+    count: 2
+    sources:
+    - ticket1#9
+    - ticket13#5
+  - term: 31CLP5
+    count: 2
+    sources:
+    - ticket1#10
+    - ticket13#6
+  - term: 31CLP6
+    count: 2
+    sources:
+    - ticket1#11
+    - ticket13#7
+  - term: 31KLP1
+    count: 2
+    sources:
+    - ticket1#3
+    - ticket13#8
+  - term: 31KLP2
+    count: 2
+    sources:
+    - ticket1#4
+    - ticket13#9
+  - term: 31KLP3
+    count: 2
+    sources:
+    - ticket1#2
+    - ticket13#10
+  - term: 111-1
+    count: 10
+    sources:
+    - ticket7#3
+    - ticket7#4
+    - ticket7#5
+    - ticket8#8
+    - ticket8#9
+    - ticket8#10
+    - ticket10#2
+    - ticket10#5
+    - ticket12#2
+    - ticket12#8
+  - term: 111-3
+    count: 11
+    sources:
+    - ticket6#1
+    - ticket7#6
+    - ticket7#7
+    - ticket7#8
+    - ticket8#5
+    - ticket8#6
+    - ticket8#7
+    - ticket10#3
+    - ticket10#6
+    - ticket12#3
+    - ticket12#9
+  - term: '#1PT'
+    count: 2
+    sources:
+    - ticket3#4
+    - ticket4#1
+  - term: '100'
+    count: 9
+    sources:
+    - ticket1#10
+    - ticket1#11
+    - ticket9#2
+    - ticket9#3
+    - ticket9#4
+    - ticket9#5
+    - ticket9#7
+    - ticket13#6
+    - ticket13#7
+  - term: '111'
+    count: 29
+    sources:
+    - ticket1#6
+    - ticket1#7
+    - ticket3#5
+    - ticket5#1
+    - ticket6#5
+    - ticket7#1
+    - ticket7#2
+    - ticket7#9
+    - ticket8#1
+    - ticket8#2
+    - ticket8#3
+    - ticket8#4
+    - ticket10#1
+    - ticket10#4
+    - ticket11#1
+    - ticket11#2
+    - ticket11#3
+    - ticket11#4
+    - ticket11#5
+    - ticket11#6
+    - ticket11#7
+    - ticket11#8
+    - ticket11#9
+    - ticket11#10
+    - ticket11#11
+    - ticket12#1
+    - ticket12#7
+    - ticket13#2
+    - ticket13#3
+  - term: '112'
+    count: 4
+    sources:
+    - ticket1#8
+    - ticket1#9
+    - ticket13#4
+    - ticket13#5
+  - term: P11
+    count: 6
+    sources:
+    - ticket3#1
+    - ticket3#2
+    - ticket3#3
+    - ticket4#2
+    - ticket4#3
+    - ticket4#4
+  protection_plates:
+  - term: 31KLP3 110kV备投闭锁内桥备投方式投入压板
+    count: 2
+    sources:
+    - ticket1#2
+    - ticket13#10
+  - term: 1-1KLP2 111开关保护光纤通道一投入压板
+    count: 1
+    sources:
+    - ticket11#5
+  - term: 1-1KLP3 111开关保护光纤通道二投入压板
+    count: 1
+    sources:
+    - ticket11#6
+  - term: 31CLP1 110kV备投跳111开关出口压板
+    count: 2
+    sources:
+    - ticket1#6
+    - ticket13#2
+  - term: 31CLP2 110kV备投合111开关出口压板
+    count: 2
+    sources:
+    - ticket1#7
+    - ticket13#3
+  - term: 31CLP3 110kV备投跳112开关出口压板
+    count: 2
+    sources:
+    - ticket1#8
+    - ticket13#4
+  - term: 31CLP4 110kV备投合112开关出口压板
+    count: 2
+    sources:
+    - ticket1#9
+    - ticket13#5
+  - term: 31CLP5 110kV备投跳100开关出口压板
+    count: 2
+    sources:
+    - ticket1#10
+    - ticket13#6
+  - term: 31CLP6 110kV备投合100开关出口压板
+    count: 2
+    sources:
+    - ticket1#11
+    - ticket13#7
+  - term: 31KLP1 110kV备投进线备投方式投入压板
+    count: 2
+    sources:
+    - ticket1#3
+    - ticket13#8
+  - term: 31KLP2 110kV备投内桥备投方式投入压板
+    count: 2
+    sources:
+    - ticket1#4
+    - ticket13#9
+  - term: 1-1KLP7 111开关保护远方操作投入压板
+    count: 1
+    sources:
+    - ticket11#10
+  - term: 1-1KLP6 111开关停用重合闸投入压板
+    count: 1
+    sources:
+    - ticket11#9
+  - term: 1-1KLP8 111开关保护装置置检修压板
+    count: 1
+    sources:
+    - ticket11#11
+  - term: 110kV丹东线线路及111开关相关保护压板
+    count: 1
+    sources:
+    - ticket11#1
+  - term: 1-1CLP1 111开关保护跳闸出口压板
+    count: 1
+    sources:
+    - ticket11#2
+  - term: 1-1KLP1 111开关差动保护投入压板
+    count: 1
+    sources:
+    - ticket11#4
+  - term: 1-1KLP4 111开关距离保护投入压板
+    count: 1
+    sources:
+    - ticket11#7
+  - term: 1-1KLP5 111开关零序保护投入压板
+    count: 1
+    sources:
+    - ticket11#8
+  - term: 1-1CLP2 111开关重合闸出口压板
+    count: 1
+    sources:
+    - ticket11#3
+  - term: 110kV备用电源自投装置相关保护压板
+    count: 2
+    sources:
+    - ticket1#1
+    - ticket13#1
+  panels:
+  - term: 110kV电压并列屏
+    count: 1
+    sources:
+    - ticket11#1
+  - term: 110kV备投屏
+    count: 2
+    sources:
+    - ticket1#1
+    - ticket13#1
+  - term: 111保护测控
+    count: 1
+    sources:
+    - ticket11#1
+  - term: 桥保护测控
+    count: 2
+    sources:
+    - ticket1#1
+    - ticket13#1
+  - term: 汇控柜
+    count: 25
+    sources:
+    - ticket3#2
+    - ticket3#4
+    - ticket3#5
+    - ticket4#1
+    - ticket4#3
+    - ticket5#1
+    - ticket5#3
+    - ticket6#3
+    - ticket6#5
+    - ticket7#1
+    - ticket7#4
+    - ticket7#7
+    - ticket8#2
+    - ticket8#4
+    - ticket8#6
+    - ticket8#9
+    - ticket10#1
+    - ticket10#2
+    - ticket10#3
+    - ticket12#1
+    - ticket12#2
+    - ticket12#3
+    - ticket12#4
+    - ticket12#5
+    - ticket12#6
+  - term: 测控屏
+    count: 6
+    sources:
+    - ticket7#9
+    - ticket8#1
+    - ticket9#2
+    - ticket9#3
+    - ticket9#4
+    - ticket9#5
+  handles:
+  - term: 电压并列切换把手
+    count: 1
+    sources:
+    - ticket2#1
+  - term: 操作方式把手
+    count: 4
+    sources:
+    - ticket7#9
+    - ticket8#1
+    - ticket9#2
+    - ticket9#5
+  - term: 切换把手
+    count: 1
+    sources:
+    - ticket2#1
+  - term: 把手
+    count: 5
+    sources:
+    - ticket2#1
+    - ticket7#9
+    - ticket8#1
+    - ticket9#2
+    - ticket9#5
+  actions:
+  - term: 停用
+    count: 18
+    sources:
+    - ticket1#2
+    - ticket11#2
+    - ticket11#3
+    - ticket11#4
+    - ticket11#5
+    - ticket11#6
+    - ticket11#7
+    - ticket11#8
+    - ticket11#9
+    - ticket11#11
+    - ticket13#2
+    - ticket13#3
+    - ticket13#4
+    - ticket13#5
+    - ticket13#6
+    - ticket13#7
+    - ticket13#8
+    - ticket13#9
+  - term: 切至
+    count: 5
+    sources:
+    - ticket2#1
+    - ticket7#9
+    - ticket8#1
+    - ticket9#2
+    - ticket9#5
+  - term: 合上
+    count: 8
+    sources:
+    - ticket3#1
+    - ticket3#4
+    - ticket5#1
+    - ticket6#2
+    - ticket7#3
+    - ticket7#6
+    - ticket8#4
+    - ticket9#3
+  - term: 投入
+    count: 19
+    sources:
+    - ticket1#2
+    - ticket1#3
+    - ticket1#4
+    - ticket1#6
+    - ticket1#7
+    - ticket1#8
+    - ticket1#9
+    - ticket1#10
+    - ticket1#11
+    - ticket11#4
+    - ticket11#5
+    - ticket11#6
+    - ticket11#7
+    - ticket11#8
+    - ticket11#9
+    - ticket11#10
+    - ticket13#8
+    - ticket13#9
+    - ticket13#10
+  - term: 拉开
+    count: 15
+    sources:
+    - ticket3#5
+    - ticket4#1
+    - ticket4#2
+    - ticket4#3
+    - ticket4#4
+    - ticket5#2
+    - ticket5#3
+    - ticket5#4
+    - ticket6#5
+    - ticket8#5
+    - ticket8#6
+    - ticket8#7
+    - ticket8#8
+    - ticket8#9
+    - ticket8#10
+  - term: 检查
+    count: 60
+    sources:
+    - ticket1#1
+    - ticket1#5
+    - ticket2#2
+    - ticket3#2
+    - ticket3#3
+    - ticket4#3
+    - ticket4#4
+    - ticket5#3
+    - ticket5#4
+    - ticket5#5
+    - ticket6#3
+    - ticket6#4
+    - ticket7#1
+    - ticket7#2
+    - ticket7#4
+    - ticket7#5
+    - ticket7#7
+    - ticket7#8
+    - ticket8#2
+    - ticket8#3
+    - ticket8#6
+    - ticket8#7
+    - ticket8#9
+    - ticket8#10
+    - ticket9#1
+    - ticket9#4
+    - ticket9#6
+    - ticket9#7
+    - ticket10#1
+    - ticket10#2
+    - ticket10#3
+    - ticket10#4
+    - ticket10#5
+    - ticket10#6
+    - ticket10#7
+    - ticket11#1
+    - ticket11#2
+    - ticket11#3
+    - ticket11#4
+    - ticket11#5
+    - ticket11#6
+    - ticket11#7
+    - ticket11#8
+    - ticket11#9
+    - ticket11#10
+    - ticket11#11
+    - ticket12#1
+    - ticket12#2
+    - ticket12#3
+    - ticket12#4
+    - ticket12#5
+    - ticket12#6
+    - ticket12#7
+    - ticket12#8
+    - ticket12#9
+    - ticket12#10
+    - ticket12#11
+    - ticket12#12
+    - ticket12#13
+    - ticket13#1
+  - term: 送电
+    count: 1
+    sources:
+    - ticket5#5
+  - term: 验明
+    count: 1
+    sources:
+    - ticket6#1
+  positions_and_states:
+  - term: 具备操作条件
+    count: 2
+    sources:
+    - ticket10#7
+    - ticket12#13
+  - term: 无异常信号
+    count: 1
+    sources:
+    - ticket1#5
+  - term: 无电压
+    count: 1
+    sources:
+    - ticket6#1
+  - term: 停用
+    count: 18
+    sources:
+    - ticket1#2
+    - ticket11#2
+    - ticket11#3
+    - ticket11#4
+    - ticket11#5
+    - ticket11#6
+    - ticket11#7
+    - ticket11#8
+    - ticket11#9
+    - ticket11#11
+    - ticket13#2
+    - ticket13#3
+    - ticket13#4
+    - ticket13#5
+    - ticket13#6
+    - ticket13#7
+    - ticket13#8
+    - ticket13#9
+  - term: 分闸
+    count: 16
+    sources:
+    - ticket7#1
+    - ticket7#2
+    - ticket8#2
+    - ticket8#3
+    - ticket10#1
+    - ticket10#4
+    - ticket12#1
+    - ticket12#2
+    - ticket12#3
+    - ticket12#4
+    - ticket12#5
+    - ticket12#7
+    - ticket12#8
+    - ticket12#9
+    - ticket12#10
+    - ticket12#11
+  - term: 合好
+    count: 10
+    sources:
+    - ticket3#2
+    - ticket3#3
+    - ticket6#3
+    - ticket6#4
+    - ticket7#4
+    - ticket7#5
+    - ticket7#7
+    - ticket7#8
+    - ticket9#4
+    - ticket9#7
+  - term: 合闸
+    count: 8
+    sources:
+    - ticket10#2
+    - ticket10#3
+    - ticket10#5
+    - ticket10#6
+    - ticket11#3
+    - ticket11#9
+    - ticket12#6
+    - ticket12#12
+  - term: 就地
+    count: 4
+    sources:
+    - ticket7#9
+    - ticket8#1
+    - ticket9#2
+    - ticket9#5
+  - term: 并列
+    count: 2
+    sources:
+    - ticket2#1
+    - ticket11#1
+  - term: 投入
+    count: 19
+    sources:
+    - ticket1#2
+    - ticket1#3
+    - ticket1#4
+    - ticket1#6
+    - ticket1#7
+    - ticket1#8
+    - ticket1#9
+    - ticket1#10
+    - ticket1#11
+    - ticket11#4
+    - ticket11#5
+    - ticket11#6
+    - ticket11#7
+    - ticket11#8
+    - ticket11#9
+    - ticket11#10
+    - ticket13#8
+    - ticket13#9
+    - ticket13#10
+  - term: 拉开
+    count: 15
+    sources:
+    - ticket3#5
+    - ticket4#1
+    - ticket4#2
+    - ticket4#3
+    - ticket4#4
+    - ticket5#2
+    - ticket5#3
+    - ticket5#4
+    - ticket6#5
+    - ticket8#5
+    - ticket8#6
+    - ticket8#7
+    - ticket8#8
+    - ticket8#9
+    - ticket8#10
+  - term: 检修
+    count: 1
+    sources:
+    - ticket11#11
+  - term: 正确
+    count: 2
+    sources:
+    - ticket2#2
+    - ticket9#6
+  - term: 解列
+    count: 1
+    sources:
+    - ticket2#1
+  - term: 远方
+    count: 5
+    sources:
+    - ticket7#9
+    - ticket8#1
+    - ticket9#2
+    - ticket9#5
+    - ticket11#10

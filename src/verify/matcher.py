@@ -257,7 +257,10 @@ class SlotMatcher:
             return (Verdict.REVIEW if cap_review else Verdict.PASS), reasons
         if score >= self.review_threshold:
             return Verdict.REVIEW, reasons
-        return Verdict.FAIL, reasons
+        # 低分只代表证据弱，不能证明现场说错。上层会用 chatter_threshold
+        # 丢弃完全无关的语音；能通过闲聊门槛但没有必要槽位矛盾的，只能进灰区。
+        reasons.append("匹配证据偏弱，未发现必要槽位矛盾")
+        return Verdict.REVIEW, reasons
 
     # ------------------------------------------------------------------
     def _similar(self, a: str, b: str) -> float:

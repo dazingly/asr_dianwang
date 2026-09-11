@@ -35,6 +35,9 @@ class OperationItem:
 class Ticket:
     items: list[OperationItem] = field(default_factory=list)
     source: str = ""
+    substation: str = ""
+    mission: str = ""
+    ticket_id: str = ""
 
     def __len__(self) -> int:
         return len(self.items)
@@ -57,6 +60,18 @@ def load_ticket(path: str | Path, extractor: SlotExtractor | None = None) -> Tic
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
+    substation = ""
+    mission = ""
+    ticket_id = ""
+    if isinstance(data, dict) and "entries" in data:
+        entries = data["entries"]
+        if not isinstance(entries, (dict, list)):
+            raise ValueError(f"操作票 entries 格式错误: {type(entries)}")
+        substation = str(data.get("substation", ""))
+        mission = str(data.get("mission", ""))
+        ticket_id = str(data.get("id", ""))
+        data = entries
+
     if isinstance(data, dict):
         pairs = [(_to_seq(k, i), v) for i, (k, v) in enumerate(data.items(), start=1)]
     elif isinstance(data, list):
@@ -74,7 +89,13 @@ def load_ticket(path: str | Path, extractor: SlotExtractor | None = None) -> Tic
             OperationItem(seq=seq, raw=raw, norm=norm,
                           slots=ext.extract(norm, already_normalized=True))
         )
-    return Ticket(items=items, source=str(path))
+    return Ticket(
+        items=items,
+        source=str(path),
+        substation=substation,
+        mission=mission,
+        ticket_id=ticket_id,
+    )
 
 
 def _to_seq(key: str, fallback: int) -> int:

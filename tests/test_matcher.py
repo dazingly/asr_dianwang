@@ -177,6 +177,19 @@ def test_missing_is_not_conflict(ticket, matcher):
     assert conflict.verdict is Verdict.FAIL, conflict.summary()
 
 
+def test_low_score_without_required_conflict_is_review_not_fail(ticket, matcher):
+    """识别很糊但没有说反关键要素时，不能伪造“说错”的正证据。"""
+    item = ticket.by_seq(3)
+    result = matcher.match(item, "桥100开关")
+
+    assert result.score < 0.60
+    assert not any(
+        slot.required and slot.outcome is Outcome.CONFLICT
+        for slot in result.slot_results
+    )
+    assert result.verdict is Verdict.REVIEW
+
+
 def test_every_ticket_item_matches_itself(ticket, matcher):
     """票面每一条拿自己的原文去匹配，都必须匹配到自己且判通过。
 

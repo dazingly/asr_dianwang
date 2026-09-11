@@ -115,8 +115,8 @@ def test_skip_warning_marks_intermediate_items(ticket):
     event = aligner.feed(UTTER[3], Role.OPERATOR)
     assert event.kind is EventKind.SKIP_WARNING, event.describe()
     assert event.skipped == [1, 2]
-    assert aligner.records[0].state is ItemState.SKIPPED
-    assert aligner.records[1].state is ItemState.SKIPPED
+    assert aligner.records[0].state is ItemState.UNCONFIRMED
+    assert aligner.records[1].state is ItemState.UNCONFIRMED
 
 
 def test_wrong_direction_fails_regardless_of_role(ticket):
@@ -126,6 +126,55 @@ def test_wrong_direction_fails_regardless_of_role(ticket):
     event = aligner.feed(
         "将测控屏110kV桥100开关操作方式把手由就地切至远方位置", Role.CALLER)
     assert event.kind is not EventKind.VERIFIED, event.describe()
+
+
+def test_contradiction_after_verified_item_still_alerts(ticket):
+    """唱票先说对、后续复述把方向说反时，不能按普通重复静默吞掉。"""
+    # 收窄前瞻窗口，隔离“第 5 条恰好是反方向操作”的票面歧义，
+    # 专门验证已完成第 2 条的 REPEAT 分支。
+    aligner = make_aligner(ticket, lookahead=0)
+    aligner.feed(UTTER[1], Role.CALLER)
+    aligner.feed(UTTER[2], Role.CALLER)
+
+    event = aligner.feed(
+        "将测控屏110kV桥100开关操作方式把手由就地切至远方位置",
+        Role.OPERATOR,
+    )
+
+    assert event.kind is EventKind.FAILED, event.describe()
+    assert event.is_alert
+    assert aligner.records[1].state is ItemState.FAILED
+    assert aligner.records[1].best.conflicts
+
+
+def test_finalize_marks_pending_items_unconfirmed(ticket):
+    aligner = make_aligner(ticket)
+    aligner.feed(UTTER[1], Role.OPERATOR)
+
+    aligner.finalize()
+
+    assert aligner.records[0].state is ItemState.VERIFIED
+    assert all(
+        record.state is ItemState.UNCONFIRMED
+        for record in aligner.records[1:]
+    )
+
+
+def test_failed_current_item_advances_and_clear_repeat_can_recover(ticket):
+    aligner = make_aligner(ticket, lookahead=0)
+    aligner.feed(UTTER[1], Role.OPERATOR)
+
+    failed = aligner.feed(
+        "将测控屏110kV桥100开关操作方式把手由就地切至远方位置",
+        Role.OPERATOR,
+    )
+    assert failed.kind is EventKind.FAILED
+    assert aligner.pointer == 2
+
+    recovered = aligner.feed(UTTER[2], Role.OPERATOR)
+    assert recovered.kind is EventKind.REPEAT
+    assert aligner.records[1].state is ItemState.VERIFIED
+    assert aligner.pointer == 2
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +214,6 @@ def test_full_pass_over_ticket(ticket):
     aligner.finalize()
 
     report = aligner.report()
-    assert report["state_counts"].get(ItemState.SKIPPED.value, 0) == 0, report
+    assert report["state_counts"].get(ItemState.UNCONFIRMED.value, 0) == 0, report
     assert report["state_counts"].get(ItemState.FAILED.value, 0) == 0, report
     assert not report["alerts"], report["alerts"]

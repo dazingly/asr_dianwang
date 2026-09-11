@@ -95,6 +95,10 @@ class SlotExtractor:
             "(?:" + "|".join(map(re.escape, self._switch_verbs)) + ")"
             "(" + "|".join(map(re.escape, self._positions)) + ")"
         )
+        self._confirmed_position_re = re.compile(
+            "(?:确在|处于|在)(" + "|".join(map(re.escape, self._positions))
+            + ")(?:位置|状态)"
+        )
         suffix_alt = "|".join(map(re.escape, self._suffixes))
         prefix_cls = f"[{re.escape(self._prefix_chars)}]" if self._prefix_chars else "[^\\s]"
         self._device_numbered_re = re.compile(
@@ -146,6 +150,13 @@ class SlotExtractor:
         def tag_terms(terms, name: str, group: str | None) -> None:
             for term in terms:  # 已按长度降序，最长匹配优先
                 for m in re.finditer(re.escape(term), norm):
+                    if (
+                        name == "position"
+                        and term == "合闸"
+                        and m.start() > 0
+                        and norm[m.start() - 1] == "重"
+                    ):
+                        continue
                     if claim(m.start(), m.end()):
                         slots.append(Slot(name, term, group, (m.start(), m.end())))
 
@@ -157,6 +168,13 @@ class SlotExtractor:
             slots.append(Slot("src_position", m.group(1), "position", m.span(1)))
             slots.append(Slot("dst_position", m.group(2), "position", m.span(2)))
             slots.append(Slot("action", "切至", "action", m.span()))
+
+        # 1.5) "确在投入/停用/分闸位置" 是状态，不是执行动作。
+        # 必须先占位，否则后面的动作层会把 "投入" 误标成 action。
+        for m in self._confirmed_position_re.finditer(norm):
+            if not claim(m.start(1), m.end(1)):
+                continue
+            slots.append(Slot("position", m.group(1), "position", m.span(1)))
 
         # 2) 电压等级
         for m in self._voltage_re.finditer(norm):
