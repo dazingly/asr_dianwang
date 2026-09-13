@@ -1,0 +1,28 @@
+[
+  {
+    "ticket": "ticket1",
+    "label": "baseline",
+    "metrics": {
+      "VERIFIED": 3,
+      "FLAGGED": 3,
+      "FAILED": 1,
+      "UNCONFIRMED": 0,
+      "alerts": 5,
+      "segments": 35,
+      "rtf": 0.0111
+    }
+  },
+  {
+    "ticket": "ticket1",
+    "label": "stitch",
+    "metrics": {
+      "VERIFIED": 5,
+      "FLAGGED": 2,
+      "FAILED": 0,
+      "UNCONFIRMED": 0,
+      "alerts": 8,
+      "segments": 35,
+      "rtf": 0.051
+    }
+  }
+]

@@ -66,17 +66,17 @@ def discover_audio(target: Path, include_full: bool) -> list[Path]:
     return out
 
 
-def split_audio(wave, segmenter: VadSegmenter | None,
-                min_speech_ms: int) -> tuple[list[Segment], str]:
+def split_audio(wave, segmenter, min_speech_ms: int) -> tuple[list[Segment], str]:
     """切分一段音频，返回片段列表和实际生效的切分方式。"""
     if segmenter is not None:
         segments = segmenter.segment(wave)
-        # VadSegmenter 在模型不可用时会静默退回整段，这里识别出这种情况
-        # 并明确告诉使用者，免得把"VAD 没生效"误读成"VAD 认为只有一段"
+        # 分段器在模型不可用时会静默退回整段，这里识别出这种情况并明确告诉
+        # 使用者，免得把"VAD 没生效"误读成"VAD 认为只有一段"。
+        how = segmenter.describe() if hasattr(segmenter, "describe") else "vad"
         whole = len(segments) == 1 and segments[0].start_ms == 0
-        if not whole:
-            return segments, "fsmn-vad"
-        return segments, "fsmn-vad(整段未切开)"
+        if whole:
+            return segments, f"{how}(整段未切开)"
+        return segments, how
     return energy_segments(wave, min_speech_ms=min_speech_ms), "energy"
 
 
@@ -92,7 +92,6 @@ def main() -> int:
     parser.add_argument("--include-full", action="store_true",
                         help="把下划线开头的整段录音也纳入")
     parser.add_argument("--device", default=None, help="cpu / cuda:0 / auto")
-    parser.add_argument("--no-fp16", action="store_true")
     args = parser.parse_args()
 
     cfg = load_config()
@@ -142,8 +141,6 @@ def main() -> int:
     overrides = {}
     if args.device:
         overrides["device"] = args.device
-    if args.no_fp16:
-        overrides["fp16"] = False
     engine = AsrEngine(cfg, **overrides)
     engine.model
     print(f"\n模型加载 {engine.load_seconds:.2f}s | {engine.describe()}")

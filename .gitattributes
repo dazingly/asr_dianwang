@@ -1,2 +1,4 @@
+# 现场录音统一走 LFS：单站 5~6MB，进了普通历史以后想迁 LFS 就得改写历史。
+# 站点目录会继续增加，所以按文件名而不是按站点写规则。
+data/**/full_audio.wav filter=lfs diff=lfs merge=lfs -text
 data/clips/_full_audio.wav filter=lfs diff=lfs merge=lfs -text
-data/dandong/clips/**/full_audio.wav filter=lfs diff=lfs merge=lfs -text

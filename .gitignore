@@ -2,6 +2,10 @@
 models/**/*.pt
 models/**/*.onnx
 
+# 同属模型下载产物，只是没有 .pt 后缀躲过了上面两条：8MB 的词表，
+# download_model.py 会拉，没必要进历史。模型目录里的小体积元数据仍进库。
+models/**/seg_dict
+
 # Python
 __pycache__/
 *.py[cod]

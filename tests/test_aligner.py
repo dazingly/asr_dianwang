@@ -61,15 +61,24 @@ def test_operator_repeat_does_not_advance_twice(ticket):
 
 
 def test_garbled_caller_then_clear_operator(ticket):
-    """唱票人远场糊成一团，操作人复述清楚 —— 这是现场最常见的形态。"""
+    """唱票人远场糊成一团，操作人复述清楚 —— 这是现场最常见的形态。
+
+    糊掉的那段先挂起：它和"被 VAD 切开的半句话"从分数上分不开（两者都
+    打不高分），而后者正是最该拼合的。拼不出增益就按原样落地成闲聊。
+    """
     aligner = make_aligner(ticket)
     first = aligner.feed("张面飞梯要再这样弄好好给你钱", Role.CALLER)
-    assert first.kind is EventKind.CHATTER, first.describe()
+    assert first.kind is EventKind.HELD, first.describe()
     assert aligner.pointer == 0
 
     second = aligner.feed(UTTER[1], Role.OPERATOR)
     assert second.kind is EventKind.VERIFIED, second.describe()
     assert aligner.pointer == 1
+
+    # 挂起的段在这时候定案，事件对象被原地改写：逐段表因此仍是一段一行，
+    # 不会因为挂起凭空多一行或者少一行。
+    assert first.kind is EventKind.CHATTER, first.describe()
+    assert len(aligner.events) == 2
 
 
 def test_two_items_in_sequence(ticket):
@@ -90,23 +99,37 @@ def test_repeat_upgrades_flagged_but_never_downgrades(ticket):
     record = aligner.records[0]
 
     partial = aligner.feed("检查110kV系统", Role.CALLER)
-    if partial.kind is EventKind.FLAGGED:
-        assert record.state is ItemState.FLAGGED
-        follow = aligner.feed(UTTER[1], Role.OPERATOR)
-        assert follow.kind is EventKind.REPEAT, follow.describe()
-        assert record.state is ItemState.VERIFIED, "清晰复述应把灰区上调为通过"
-    else:
-        # 简述本身就被判通过时，验证反向：后面再来一段不会把它拉低
-        assert record.state is ItemState.VERIFIED
-        aligner.feed("检查110kV系统", Role.OPERATOR)
-        assert record.state is ItemState.VERIFIED
+    assert partial.kind is EventKind.HELD, partial.describe()
+
+    follow = aligner.feed(UTTER[1], Role.OPERATOR)
+    # 拼合后的分数超不过"完整的那一段单独判"（两段内容本就有重叠），
+    # 于是挂起段按自己的结论落地成灰区，再被这一段完整复述上调为通过。
+    assert partial.kind is EventKind.FLAGGED, partial.describe()
+    assert follow.kind is EventKind.REPEAT, follow.describe()
+    assert record.state is ItemState.VERIFIED, "清晰复述应把灰区上调为通过"
+
+    # 反向：条目已经通过，后面那句含糊的确认不挂起、直接按重复处理，
+    # 也就不会把它拉回灰区（挂起只在结论还有改进余地时才有意义）。
+    confirm = aligner.feed("检查110kV系统", Role.OPERATOR)
+    assert confirm.kind is EventKind.REPEAT, confirm.describe()
+    assert record.state is ItemState.VERIFIED
 
 
 def test_chatter_is_dropped(ticket):
+    """对哪一条都打不高分的段判为闲聊：不动指针、不告警。
+
+    和上面两段一样是先挂起再定案 —— 挂起的代价只是那一行的结论晚一段
+    出现，本段的判定不受影响，所以不值得为了"立刻丢闲聊"牺牲拼合。
+    """
     aligner = make_aligner(ticket)
     event = aligner.feed("我想他了咱先歇会儿抽根烟", Role.OPERATOR)
+    assert event.kind is EventKind.HELD, event.describe()
+
+    aligner.finalize()
+
     assert event.kind is EventKind.CHATTER, event.describe()
     assert aligner.pointer == 0
+    assert not aligner.report()["alerts"]
 
 
 def test_skip_warning_marks_intermediate_items(ticket):
@@ -175,6 +198,98 @@ def test_failed_current_item_advances_and_clear_repeat_can_recover(ticket):
     assert recovered.kind is EventKind.REPEAT
     assert aligner.records[1].state is ItemState.VERIFIED
     assert aligner.pointer == 2
+
+
+def test_failed_item_can_downgrade_to_flagged(ticket):
+    """疑似说错的条目后面跟一段"得分接近通过但没有矛盾"的复述时改判灰区。
+
+    得高分却判灰区，只可能是某个必要要素没听全 —— 这时再报"疑似说错"就是
+    拿识别噪声当现场错误。矛盾槽位才是"说错"的正证据，有矛盾的不给这条路。
+    """
+    aligner = make_aligner(ticket, lookahead=0)
+    aligner.feed(UTTER[1], Role.CALLER)
+
+    failed = aligner.feed(
+        "将测控屏110kV桥100开关操作方式把手由就地切至远方位置", Role.OPERATOR)
+    assert failed.kind is EventKind.FAILED
+    assert aligner.records[1].state is ItemState.FAILED
+
+    # 漏了"操作方式把手"（必要槽位），其余逐字正确
+    soft = aligner.feed("将测控屏110kV桥100开关由远方切至就地位置", Role.OPERATOR)
+    assert not soft.match.conflicts
+    aligner.finalize()
+
+    assert aligner.records[1].state is ItemState.FLAGGED, aligner.records[1].best.summary()
+    assert soft.kind is EventKind.FLAGGED
+    assert "改判灰区" in soft.message
+
+
+# ---------------------------------------------------------------------------
+# 挂起与拼合：VAD 把一句话切成上下半截时怎么办
+# ---------------------------------------------------------------------------
+
+def test_split_readback_stitches_into_verified(ticket):
+    """同一句话被 VAD 切成上下半截：两半各自都拿不出结论，合起来是干净的复述。
+
+    这是用户报的第一个问题（"一段话被分成两段，两段分别匹配导致整体不是
+    verified"）的直接回归用例。
+    """
+    aligner = make_aligner(ticket, lookahead=0)
+    aligner.feed(UTTER[1], Role.CALLER)
+
+    head = aligner.feed("将测控屏110kV桥100开关操作方式把手", Role.OPERATOR)
+    assert head.kind is EventKind.HELD, head.describe()
+    assert aligner.pointer == 1, "挂起期间指针不动"
+
+    tail = aligner.feed("由远方切至就地位置", Role.OPERATOR)
+    assert tail.kind is EventKind.VERIFIED, tail.describe()
+    assert tail.stitched is True
+    assert aligner.records[1].state is ItemState.VERIFIED
+
+    # 前半截那一行改记成"已并入下一段"，报告里才不会把它当成独立结论
+    assert head.kind is EventKind.MERGED, head.describe()
+    assert len(aligner.events) == 3
+
+
+def test_stitch_rejected_when_it_adds_nothing(ticket):
+    """拼不出增益就不拼：同一半截说两遍，缺的那半截还是缺的。
+
+    拼合的判据是"拼起来确实更像一条完整票面"，它必须自校验 —— 唱票和复述
+    本来就是同一句内容，按内容相似度合并、按静音间隔合并都在这里栽过
+    （PROGRESS 第十节），只有"拼了确实涨分"区分得开。
+    """
+    aligner = make_aligner(ticket, lookahead=0)
+    aligner.feed(UTTER[1], Role.CALLER)
+
+    head = aligner.feed("将测控屏110kV桥100开关操作方式把手", Role.OPERATOR)
+    assert head.kind is EventKind.HELD
+
+    again = aligner.feed("将测控屏110kV桥100开关操作方式把手", Role.OPERATOR)
+
+    assert again.stitched is False
+    assert head.kind is EventKind.FLAGGED, head.describe()
+    assert aligner.records[1].state is ItemState.FLAGGED
+
+
+def test_stitch_never_turns_a_contradiction_into_a_pass(ticket):
+    """拼合不许把"说反了"拼成通过。
+
+    前半截指向第 2 条（方向还没念到），后半截把方向说反。拼合明令不采纳
+    判 FAIL 的结果（拼是为了把听糊的段救回来，不是为了对票面给出新的坏
+    结论），所以这里退回"不拼"，两段各自落地：前半截灰区，后半截带着
+    方向矛盾，谁都没有被洗成通过。
+    """
+    aligner = make_aligner(ticket, lookahead=0)
+    aligner.feed(UTTER[1], Role.CALLER)
+
+    head = aligner.feed("将测控屏110kV桥100开关操作方式把手", Role.OPERATOR)
+    event = aligner.feed("由就地切至远方位置", Role.OPERATOR)
+
+    assert event.stitched is False
+    assert event.match.conflicts, event.describe()
+    assert event.kind is not EventKind.VERIFIED
+    assert head.kind is not EventKind.MERGED, head.describe()
+    assert aligner.records[1].state is not ItemState.VERIFIED
 
 
 # ---------------------------------------------------------------------------

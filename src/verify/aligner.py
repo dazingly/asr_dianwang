@@ -59,6 +59,8 @@ class EventKind(str, Enum):
     REPEAT = "REPEAT"
     CALL = "CALL"            # 唱票人念了一条
     CHATTER = "CHATTER"      # 无关语音，丢弃
+    HELD = "HELD"            # 内容不完整，暂缓判定，等下一段拼合
+    MERGED = "MERGED"        # 本段已并入下一段，判定记在下一段上
 
 
 @dataclass
@@ -70,6 +72,9 @@ class AlignEvent:
     match: MatchResult | None = None
     message: str = ""
     skipped: list[int] = field(default_factory=list)
+    # 这一段是不是和上一段拼起来判的。拼合把两段语音合成一段文本，
+    # 报告里得让人看出这一行的结论不是这一段单独得出的。
+    stitched: bool = False
 
     @property
     def is_alert(self) -> bool:
@@ -93,6 +98,15 @@ class ItemRecord:
     attempts: int = 0
 
 
+@dataclass
+class _Pending:
+    """一段内容不完整、暂缓判定的语音，等下一段来拼。"""
+    text: str
+    role: Role
+    best: MatchResult | None
+    event: AlignEvent
+
+
 class SequentialAligner:
     def __init__(self, ticket: Ticket, config: dict | None = None,
                  matcher: SlotMatcher | None = None):
@@ -103,6 +117,10 @@ class SequentialAligner:
         self.lookahead = cfg_get(cfg, "aligner.lookahead", 2)
         self.lookback = cfg_get(cfg, "aligner.lookback", 1)
         self.chatter_threshold = cfg_get(cfg, "aligner.chatter_threshold", 0.45)
+        self.review_threshold = cfg_get(cfg, "verdict.review_threshold", 0.60)
+        self.pass_threshold = cfg_get(cfg, "verdict.pass_threshold", 0.82)
+        # 拼合要带来多大的分数增益才采纳。见 _try_stitch 的注释。
+        self.stitch_gain = cfg_get(cfg, "aligner.stitch_gain", 0.10)
         self.role_aware = cfg_get(cfg, "aligner.role_aware", False)
         self.use_call_corroboration = cfg_get(
             cfg, "aligner.use_call_corroboration", True
@@ -111,6 +129,7 @@ class SequentialAligner:
         self.pointer = 0
         self.events: list[AlignEvent] = []
         self._last_call: MatchResult | None = None
+        self._pending: _Pending | None = None
 
     # ------------------------------------------------------------------
     @property
@@ -127,19 +146,131 @@ class SequentialAligner:
         return self.records[start:end]
 
     # ------------------------------------------------------------------
-    def feed(self, utterance: str, role: Role = Role.OPERATOR) -> AlignEvent:
-        """喂入一段语音的识别文本，返回这一段引发的事件。"""
+    def _best(self, utterance: str) -> MatchResult | None:
+        """这段话和窗口内各条的最佳匹配。窗口空了返回 None。"""
         window = self._window()
-        if not utterance.strip() or not window:
-            return self._emit(AlignEvent(EventKind.CHATTER, utterance, role,
-                                         message="空文本或操作票已走完"))
+        if not window:
+            return None
+        return self.matcher.best_match([r.item for r in window], utterance)
 
-        best = self.matcher.best_match([r.item for r in window], utterance)
-        if best is None or best.score < self.chatter_threshold:
-            score = f"{best.score:.2f}" if best else "n/a"
-            return self._emit(AlignEvent(EventKind.CHATTER, utterance, role,
-                                         match=best,
-                                         message=f"对窗口内各条都打不高分(最高{score})，判为无关语音"))
+    def feed(self, utterance: str, role: Role = Role.OPERATOR) -> AlignEvent:
+        """喂入一段语音的识别文本，返回这一段引发的事件。
+
+        一段话被 VAD 切成两半是常态（"检查黄堽线3123刀闸开关侧" 和
+        "确已装设4号接地线一组" 就是同一句话的上下半截）。两半各自拿去匹配，
+        谁都不完整，合起来才是一条干净复述。所以内容不完整的段先挂起，等下一段
+        来了拼起来重判一次；拼不比不拼好就照原样落地，不耽误。
+        """
+        text = utterance.strip()
+        if self._pending is not None:
+            if text:
+                stitched = self._try_stitch(text, role)
+                if stitched is not None:
+                    return stitched
+            # 拼不成：挂起的那段按它自己的结论落地，再照常处理这一段
+            self._flush_pending()
+
+        if not text:
+            return self._emit(AlignEvent(EventKind.CHATTER, text, role,
+                                         message="空文本"))
+        best = self._best(text)
+        if self._should_hold(best):
+            event = AlignEvent(EventKind.HELD, text, role, item=best.item, match=best,
+                               message="内容不完整，等下一段拼合后再判")
+            self._pending = _Pending(text, role, best, event)
+            return self._emit(event)
+        return self._commit(text, role, best)
+
+    def _should_hold(self, best: MatchResult | None) -> bool:
+        """这段值不值得等下一段拼起来再判。
+
+        值得等的是"像是某一条、但拿不出结论"的段：判定落在灰区。包含分数低到
+        本来会被当闲聊丢掉的那些 —— 被 VAD 切开的半句话就落在这一档，它们恰恰
+        是拼合最该救的。指向已通过条目的不等：那一条已经定论、没有可改进的余地，
+        挂起只会让重复复述的结论白白晚一段才出来。
+        """
+        if best is None or best.verdict is not Verdict.REVIEW:
+            return False
+        return self._record_of(best.item.seq).state is not ItemState.VERIFIED
+
+    def _try_stitch(self, utterance: str, role: Role) -> AlignEvent | None:
+        """把挂起的那段和这一段拼起来重判，只有明显更值得采信时才采纳。
+
+        判据是"拼合后的分数要显著高于两段各自的最好分"。为什么是这个判据：
+
+        音频层的碎段合并已经栽过一次（PROGRESS 第十节）—— 它按静音间隔合，
+        而唱票和复述之间正好是"换一口气 + 同一句内容"，必然把两个人粘在一起。
+        按角色合也不行，角色判定本身不稳（config.yaml 里写着）。按内容合同样
+        不行，唱票和复述的内容本来就是同一句。只有"拼起来确实更像一条完整票面"
+        区分得开，而且它自校验：拼合后不涨分的就不采纳，现在通过的那些段不会被
+        改坏。
+
+        实测小留 ticket1 的增益分布：真正该拼的（同一句话的上下半截）+0.38；
+        勉强够格的 +0.07；而唱票尾巴粘操作人头、闲聊两段相拼一律为负。
+        门槛取在两者之间，见 aligner.stitch_gain。
+        """
+        pending = self._pending
+        combined = pending.text + utterance
+        stitched = self._best(combined)
+        if stitched is None or stitched.verdict is Verdict.FAIL:
+            return None
+        if stitched.score < self.review_threshold:
+            return None
+
+        alone = self._best(utterance)
+        base = max(
+            pending.best.score if pending.best else -1.0,
+            alone.score if alone else -1.0,
+        )
+        if stitched.score < base + self.stitch_gain:
+            return None
+
+        # 挂起那段不单独出结论了，判定记在拼合后的这一段上。它自己那一行的
+        # 事件改成 MERGED，看报告的人才知道那一行不是独立结论。
+        self._pending = None
+        pending.event.kind = EventKind.MERGED
+        pending.event.message = "本段并入下一段，合起来判"
+        return self._commit(combined, role, stitched, stitched=True)
+
+    def _flush_pending(self) -> None:
+        """挂起的段按它自己的匹配结果落地。"""
+        pending, self._pending = self._pending, None
+        if pending is None:
+            return
+        self._commit(pending.text, pending.role, pending.best, event=pending.event)
+
+    # ------------------------------------------------------------------
+    def _commit(self, utterance: str, role: Role, best: MatchResult | None, *,
+                event: AlignEvent | None = None, stitched: bool = False) -> AlignEvent:
+        """把一段语音的判定落进状态机并返回事件。
+
+        event 非空表示复用挂起时已经建好、也已经记进 events 的那个事件对象 ——
+        挂起段的结论是延迟得出的，改在同一个对象上，报告里逐段和事件才是
+        一一对应的，不会凭空多出一行或者少一行。
+        """
+        def settle(kind: EventKind, message: str, *, item=None, match=None,
+                   skipped=None) -> AlignEvent:
+            if event is None:
+                return self._emit(AlignEvent(kind, utterance, role, item=item,
+                                             match=match, message=message,
+                                             skipped=skipped or [],
+                                             stitched=stitched))
+            event.kind = kind
+            event.utterance = utterance
+            event.item = item
+            event.match = match
+            event.message = message
+            event.skipped = skipped or []
+            event.stitched = stitched
+            return event
+
+        if not utterance or best is None:
+            return settle(EventKind.CHATTER, "空文本或操作票已走完")
+
+        if best.score < self.chatter_threshold:
+            return settle(EventKind.CHATTER,
+                          f"对窗口内各条都打不高分(最高{best.score:.2f})，判为无关语音",
+                          match=best)
 
         record = self._record_of(best.item.seq)
 
@@ -148,9 +279,7 @@ class SequentialAligner:
         if self.role_aware and role is Role.CALLER:
             record.called = True
             self._last_call = best
-            return self._emit(AlignEvent(EventKind.CALL, utterance, role,
-                                         item=best.item, match=best,
-                                         message="唱票已发出"))
+            return settle(EventKind.CALL, "唱票已发出", item=best.item, match=best)
 
         if role is Role.CALLER:
             record.called = True
@@ -170,34 +299,42 @@ class SequentialAligner:
             if best.verdict is Verdict.FAIL and best.conflicts:
                 record.state = ItemState.FAILED
                 record.best = best
-                return self._emit(AlignEvent(
-                    EventKind.FAILED, utterance, role, item=best.item, match=best,
-                    message="已完成条目出现矛盾复述：" + "；".join(best.reasons),
-                ))
+                return settle(EventKind.FAILED,
+                              "已完成条目出现矛盾复述：" + "；".join(best.reasons),
+                              item=best.item, match=best)
             upgraded = (record.state is ItemState.FLAGGED
                         and best.verdict is Verdict.PASS)
             if upgraded:
                 record.state = ItemState.VERIFIED
-            return self._emit(AlignEvent(
-                EventKind.REPEAT, utterance, role, item=best.item, match=best,
-                message="重复复述，灰区上调为通过" if upgraded else "重复复述已完成的条目",
-            ))
+            return settle(EventKind.REPEAT,
+                          "重复复述，灰区上调为通过" if upgraded else "重复复述已完成的条目",
+                          item=best.item, match=best)
 
-        # 先前被判疑似说错的条目，允许紧接着的清晰复述纠正结果。
+        # 先前被判疑似说错的条目，允许紧接着的复述纠正结果。
         # 指针已经前移，因此这里只改记录，不得把指针退回旧条目。
         if record.state is ItemState.FAILED:
             if best.verdict is Verdict.PASS:
                 record.state = ItemState.VERIFIED
                 record.best = best
-                return self._emit(AlignEvent(
-                    EventKind.REPEAT, utterance, role, item=best.item, match=best,
-                    message="后续清晰复述将疑似说错纠正为通过",
-                ))
-            return self._emit(AlignEvent(
-                EventKind.FAILED, utterance, role, item=best.item, match=best,
-                message="疑似说错条目的后续复述仍未通过：" +
-                        "；".join(best.reasons or ["得分不足"]),
-            ))
+                return settle(EventKind.REPEAT, "后续清晰复述将疑似说错纠正为通过",
+                              item=best.item, match=best)
+            # 分数够高、又没有矛盾槽位的复述，说明"说错"这个结论站不住 ——
+            # 得高分而判灰区只可能是某个必要要素没听全。这时再报"疑似说错"
+            # 就是拿识别噪声当现场错误，改判灰区交人工听录音。有矛盾槽位的不给
+            # 这条路：矛盾才是"说错"的正证据，它不会因为后面一句含糊的复述消失。
+            if (best.verdict is Verdict.REVIEW and not best.conflicts
+                    and best.score >= self.pass_threshold):
+                record.state = ItemState.FLAGGED
+                record.best = best
+                return settle(
+                    EventKind.FLAGGED,
+                    "后续复述得分接近通过且无矛盾，疑似说错改判灰区待复核",
+                    item=best.item, match=best,
+                )
+            return settle(EventKind.FAILED,
+                          "疑似说错条目的后续复述仍未通过：" +
+                          "；".join(best.reasons or ["得分不足"]),
+                          item=best.item, match=best)
 
         verdict = self._corroborate(best)
 
@@ -213,11 +350,9 @@ class SequentialAligner:
             for seq in skipped:
                 self._record_of(seq).state = ItemState.UNCONFIRMED
             self._advance_past(best.item.seq)
-            return self._emit(AlignEvent(
-                EventKind.FAILED, utterance, role, item=best.item, match=best,
-                skipped=skipped,
-                message="复述与票面不符：" + "；".join(best.reasons or ["整体相似度过低"]),
-            ))
+            return settle(EventKind.FAILED,
+                          "复述与票面不符：" + "；".join(best.reasons or ["整体相似度过低"]),
+                          item=best.item, match=best, skipped=skipped)
 
         record.state = ItemState.VERIFIED if verdict is Verdict.PASS else ItemState.FLAGGED
 
@@ -225,18 +360,15 @@ class SequentialAligner:
             for seq in skipped:
                 self._record_of(seq).state = ItemState.UNCONFIRMED
             self._advance_past(best.item.seq)
-            return self._emit(AlignEvent(
-                EventKind.SKIP_WARNING, utterance, role, item=best.item, match=best,
-                skipped=skipped,
-                message=f"疑似跳项：第 {', '.join(map(str, skipped))} 条没有复述记录",
-            ))
+            return settle(EventKind.SKIP_WARNING,
+                          f"疑似跳项：第 {', '.join(map(str, skipped))} 条没有复述记录",
+                          item=best.item, match=best, skipped=skipped)
 
         self._advance_past(best.item.seq)
         kind = EventKind.VERIFIED if verdict is Verdict.PASS else EventKind.FLAGGED
         message = "一致" if verdict is Verdict.PASS else \
             "灰区，需人工复核：" + "；".join(best.reasons or ["得分处于灰区"])
-        return self._emit(AlignEvent(kind, utterance, role, item=best.item,
-                                     match=best, message=message))
+        return settle(kind, message, item=best.item, match=best)
 
     # ------------------------------------------------------------------
     def _corroborate(self, best: MatchResult) -> Verdict:
@@ -276,7 +408,12 @@ class SequentialAligner:
 
     # ------------------------------------------------------------------
     def finalize(self) -> None:
-        """录音结束时把始终没听到匹配语音的条目标成未确认。"""
+        """录音结束时先给挂起的段落地，再把始终没听到匹配语音的条目标成未确认。
+
+        顺序不能反：挂起段落地时可能推进指针、也可能把某条判成通过或灰区，
+        先标未确认会把这些结论覆盖掉。
+        """
+        self._flush_pending()
         for record in self.records:
             if record.state is ItemState.PENDING:
                 record.state = ItemState.UNCONFIRMED

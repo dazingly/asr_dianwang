@@ -6,20 +6,24 @@
     "mission": "核对110kV丹东线线路及111开关相关保护正确投退",
     "ticket_id": "新2060070100020042609013",
     "asset_list": "D:\\pycode\\asr_dianwang\\configs\\stations\\dandong_assets.txt",
-    "asr": "SenseVoiceSmall @ cuda:0 (fp32), use_itn=True",
-    "segmenter": "fsmn-vad"
+    "asr": "Paraformer-Large @ cuda:0 (fp32)",
+    "segmenter": "fsmn-vad(静音300ms)",
+    "adhere": "阈值0.9，靶子136条"
   },
   "summary": {
     "audio_seconds": 159.509,
     "segment_count": 33,
-    "total_infer_seconds": 2.375,
-    "rtf": 0.0149,
+    "total_infer_seconds": 1.926,
+    "rtf": 0.0121,
+    "adhere_rewrites": 5,
+    "adhere_segments": 5,
     "state_counts": {
       "FAILED": 5,
-      "FLAGGED": 3,
-      "VERIFIED": 3
+      "FLAGGED": 2,
+      "VERIFIED": 4
     },
-    "alert_count": 10
+    "alert_count": 8,
+    "peak_gpu_mb": 921.1
   },
   "segments": [
     {
@@ -33,22 +37,26 @@
       "role_label": "唱票人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "1点17。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>1点17。",
-      "infer_seconds": 0.0675,
+      "asr_text": "一点十七",
+      "asr_raw": "一点十七",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0565,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
       "matched_seq": null,
       "score": 0.0192,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0769,
       "reasons": [
-        "residual: 票面「11clp重出口确在停用」但复述为「1点17」",
-        "device: 缺失「2111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「重合闸出口确在停用」但复述为「1点17」",
+        "device: 缺失「11clp2」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11clp重出口确在停用」但复述为「1点17」"
+        "residual: 票面「重合闸出口确在停用」但复述为「1点17」"
       ],
       "slots": [
         {
@@ -61,7 +69,7 @@
         },
         {
           "name": "residual",
-          "expected": "11clp重出口确在停用",
+          "expected": "重合闸出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -69,18 +77,18 @@
         },
         {
           "name": "device",
-          "expected": "2111开关",
+          "expected": "11clp2",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "合闸",
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
         },
         {
@@ -104,24 +112,27 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "对了。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>对了。",
-      "infer_seconds": 0.0615,
+      "asr_text": "没有了",
+      "asr_raw": "没有了",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0611,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
       "score": 0.0,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「对」",
+        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「没有」",
         "voltage: 缺失「110kv」",
         "device: 缺失「111开关」",
         "handle: 缺失「压板」",
-        "voltage: 缺失「110kv」"
+        "voltage: 缺失「110kv」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「对」"
+        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「没有」"
       ],
       "slots": [
         {
@@ -138,7 +149,7 @@
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "对"
+          "conflicting_value": "没有"
         },
         {
           "name": "voltage",
@@ -193,54 +204,59 @@
       "role_label": "唱票人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "先个时间。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>先个时间。",
-      "infer_seconds": 0.0707,
+      "asr_text": "先要个实验",
+      "asr_raw": "先要个实验",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0564,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.06)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.01)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0577,
-      "verdict": "FAIL",
-      "sentence_similarity": 0.0,
+      "score": 0.0111,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0444,
       "reasons": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「先个时间」",
-        "device: 缺失「1111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「先要个实验」",
+        "voltage: 缺失「110kv」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "voltage: 缺失「110kv」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「先个时间」"
+        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「先要个实验」"
       ],
       "slots": [
         {
           "name": "check_type",
           "expected": "检查",
           "outcome": "MISSING",
-          "score": 0.5,
+          "score": 0.0,
           "required": false,
           "conflicting_value": null
         },
         {
           "name": "residual",
-          "expected": "11clp保护出口确在停用",
+          "expected": "丹东线线路相关保护确在111保护测控电压屏内",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "先个时间"
+          "conflicting_value": "先要个实验"
         },
         {
-          "name": "device",
-          "expected": "1111开关",
+          "name": "voltage",
+          "expected": "110kv",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "跳闸",
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
         },
         {
@@ -249,6 +265,22 @@
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "voltage",
+          "expected": "110kv",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "并列",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -264,22 +296,26 @@
       "role_label": "唱票人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "可以了。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>可以了。",
-      "infer_seconds": 0.0708,
+      "asr_text": "可以了",
+      "asr_raw": "可以了",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.066,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.01)，判为无关语音",
       "matched_seq": null,
       "score": 0.0096,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0385,
       "reasons": [
-        "residual: 票面「11clp重出口确在停用」但复述为「可以」",
-        "device: 缺失「2111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「重合闸出口确在停用」但复述为「可以」",
+        "device: 缺失「11clp2」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11clp重出口确在停用」但复述为「可以」"
+        "residual: 票面「重合闸出口确在停用」但复述为「可以」"
       ],
       "slots": [
         {
@@ -292,7 +328,7 @@
         },
         {
           "name": "residual",
-          "expected": "11clp重出口确在停用",
+          "expected": "重合闸出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -300,18 +336,18 @@
         },
         {
           "name": "device",
-          "expected": "2111开关",
+          "expected": "11clp2",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "合闸",
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
         },
         {
@@ -335,15 +371,17 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "检查120千伏单独线线路及111开关，相关保护压板确在111保护测控及120千伏电压并率频内。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查120千伏单独线线路及111开关，相关保护压板确在111保护测控及120千伏电压并率频内。",
-      "infer_seconds": 0.0808,
+      "asr_text": "检查一百二十千伏单独线线路及幺幺幺开关相关保护压板却在幺幺幺保护测控及一百二十千伏电压并列瓶内",
+      "asr_raw": "检查一百二十千伏单独线线路及幺幺幺开关相关保护压板却在幺幺幺保护测控及一百二十千伏电压并列瓶内",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0733,
       "event": "FAILED",
       "message": "复述与票面不符：voltage: 票面「110kv」但复述为「120kv」；voltage: 票面「110kv」但复述为「120kv」",
       "matched_seq": 1,
-      "score": 0.7462,
+      "score": 0.8029,
       "verdict": "FAIL",
-      "sentence_similarity": 0.9111,
+      "sentence_similarity": 0.9333,
       "reasons": [
         "voltage: 票面「110kv」但复述为「120kv」",
         "voltage: 票面「110kv」但复述为「120kv」"
@@ -365,7 +403,7 @@
           "name": "residual",
           "expected": "丹东线线路相关保护确在111保护测控电压屏内",
           "outcome": "HIT",
-          "score": 0.875,
+          "score": 0.9545,
           "required": false,
           "conflicting_value": null
         },
@@ -404,8 +442,8 @@
         {
           "name": "position",
           "expected": "并列",
-          "outcome": "MISSING",
-          "score": 0.5,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": false,
           "conflicting_value": null
         }
@@ -422,22 +460,25 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查咱们显也要相个保护要本。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>检查咱们显也要相个保护要本。",
-      "infer_seconds": 0.0736,
+      "asr_text": "检查咱们现在有小个保护压板儿",
+      "asr_raw": "检查咱们现在有小个保护压板儿",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0597,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.16)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.29)，判为无关语音",
       "matched_seq": null,
-      "score": 0.1617,
-      "verdict": "FAIL",
-      "sentence_similarity": 0.1852,
+      "score": 0.2885,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.1538,
       "reasons": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「咱们显也要相个保护要本」",
-        "device: 缺失「1111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「重合闸出口确在停用」但复述为「咱们现在有小个保护儿」",
+        "device: 缺失「11clp2」",
+        "device: 缺失「111开关」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「咱们显也要相个保护要本」"
+        "residual: 票面「重合闸出口确在停用」但复述为「咱们现在有小个保护儿」"
       ],
       "slots": [
         {
@@ -450,33 +491,33 @@
         },
         {
           "name": "residual",
-          "expected": "11clp保护出口确在停用",
+          "expected": "重合闸出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "咱们显也要相个保护要本"
+          "conflicting_value": "咱们现在有小个保护儿"
         },
         {
           "name": "device",
-          "expected": "1111开关",
+          "expected": "11clp2",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "跳闸",
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
         },
         {
           "name": "handle",
           "expected": "压板",
-          "outcome": "MISSING",
-          "score": 0.0,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": true,
           "conflicting_value": null
         }
@@ -493,24 +534,28 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "呃，现在11保护操控机因为有限过的电压变频台。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>呃，现在11保护操控机因为有限过的电压变频台。",
-      "infer_seconds": 0.0692,
+      "asr_text": "呃现在要要保护操控及一百一千伏的电压变更器的",
+      "asr_raw": "呃现在要要保护操控及一百一千伏的电压变更器的",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0591,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.12)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.13)，判为无关语音",
       "matched_seq": null,
-      "score": 0.1217,
+      "score": 0.1328,
       "verdict": "FAIL",
-      "sentence_similarity": 0.2222,
+      "sentence_similarity": 0.2667,
       "reasons": [
-        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「呃现在11保护操控机因为有限过电压变频台」",
-        "voltage: 缺失「110kv」",
+        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「呃现在要要保护操控电压变更器」",
+        "voltage: 票面「110kv」但复述为「101kv」",
         "device: 缺失「111开关」",
         "handle: 缺失「压板」",
-        "voltage: 缺失「110kv」"
+        "voltage: 票面「110kv」但复述为「101kv」"
       ],
       "conflicts": [
-        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「呃现在11保护操控机因为有限过电压变频台」"
+        "residual: 票面「丹东线线路相关保护确在111保护测控电压屏内」但复述为「呃现在要要保护操控电压变更器」",
+        "voltage: 票面「110kv」但复述为「101kv」",
+        "voltage: 票面「110kv」但复述为「101kv」"
       ],
       "slots": [
         {
@@ -527,15 +572,15 @@
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "呃现在11保护操控机因为有限过电压变频台"
+          "conflicting_value": "呃现在要要保护操控电压变更器"
         },
         {
           "name": "voltage",
           "expected": "110kv",
-          "outcome": "MISSING",
+          "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "101kv"
         },
         {
           "name": "device",
@@ -556,10 +601,10 @@
         {
           "name": "voltage",
           "expected": "110kv",
-          "outcome": "MISSING",
+          "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "101kv"
         },
         {
           "name": "position",
@@ -582,22 +627,26 @@
       "role_label": "唱票人",
       "role_confidence": 0.7582,
       "role_source": "energy",
-      "asr_text": "嗯，对，正确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>嗯，对，正确。",
-      "infer_seconds": 0.0841,
+      "asr_text": "嗯对正确",
+      "asr_raw": "嗯对正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.058,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
       "matched_seq": null,
       "score": 0.0192,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0769,
       "reasons": [
-        "residual: 票面「11clp重出口确在停用」但复述为「嗯对」",
-        "device: 缺失「2111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「重合闸出口确在停用」但复述为「嗯对」",
+        "device: 缺失「11clp2」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11clp重出口确在停用」但复述为「嗯对」"
+        "residual: 票面「重合闸出口确在停用」但复述为「嗯对」"
       ],
       "slots": [
         {
@@ -610,7 +659,7 @@
         },
         {
           "name": "residual",
-          "expected": "11clp重出口确在停用",
+          "expected": "重合闸出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -618,18 +667,18 @@
         },
         {
           "name": "device",
-          "expected": "2111开关",
+          "expected": "11clp2",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "合闸",
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
         },
         {
@@ -653,22 +702,25 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "检查E-ECLPE111开关，保护调闸出口压板停在停停位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查E-ECLPE111开关，保护调闸出口压板停在停停位置。",
-      "infer_seconds": 0.066,
+      "asr_text": "检查一杠ECLPE幺幺幺开关保护跳闸出口二百贴在停运位置",
+      "asr_raw": "检查一杠ECLPE幺幺幺开关保护跳闸出口二百贴在停运位置",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0651,
       "event": "FAILED",
-      "message": "复述与票面不符：residual: 票面「11clp保护出口确在停用」但复述为「eeclpe保护调闸出口停在停停」；device: 票面「1111开关」但复述为「111开关」",
+      "message": "复述与票面不符：residual: 票面「保护出口确在停用」但复述为「1杠eclpe保护出口200贴在停运」；device: 票面「11clp1」但复述为「111开关」；handle: 缺失「压板」",
       "matched_seq": 2,
-      "score": 0.5406,
+      "score": 0.534,
       "verdict": "FAIL",
-      "sentence_similarity": 0.7778,
+      "sentence_similarity": 0.7241,
       "reasons": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「eeclpe保护调闸出口停在停停」",
-        "device: 票面「1111开关」但复述为「111开关」"
+        "residual: 票面「保护出口确在停用」但复述为「1杠eclpe保护出口200贴在停运」",
+        "device: 票面「11clp1」但复述为「111开关」",
+        "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「eeclpe保护调闸出口停在停停」",
-        "device: 票面「1111开关」但复述为「111开关」"
+        "residual: 票面「保护出口确在停用」但复述为「1杠eclpe保护出口200贴在停运」",
+        "device: 票面「11clp1」但复述为「111开关」"
       ],
       "slots": [
         {
@@ -681,33 +733,41 @@
         },
         {
           "name": "residual",
-          "expected": "11clp保护出口确在停用",
+          "expected": "保护出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "eeclpe保护调闸出口停在停停"
+          "conflicting_value": "1杠eclpe保护出口200贴在停运"
         },
         {
           "name": "device",
-          "expected": "1111开关",
+          "expected": "11clp1",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
           "conflicting_value": "111开关"
         },
         {
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
           "name": "position",
           "expected": "跳闸",
-          "outcome": "MISSING",
-          "score": 0.5,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": false,
           "conflicting_value": null
         },
         {
           "name": "handle",
           "expected": "压板",
-          "outcome": "HIT",
-          "score": 1.0,
+          "outcome": "MISSING",
+          "score": 0.0,
           "required": true,
           "conflicting_value": null
         }
@@ -724,22 +784,27 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1CP1111看完保护前查是故下板，确实挺幼稚，嗯，正确。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>检查1-1CP1111看完保护前查是故下板，确实挺幼稚，嗯，正确。",
-      "infer_seconds": 0.067,
-      "event": "FAILED",
-      "message": "复述与票面不符：residual: 票面「11clp保护出口确在停用」但复述为「11cp1111看完保护前查是故下板确实挺幼稚嗯」；device: 缺失「1111开关」；handle: 缺失「压板」",
-      "matched_seq": 2,
-      "score": 0.4808,
+      "asr_text": "检查一杠一CB一幺幺幺看看保护下的是否下板取的挺幼稚嗯正确",
+      "asr_raw": "检查一杠一CB一幺幺幺看看保护下的是否下板取的挺幼稚嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0569,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.26)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.2616,
       "verdict": "FAIL",
-      "sentence_similarity": 0.5,
+      "sentence_similarity": 0.4286,
       "reasons": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「11cp1111看完保护前查是故下板确实挺幼稚嗯」",
-        "device: 缺失「1111开关」",
+        "residual: 票面「保护出口确在停用」但复述为「11cb看看保护下是否下板取挺幼稚嗯」",
+        "device: 票面「11clp1」但复述为「1111」",
+        "device: 票面「111开关」但复述为「1111」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「11cp1111看完保护前查是故下板确实挺幼稚嗯」"
+        "residual: 票面「保护出口确在停用」但复述为「11cb看看保护下是否下板取挺幼稚嗯」",
+        "device: 票面「11clp1」但复述为「1111」",
+        "device: 票面「111开关」但复述为「1111」"
       ],
       "slots": [
         {
@@ -752,19 +817,27 @@
         },
         {
           "name": "residual",
-          "expected": "11clp保护出口确在停用",
+          "expected": "保护出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "11cp1111看完保护前查是故下板确实挺幼稚嗯"
+          "conflicting_value": "11cb看看保护下是否下板取挺幼稚嗯"
         },
         {
           "name": "device",
-          "expected": "1111开关",
-          "outcome": "MISSING",
-          "score": 0.6667,
+          "expected": "11clp1",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "1111"
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "1111"
         },
         {
           "name": "position",
@@ -795,21 +868,23 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "检查E-ECLP2111开关重合闸出口压边取在停定位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查E-ECLP2111开关重合闸出口压边取在停定位置。",
-      "infer_seconds": 0.076,
+      "asr_text": "检查一杠一CLP二幺幺幺开关重合闸出口下边确的天线位置",
+      "asr_raw": "检查一杠一CLP二幺幺幺开关重合闸出口下边确的天线位置",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0578,
       "event": "FLAGGED",
-      "message": "灰区，需人工复核：residual: 票面「11clp重出口确在停用」但复述为「eeclp重出口压边取在停定」；handle: 缺失「压板」",
+      "message": "灰区，需人工复核：residual: 票面「重合闸出口确在停用」但复述为「重合闸出口下边确天线」；handle: 缺失「压板」",
       "matched_seq": 3,
-      "score": 0.75,
+      "score": 0.7019,
       "verdict": "REVIEW",
       "sentence_similarity": 0.8077,
       "reasons": [
-        "residual: 票面「11clp重出口确在停用」但复述为「eeclp重出口压边取在停定」",
+        "residual: 票面「重合闸出口确在停用」但复述为「重合闸出口下边确天线」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11clp重出口确在停用」但复述为「eeclp重出口压边取在停定」"
+        "residual: 票面「重合闸出口确在停用」但复述为「重合闸出口下边确天线」"
       ],
       "slots": [
         {
@@ -822,33 +897,33 @@
         },
         {
           "name": "residual",
-          "expected": "11clp重出口确在停用",
+          "expected": "重合闸出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "eeclp重出口压边取在停定"
+          "conflicting_value": "重合闸出口下边确天线"
         },
         {
           "name": "device",
-          "expected": "2111开关",
+          "expected": "11clp2",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "合闸",
+          "name": "device",
+          "expected": "111开关",
           "outcome": "HIT",
           "score": 1.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
         },
         {
           "name": "handle",
           "expected": "压板",
           "outcome": "MISSING",
-          "score": 0.5,
+          "score": 0.0,
           "required": true,
           "conflicting_value": null
         }
@@ -865,23 +940,27 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1CB聊11开关冲山储物小班确定听均位置嗯，正确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1CB聊11开关冲山储物小班确定听均位置嗯，正确。",
-      "infer_seconds": 0.0737,
+      "asr_text": "检查一杠一CP幺幺幺开关重插出口夜班确定停息位置嗯正确",
+      "asr_raw": "检查一杠一CP幺幺幺开关重插出口夜班确定停息位置嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0553,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.33)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.32)，判为无关语音",
       "matched_seq": null,
-      "score": 0.3269,
+      "score": 0.3192,
       "verdict": "FAIL",
-      "sentence_similarity": 0.5,
+      "sentence_similarity": 0.5769,
       "reasons": [
-        "residual: 票面「11clp重出口确在停用」但复述为「11cb聊冲山储物小班确定听均嗯」",
-        "device: 票面「2111开关」但复述为「11开关」",
+        "residual: 票面「重合闸出口确在停用」但复述为「11c重插出口夜班确定停息嗯」",
+        "device: 票面「11clp2」但复述为「p11」",
+        "device: 票面「111开关」但复述为「1开关」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11clp重出口确在停用」但复述为「11cb聊冲山储物小班确定听均嗯」",
-        "device: 票面「2111开关」但复述为「11开关」"
+        "residual: 票面「重合闸出口确在停用」但复述为「11c重插出口夜班确定停息嗯」",
+        "device: 票面「11clp2」但复述为「p11」",
+        "device: 票面「111开关」但复述为「1开关」"
       ],
       "slots": [
         {
@@ -894,27 +973,27 @@
         },
         {
           "name": "residual",
-          "expected": "11clp重出口确在停用",
+          "expected": "重合闸出口确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "11cb聊冲山储物小班确定听均嗯"
+          "conflicting_value": "11c重插出口夜班确定停息嗯"
         },
         {
           "name": "device",
-          "expected": "2111开关",
+          "expected": "11clp2",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "11开关"
+          "conflicting_value": "p11"
         },
         {
-          "name": "position",
-          "expected": "合闸",
-          "outcome": "MISSING",
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "CONFLICT",
           "score": 0.0,
-          "required": false,
-          "conflicting_value": null
+          "required": true,
+          "conflicting_value": "1开关"
         },
         {
           "name": "handle",
@@ -937,20 +1016,25 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1KLPE111开关插动保护投入压板现在停运位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLPE111开关插动保护投入压板现在停运位置。",
-      "infer_seconds": 0.0765,
+      "asr_text": "检查一杠一KLPE幺幺幺开关插动保护投入夹板车的停运位置",
+      "asr_raw": "检查一杠一KLPE幺幺幺开关插动保护投入夹板车的停运位置",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0634,
       "event": "FAILED",
-      "message": "复述与票面不符：device: 票面「1111开关」但复述为「111开关」",
+      "message": "复述与票面不符：residual: 票面「差动保护确在停用」但复述为「11klpe插动保护夹板车停运」；device: 票面「11klp1」但复述为「111开关」；handle: 缺失「压板」",
       "matched_seq": 4,
-      "score": 0.735,
+      "score": 0.6412,
       "verdict": "FAIL",
-      "sentence_similarity": 0.8889,
+      "sentence_similarity": 0.8148,
       "reasons": [
-        "device: 票面「1111开关」但复述为「111开关」"
+        "residual: 票面「差动保护确在停用」但复述为「11klpe插动保护夹板车停运」",
+        "device: 票面「11klp1」但复述为「111开关」",
+        "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "device: 票面「1111开关」但复述为「111开关」"
+        "residual: 票面「差动保护确在停用」但复述为「11klpe插动保护夹板车停运」",
+        "device: 票面「11klp1」但复述为「111开关」"
       ],
       "slots": [
         {
@@ -963,19 +1047,27 @@
         },
         {
           "name": "residual",
-          "expected": "11klp差动保护确在停用",
-          "outcome": "HIT",
-          "score": 0.7857,
+          "expected": "差动保护确在停用",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": false,
-          "conflicting_value": null
+          "conflicting_value": "11klpe插动保护夹板车停运"
         },
         {
           "name": "device",
-          "expected": "1111开关",
+          "expected": "11klp1",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
           "conflicting_value": "111开关"
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
         },
         {
           "name": "action",
@@ -988,8 +1080,8 @@
         {
           "name": "handle",
           "expected": "压板",
-          "outcome": "HIT",
-          "score": 1.0,
+          "outcome": "MISSING",
+          "score": 0.5,
           "required": true,
           "conflicting_value": null
         }
@@ -1006,20 +1098,23 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "检查1-1K1P1111开关插动保护投入压板皮T优置嗯，准确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1K1P1111开关插动保护投入压板皮T优置嗯，准确。",
-      "infer_seconds": 0.0781,
-      "event": "VERIFIED",
-      "message": "一致",
+      "asr_text": "检查一杠一KLP幺幺幺幺开关插头保护投入压边区的停位值嗯正确",
+      "asr_raw": "检查一杠一KLP幺幺幺幺开关插头保护投入压边区的停位值嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0566,
+      "event": "FAILED",
+      "message": "疑似说错条目的后续复述仍未通过：residual: 票面「差动保护确在停用」但复述为「插头保护压边区停位值嗯」；handle: 缺失「压板」",
       "matched_seq": 4,
-      "score": 0.8214,
-      "verdict": "PASS",
-      "sentence_similarity": 0.7143,
+      "score": 0.7852,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.7241,
       "reasons": [
-        "residual: 票面「11klp差动保护确在停用」但复述为「11k1p插动保护皮t优置嗯准确」"
+        "residual: 票面「差动保护确在停用」但复述为「插头保护压边区停位值嗯」",
+        "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp差动保护确在停用」但复述为「11k1p插动保护皮t优置嗯准确」"
+        "residual: 票面「差动保护确在停用」但复述为「插头保护压边区停位值嗯」"
       ],
       "slots": [
         {
@@ -1032,15 +1127,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp差动保护确在停用",
+          "expected": "差动保护确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "11k1p插动保护皮t优置嗯准确"
+          "conflicting_value": "插头保护压边区停位值嗯"
         },
         {
           "name": "device",
-          "expected": "1111开关",
+          "expected": "11klp1",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
@@ -1057,8 +1160,8 @@
         {
           "name": "handle",
           "expected": "压板",
-          "outcome": "HIT",
-          "score": 1.0,
+          "outcome": "MISSING",
+          "score": 0.5,
           "required": true,
           "conflicting_value": null
         }
@@ -1075,17 +1178,23 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1KLP2111开关，保护光线通道已投入压板现在通讯位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLP2111开关，保护光线通道已投入压板现在通讯位置。",
-      "infer_seconds": 0.0703,
+      "asr_text": "检查一杠一KLP二幺幺幺开关保护光线通道已投入压板器的通讯位置",
+      "asr_raw": "检查一杠一KLP二幺幺幺开关保护光线通道已投入压板器的通讯位置",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0591,
       "event": "VERIFIED",
       "message": "一致",
       "matched_seq": 5,
-      "score": 0.9549,
+      "score": 0.8833,
       "verdict": "PASS",
-      "sentence_similarity": 0.9,
-      "reasons": [],
-      "conflicts": [],
+      "sentence_similarity": 0.8667,
+      "reasons": [
+        "residual: 票面「保护光纤通道1确在停用」但复述为「保护光线通道已器通讯」"
+      ],
+      "conflicts": [
+        "residual: 票面「保护光纤通道1确在停用」但复述为「保护光线通道已器通讯」"
+      ],
       "slots": [
         {
           "name": "check_type",
@@ -1097,15 +1206,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护光纤通道1确在停用",
-          "outcome": "HIT",
-          "score": 0.8125,
+          "expected": "保护光纤通道1确在停用",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": false,
+          "conflicting_value": "保护光线通道已器通讯"
+        },
+        {
+          "name": "device",
+          "expected": "11klp2",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
           "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "2111开关",
+          "expected": "111开关",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
@@ -1140,24 +1257,27 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1KB211开关，保护光线通道仪同入下边。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KB211开关，保护光线通道仪同入下边。",
-      "infer_seconds": 0.075,
+      "asr_text": "检查一杠一调频梁幺幺开关保护光纤通道一投入下板",
+      "asr_raw": "检查一杠一调频梁幺幺开关保护光纤通道一投入下板",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0567,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.34)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.43)，判为无关语音",
       "matched_seq": null,
-      "score": 0.3375,
+      "score": 0.4292,
       "verdict": "FAIL",
-      "sentence_similarity": 0.6,
+      "sentence_similarity": 0.6333,
       "reasons": [
-        "residual: 票面「11klp保护光纤通道1确在停用」但复述为「11kb保护光线通道仪同入下边」",
-        "device: 票面「2111开关」但复述为「211开关」",
-        "action: 缺失「投入」",
+        "residual: 票面「保护光纤通道1确在停用」但复述为「11调频梁保护光纤通道1下板」",
+        "device: 票面「11klp2」但复述为「11开关」",
+        "device: 票面「111开关」但复述为「11开关」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护光纤通道1确在停用」但复述为「11kb保护光线通道仪同入下边」",
-        "device: 票面「2111开关」但复述为「211开关」"
+        "residual: 票面「保护光纤通道1确在停用」但复述为「11调频梁保护光纤通道1下板」",
+        "device: 票面「11klp2」但复述为「11开关」",
+        "device: 票面「111开关」但复述为「11开关」"
       ],
       "slots": [
         {
@@ -1170,25 +1290,33 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护光纤通道1确在停用",
+          "expected": "保护光纤通道1确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "11kb保护光线通道仪同入下边"
+          "conflicting_value": "11调频梁保护光纤通道1下板"
         },
         {
           "name": "device",
-          "expected": "2111开关",
+          "expected": "11klp2",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "211开关"
+          "conflicting_value": "11开关"
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "11开关"
         },
         {
           "name": "action",
           "expected": "投入",
-          "outcome": "MISSING",
-          "score": 0.5,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": true,
           "conflicting_value": null
         },
@@ -1196,7 +1324,7 @@
           "name": "handle",
           "expected": "压板",
           "outcome": "MISSING",
-          "score": 0.0,
+          "score": 0.5,
           "required": true,
           "conflicting_value": null
         }
@@ -1213,23 +1341,27 @@
       "role_label": "唱票人",
       "role_confidence": 0.8696,
       "role_source": "energy",
-      "asr_text": "嗯，正确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>嗯，正确。",
-      "infer_seconds": 0.0642,
+      "asr_text": "嗯正确",
+      "asr_raw": "嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0549,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
       "matched_seq": null,
       "score": 0.0185,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0741,
       "reasons": [
-        "residual: 票面「11klp距离保护确在停用」但复述为「嗯」",
-        "device: 缺失「4111开关」",
+        "residual: 票面「距离保护确在停用」但复述为「嗯」",
+        "device: 缺失「11klp4」",
+        "device: 缺失「111开关」",
         "action: 缺失「投入」",
-        "handle: 缺失「压板」"
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11klp距离保护确在停用」但复述为「嗯」"
+        "residual: 票面「距离保护确在停用」但复述为「嗯」"
       ],
       "slots": [
         {
@@ -1242,7 +1374,7 @@
         },
         {
           "name": "residual",
-          "expected": "11klp距离保护确在停用",
+          "expected": "距离保护确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -1250,7 +1382,15 @@
         },
         {
           "name": "device",
-          "expected": "4111开关",
+          "expected": "11klp4",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -1285,20 +1425,24 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "检查1-1KLP311开关，保护光纤通道2投入压板车在停行位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLP311开关，保护光纤通道2投入压板车在停行位置。",
-      "infer_seconds": 0.0789,
+      "asr_text": "检查一杠一KLP三幺幺开关保护光纤通道二投入压板车的通讯位置",
+      "asr_raw": "检查一杠一KLP三幺幺开关保护光纤通道二投入压板车的通讯位置",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0595,
       "event": "FAILED",
-      "message": "复述与票面不符：device: 票面「3111开关」但复述为「311开关」",
+      "message": "复述与票面不符：residual: 票面「保护光纤通道2确在停用」但复述为「保护光纤通道2车通讯」；device: 票面「111开关」但复述为「11开关」",
       "matched_seq": 6,
-      "score": 0.7473,
+      "score": 0.7083,
       "verdict": "FAIL",
-      "sentence_similarity": 0.9,
+      "sentence_similarity": 0.8333,
       "reasons": [
-        "device: 票面「3111开关」但复述为「311开关」"
+        "residual: 票面「保护光纤通道2确在停用」但复述为「保护光纤通道2车通讯」",
+        "device: 票面「111开关」但复述为「11开关」"
       ],
       "conflicts": [
-        "device: 票面「3111开关」但复述为「311开关」"
+        "residual: 票面「保护光纤通道2确在停用」但复述为「保护光纤通道2车通讯」",
+        "device: 票面「111开关」但复述为「11开关」"
       ],
       "slots": [
         {
@@ -1311,19 +1455,27 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护光纤通道2确在停用",
-          "outcome": "HIT",
-          "score": 0.875,
+          "expected": "保护光纤通道2确在停用",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": false,
+          "conflicting_value": "保护光纤通道2车通讯"
+        },
+        {
+          "name": "device",
+          "expected": "11klp3",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
           "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "3111开关",
+          "expected": "111开关",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "311开关"
+          "conflicting_value": "11开关"
         },
         {
           "name": "action",
@@ -1354,47 +1506,61 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检1杠1KP3111开关保护保险通道2从这边取的提位置嗯，正确。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>检1杠1KP3111开关保护保险通道2从这边取的提位置嗯，正确。",
-      "infer_seconds": 0.071,
+      "asr_text": "一杠一KFP三幺幺幺开关保护保险通道二图片把车车提回去嗯正确",
+      "asr_raw": "一杠一KFP三幺幺幺开关保护保险通道二图片把车车提回去嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0566,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.39)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.12)，判为无关语音",
       "matched_seq": null,
-      "score": 0.3929,
+      "score": 0.125,
       "verdict": "FAIL",
       "sentence_similarity": 0.5,
       "reasons": [
-        "residual: 票面「11klp保护光纤通道2确在停用」但复述为「检1杠1kp保护保险通道2从这边取提嗯」",
+        "residual: 票面「保护光纤通道2确在停用」但复述为「11kfp保护保险通道2图片车车提回去嗯」",
+        "device: 票面「11klp3」但复述为「3111开关」",
+        "device: 票面「111开关」但复述为「3111开关」",
         "action: 缺失「投入」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护光纤通道2确在停用」但复述为「检1杠1kp保护保险通道2从这边取提嗯」"
+        "residual: 票面「保护光纤通道2确在停用」但复述为「11kfp保护保险通道2图片车车提回去嗯」",
+        "device: 票面「11klp3」但复述为「3111开关」",
+        "device: 票面「111开关」但复述为「3111开关」"
       ],
       "slots": [
         {
           "name": "check_type",
           "expected": "检查",
           "outcome": "MISSING",
-          "score": 0.5,
+          "score": 0.0,
           "required": false,
           "conflicting_value": null
         },
         {
           "name": "residual",
-          "expected": "11klp保护光纤通道2确在停用",
+          "expected": "保护光纤通道2确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "检1杠1kp保护保险通道2从这边取提嗯"
+          "conflicting_value": "11kfp保护保险通道2图片车车提回去嗯"
         },
         {
           "name": "device",
-          "expected": "3111开关",
-          "outcome": "HIT",
-          "score": 1.0,
+          "expected": "11klp3",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "3111开关"
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "3111开关"
         },
         {
           "name": "action",
@@ -1425,17 +1591,30 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1KLP4111开关距离保护投入压板取得停停位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLP4111开关距离保护投入压板取得停停位置。",
-      "infer_seconds": 0.0738,
+      "asr_text": "检查一杠一KLP四幺幺幺开关距离保护头入压板区的停线位置",
+      "asr_raw": "检查一杠一KLP四幺幺幺开关距离保护头入压板区的停线位置",
+      "adhered_text": "检查11klp4111开关距离保护投入压板区的停线位置",
+      "rewrites": [
+        {
+          "heard": "11klp4111开关距离保护头入压板",
+          "term": "11klp4111开关距离保护投入压板",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.0588,
       "event": "VERIFIED",
       "message": "一致",
       "matched_seq": 7,
-      "score": 0.9475,
+      "score": 0.8889,
       "verdict": "PASS",
       "sentence_similarity": 0.8889,
-      "reasons": [],
-      "conflicts": [],
+      "reasons": [
+        "residual: 票面「距离保护确在停用」但复述为「距离保护区停线」"
+      ],
+      "conflicts": [
+        "residual: 票面「距离保护确在停用」但复述为「距离保护区停线」"
+      ],
       "slots": [
         {
           "name": "check_type",
@@ -1447,15 +1626,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp距离保护确在停用",
-          "outcome": "HIT",
-          "score": 0.7692,
+          "expected": "距离保护确在停用",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": false,
+          "conflicting_value": "距离保护区停线"
+        },
+        {
+          "name": "device",
+          "expected": "11klp4",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
           "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "4111开关",
+          "expected": "111开关",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
@@ -1490,24 +1677,28 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "检查1杠1KP411开关距离保护图入下边车车停位置嗯，正确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1杠1KP411开关距离保护图入下边车车停位置嗯，正确。",
-      "infer_seconds": 0.074,
+      "asr_text": "检查一杠一k幺p四幺幺开关距离保护头儿下边取在停机位置嗯正确",
+      "asr_raw": "检查一杠一k幺p四幺幺开关距离保护头儿下边取在停机位置嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0563,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.33)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.31)，判为无关语音",
       "matched_seq": null,
-      "score": 0.3304,
+      "score": 0.3096,
       "verdict": "FAIL",
-      "sentence_similarity": 0.5714,
+      "sentence_similarity": 0.6552,
       "reasons": [
-        "residual: 票面「11klp距离保护确在停用」但复述为「1杠1kp距离保护图入下边车车停嗯」",
-        "device: 票面「4111开关」但复述为「411开关」",
+        "residual: 票面「距离保护确在停用」但复述为「11k1p距离保护头儿下边取在停机嗯」",
+        "device: 票面「11klp4」但复述为「411开关」",
+        "device: 票面「111开关」但复述为「411开关」",
         "action: 缺失「投入」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp距离保护确在停用」但复述为「1杠1kp距离保护图入下边车车停嗯」",
-        "device: 票面「4111开关」但复述为「411开关」"
+        "residual: 票面「距离保护确在停用」但复述为「11k1p距离保护头儿下边取在停机嗯」",
+        "device: 票面「11klp4」但复述为「411开关」",
+        "device: 票面「111开关」但复述为「411开关」"
       ],
       "slots": [
         {
@@ -1520,15 +1711,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp距离保护确在停用",
+          "expected": "距离保护确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "1杠1kp距离保护图入下边车车停嗯"
+          "conflicting_value": "11k1p距离保护头儿下边取在停机嗯"
         },
         {
           "name": "device",
-          "expected": "4111开关",
+          "expected": "11klp4",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "411开关"
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
@@ -1563,17 +1762,30 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "检查1-1KLP5111开关临续保护投入压板车停有位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLP5111开关临续保护投入压板车停有位置。",
-      "infer_seconds": 0.088,
+      "asr_text": "检查一杠一KLP五幺幺幺开关连续保护头入压板车停用位置",
+      "asr_raw": "检查一杠一KLP五幺幺幺开关连续保护头入压板车停用位置",
+      "adhered_text": "检查11klp5111开关连续保护投入压板车停用位置",
+      "rewrites": [
+        {
+          "heard": "头入",
+          "term": "投入",
+          "category": "position",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.056,
       "event": "VERIFIED",
       "message": "一致",
       "matched_seq": 8,
-      "score": 0.9475,
+      "score": 0.8889,
       "verdict": "PASS",
       "sentence_similarity": 0.8889,
-      "reasons": [],
-      "conflicts": [],
+      "reasons": [
+        "residual: 票面「0序保护确在停用」但复述为「连续保护车停用」"
+      ],
+      "conflicts": [
+        "residual: 票面「0序保护确在停用」但复述为「连续保护车停用」"
+      ],
       "slots": [
         {
           "name": "check_type",
@@ -1585,15 +1797,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp0序保护确在停用",
-          "outcome": "HIT",
-          "score": 0.7692,
+          "expected": "0序保护确在停用",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": false,
+          "conflicting_value": "连续保护车停用"
+        },
+        {
+          "name": "device",
+          "expected": "11klp5",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
           "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "5111开关",
+          "expected": "111开关",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
@@ -1628,23 +1848,28 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查一杠与KOP511开关领续保护图压板取得停留位置嗯，正确。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>检查一杠与KOP511开关领续保护图压板取得停留位置嗯，正确。",
-      "infer_seconds": 0.069,
-      "event": "FAILED",
-      "message": "已完成条目出现矛盾复述：residual: 票面「11klp0序保护确在停用」但复述为「1杠kop领续保护图取得停留嗯」；device: 票面「5111开关」但复述为「511开关」；action: 缺失「投入」",
-      "matched_seq": 8,
-      "score": 0.4948,
+      "asr_text": "检查一杠于k幺p五幺幺开关零续保护图下板取得停留位置嗯正确",
+      "asr_raw": "检查一杠于k幺p五幺幺开关零续保护图下板取得停留位置嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0582,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.35)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.3463,
       "verdict": "FAIL",
-      "sentence_similarity": 0.5862,
+      "sentence_similarity": 0.5517,
       "reasons": [
-        "residual: 票面「11klp0序保护确在停用」但复述为「1杠kop领续保护图取得停留嗯」",
-        "device: 票面「5111开关」但复述为「511开关」",
-        "action: 缺失「投入」"
+        "residual: 票面「0序保护确在停用」但复述为「1杠于k1p0续保护图下板取得停留嗯」",
+        "device: 票面「11klp5」但复述为「511开关」",
+        "device: 票面「111开关」但复述为「511开关」",
+        "action: 缺失「投入」",
+        "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp0序保护确在停用」但复述为「1杠kop领续保护图取得停留嗯」",
-        "device: 票面「5111开关」但复述为「511开关」"
+        "residual: 票面「0序保护确在停用」但复述为「1杠于k1p0续保护图下板取得停留嗯」",
+        "device: 票面「11klp5」但复述为「511开关」",
+        "device: 票面「111开关」但复述为「511开关」"
       ],
       "slots": [
         {
@@ -1657,15 +1882,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp0序保护确在停用",
+          "expected": "0序保护确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "1杠kop领续保护图取得停留嗯"
+          "conflicting_value": "1杠于k1p0续保护图下板取得停留嗯"
         },
         {
           "name": "device",
-          "expected": "5111开关",
+          "expected": "11klp5",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "511开关"
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
@@ -1682,8 +1915,8 @@
         {
           "name": "handle",
           "expected": "压板",
-          "outcome": "HIT",
-          "score": 1.0,
+          "outcome": "MISSING",
+          "score": 0.5,
           "required": true,
           "conflicting_value": null
         }
@@ -1700,22 +1933,24 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1KLP6121开关停用出货闸投入压板，却在投入位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLP6121开关停用出货闸投入压板，却在投入位置。",
-      "infer_seconds": 0.0839,
+      "asr_text": "检查一杠一KLP六幺二幺开关停用出货闸投入压板确在投入位置",
+      "asr_raw": "检查一杠一KLP六幺二幺开关停用出货闸投入压板确在投入位置",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0532,
       "event": "FAILED",
-      "message": "复述与票面不符：device: 票面「6111开关」但复述为「6121开关」；position: 票面「合闸」但复述为「投入」",
+      "message": "复述与票面不符：residual: 票面「停用重合闸确在」但复述为「停用出货闸确在」；device: 票面「111开关」但复述为「121开关」",
       "matched_seq": 9,
-      "score": 0.7166,
+      "score": 0.7482,
       "verdict": "FAIL",
       "sentence_similarity": 0.8929,
       "reasons": [
-        "device: 票面「6111开关」但复述为「6121开关」",
-        "position: 票面「合闸」但复述为「投入」"
+        "residual: 票面「停用重合闸确在」但复述为「停用出货闸确在」",
+        "device: 票面「111开关」但复述为「121开关」"
       ],
       "conflicts": [
-        "device: 票面「6111开关」但复述为「6121开关」",
-        "position: 票面「合闸」但复述为「投入」"
+        "residual: 票面「停用重合闸确在」但复述为「停用出货闸确在」",
+        "device: 票面「111开关」但复述为「121开关」"
       ],
       "slots": [
         {
@@ -1728,27 +1963,27 @@
         },
         {
           "name": "residual",
-          "expected": "11klp停用重确在",
-          "outcome": "HIT",
-          "score": 0.75,
+          "expected": "停用重合闸确在",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": false,
+          "conflicting_value": "停用出货闸确在"
+        },
+        {
+          "name": "device",
+          "expected": "11klp6",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
           "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "6111开关",
+          "expected": "111开关",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "6121开关"
-        },
-        {
-          "name": "position",
-          "expected": "合闸",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "投入"
+          "conflicting_value": "121开关"
         },
         {
           "name": "action",
@@ -1767,11 +2002,11 @@
           "conflicting_value": null
         },
         {
-          "name": "action",
+          "name": "position",
           "expected": "投入",
           "outcome": "HIT",
           "score": 1.0,
-          "required": true,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1787,23 +2022,28 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-11-1K1P6111开关停用冲物闸图下边是。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>检查1-11-1K1P6111开关停用冲物闸图下边是。",
-      "infer_seconds": 0.0715,
+      "asr_text": "检查一杠幺一杠一k幺p六幺幺幺开关停用充风插头下边取的",
+      "asr_raw": "检查一杠幺一杠一k幺p六幺幺幺开关停用充风插头下边取的",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0539,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.40)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.29)，判为无关语音",
       "matched_seq": null,
-      "score": 0.4013,
+      "score": 0.2938,
       "verdict": "FAIL",
       "sentence_similarity": 0.5,
       "reasons": [
-        "residual: 票面「11klp停用重确在」但复述为「1111k1p停用冲物闸图下边是」",
+        "residual: 票面「停用重合闸确在」但复述为「k1p停用充风插头下边取」",
+        "device: 票面「11klp6」但复述为「1111」",
+        "device: 票面「111开关」但复述为「6111开关」",
         "action: 缺失「投入」",
-        "handle: 缺失「压板」",
-        "action: 缺失「投入」"
+        "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp停用重确在」但复述为「1111k1p停用冲物闸图下边是」"
+        "residual: 票面「停用重合闸确在」但复述为「k1p停用充风插头下边取」",
+        "device: 票面「11klp6」但复述为「1111」",
+        "device: 票面「111开关」但复述为「6111开关」"
       ],
       "slots": [
         {
@@ -1816,33 +2056,33 @@
         },
         {
           "name": "residual",
-          "expected": "11klp停用重确在",
+          "expected": "停用重合闸确在",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "1111k1p停用冲物闸图下边是"
+          "conflicting_value": "k1p停用充风插头下边取"
         },
         {
           "name": "device",
-          "expected": "6111开关",
-          "outcome": "HIT",
-          "score": 1.0,
+          "expected": "11klp6",
+          "outcome": "CONFLICT",
+          "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "1111"
         },
         {
-          "name": "position",
-          "expected": "合闸",
-          "outcome": "MISSING",
-          "score": 0.5,
-          "required": false,
-          "conflicting_value": null
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "6111开关"
         },
         {
           "name": "action",
           "expected": "投入",
           "outcome": "MISSING",
-          "score": 0.0,
+          "score": 0.5,
           "required": true,
           "conflicting_value": null
         },
@@ -1855,11 +2095,11 @@
           "conflicting_value": null
         },
         {
-          "name": "action",
+          "name": "position",
           "expected": "投入",
           "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
+          "score": 0.5,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1875,22 +2115,33 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "位置哎，对，正确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>位置哎，对，正确。",
-      "infer_seconds": 0.0799,
+      "asr_text": "透入一点哎对正确",
+      "asr_raw": "透入一点哎对正确",
+      "adhered_text": "投入1点哎对正确",
+      "rewrites": [
+        {
+          "heard": "透入",
+          "term": "投入",
+          "category": "position",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.0581,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.21)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0179,
-      "verdict": "FAIL",
+      "score": 0.2054,
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0714,
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「哎对」",
-        "device: 缺失「8111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「停用重合闸确在」但复述为「1点哎对」",
+        "device: 缺失「11klp6」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「哎对」"
+        "residual: 票面「停用重合闸确在」但复述为「1点哎对」"
       ],
       "slots": [
         {
@@ -1903,17 +2154,33 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护装置置检修确在停用",
+          "expected": "停用重合闸确在",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "哎对"
+          "conflicting_value": "1点哎对"
         },
         {
           "name": "device",
-          "expected": "8111开关",
+          "expected": "11klp6",
           "outcome": "MISSING",
           "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "action",
+          "expected": "投入",
+          "outcome": "HIT",
+          "score": 1.0,
           "required": true,
           "conflicting_value": null
         },
@@ -1923,6 +2190,14 @@
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "投入",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1938,20 +2213,29 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1KLP7111开关，保护原方操作投入压板取在投入位置。检查1杠1KLP7111开关保护原方操作投入压板取在投入位置嗯，正确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLP7111开关，保护原方操作投入压板取在投入位置。检查1杠1KLP7111开关保护原方操作投入压板取在投入位置嗯，正确。",
-      "infer_seconds": 0.0889,
+      "asr_text": "检查一杠一KLP七幺幺幺开关保护原方操作投入压板取在投入位置检查一杠一KLP七幺幺幺开关保护原方操作投入压板取在投入位置嗯正确",
+      "asr_raw": "检查一杠一KLP七幺幺幺开关保护原方操作投入压板取在投入位置检查一杠一KLP七幺幺幺开关保护原方操作投入压板取在投入位置嗯正确",
+      "adhered_text": "检查11klp7111开关保护远方操作投入压板取在投入位置检查11klp7111开关保护原方操作投入压板取在投入位置嗯正确",
+      "rewrites": [
+        {
+          "heard": "11klp7111开关保护原方操作投入压板",
+          "term": "11klp7111开关保护远方操作投入压板",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.057,
       "event": "FLAGGED",
-      "message": "灰区，需人工复核：residual: 票面「11klp保护操作确在」但复述为「11klp保护原方操作取在1杠1klp保护原方操作取在嗯」",
+      "message": "灰区，需人工复核：residual: 票面「保护操作确在」但复述为「保护操作取在保护原方操作取在嗯」",
       "matched_seq": 10,
-      "score": 0.784,
+      "score": 0.7966,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.4516,
+      "sentence_similarity": 0.459,
       "reasons": [
-        "residual: 票面「11klp保护操作确在」但复述为「11klp保护原方操作取在1杠1klp保护原方操作取在嗯」"
+        "residual: 票面「保护操作确在」但复述为「保护操作取在保护原方操作取在嗯」"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护操作确在」但复述为「11klp保护原方操作取在1杠1klp保护原方操作取在嗯」"
+        "residual: 票面「保护操作确在」但复述为「保护操作取在保护原方操作取在嗯」"
       ],
       "slots": [
         {
@@ -1964,15 +2248,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护操作确在",
+          "expected": "保护操作确在",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "11klp保护原方操作取在1杠1klp保护原方操作取在嗯"
+          "conflicting_value": "保护操作取在保护原方操作取在嗯"
         },
         {
           "name": "device",
-          "expected": "7111开关",
+          "expected": "11klp7",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
@@ -2003,11 +2295,11 @@
           "conflicting_value": null
         },
         {
-          "name": "action",
+          "name": "position",
           "expected": "投入",
           "outcome": "HIT",
           "score": 1.0,
-          "required": true,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -2023,20 +2315,29 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "检查1-1KLP8111开关保护装置至检修压板取在停留卫置。检查1-1KLP8。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查1-1KLP8111开关保护装置至检修压板取在停留卫置。检查1-1KLP8。",
-      "infer_seconds": 0.0659,
-      "event": "FLAGGED",
-      "message": "灰区，需人工复核：residual: 票面「11klp保护装置置检修确在停用」但复述为「11klp保护装置检修取在停留卫置11klp8」",
+      "asr_text": "检查一杠一KLP八幺幺幺开关保护装置至检修压板取得停运位置检查一杠一KLP八",
+      "asr_raw": "检查一杠一KLP八幺幺幺开关保护装置至检修压板取得停运位置检查一杠一KLP八",
+      "adhered_text": "检查11klp8111开关保护装置置检修压板取得停运位置检查11klp8",
+      "rewrites": [
+        {
+          "heard": "11klp8111开关保护装置至检修压板",
+          "term": "11klp8111开关保护装置置检修压板",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.0553,
+      "event": "VERIFIED",
+      "message": "一致",
       "matched_seq": 11,
-      "score": 0.7942,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.7222,
+      "score": 0.8236,
+      "verdict": "PASS",
+      "sentence_similarity": 0.6944,
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「11klp保护装置检修取在停留卫置11klp8」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「保护装置置检修取得停运」"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「11klp保护装置检修取在停留卫置11klp8」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「保护装置置检修取得停运」"
       ],
       "slots": [
         {
@@ -2049,15 +2350,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护装置置检修确在停用",
+          "expected": "保护装置置检修确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "11klp保护装置检修取在停留卫置11klp8"
+          "conflicting_value": "保护装置置检修取得停运"
         },
         {
           "name": "device",
-          "expected": "8111开关",
+          "expected": "11klp8",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
@@ -2084,23 +2393,27 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "111开关保护装置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>111开关保护装置。",
-      "infer_seconds": 0.0711,
+      "asr_text": "幺二幺开关保护装置",
+      "asr_raw": "幺二幺开关保护装置",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0595,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.08)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.07)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0804,
+      "score": 0.0714,
       "verdict": "FAIL",
-      "sentence_similarity": 0.3214,
+      "sentence_similarity": 0.2857,
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「保护装置」",
-        "device: 票面「8111开关」但复述为「111开关」",
+        "residual: 票面「保护装置置检修确在停用」但复述为「保护装置」",
+        "device: 票面「11klp8」但复述为「121开关」",
+        "device: 票面「111开关」但复述为「121开关」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「保护装置」",
-        "device: 票面「8111开关」但复述为「111开关」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「保护装置」",
+        "device: 票面「11klp8」但复述为「121开关」",
+        "device: 票面「111开关」但复述为「121开关」"
       ],
       "slots": [
         {
@@ -2113,7 +2426,7 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护装置置检修确在停用",
+          "expected": "保护装置置检修确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -2121,11 +2434,19 @@
         },
         {
           "name": "device",
-          "expected": "8111开关",
+          "expected": "11klp8",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "111开关"
+          "conflicting_value": "121开关"
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "121开关"
         },
         {
           "name": "handle",
@@ -2148,22 +2469,26 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "这是兼修夜班确实挺有劲儿，嗯，正确。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>这是兼修夜班确实挺有劲儿，嗯，正确。",
-      "infer_seconds": 0.0614,
+      "asr_text": "这是检修夜班学的挺有劲嗯正确",
+      "asr_raw": "这是检修夜班学的挺有劲嗯正确",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0618,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.19)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.14)，判为无关语音",
       "matched_seq": null,
-      "score": 0.1883,
-      "verdict": "FAIL",
+      "score": 0.1429,
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0714,
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「这是兼修夜班确实挺有劲儿嗯」",
-        "device: 缺失「8111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「这是检修夜班学挺有劲嗯」",
+        "device: 缺失「11klp8」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「这是兼修夜班确实挺有劲儿嗯」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「这是检修夜班学挺有劲嗯」"
       ],
       "slots": [
         {
@@ -2176,15 +2501,23 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护装置置检修确在停用",
+          "expected": "保护装置置检修确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "这是兼修夜班确实挺有劲儿嗯"
+          "conflicting_value": "这是检修夜班学挺有劲嗯"
         },
         {
           "name": "device",
-          "expected": "8111开关",
+          "expected": "11klp8",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -2211,22 +2544,26 @@
       "role_label": "唱票人",
       "role_confidence": 0.9047,
       "role_source": "energy",
-      "asr_text": "好，操作结束。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>好，操作结束。",
-      "infer_seconds": 0.0578,
+      "asr_text": "好操作结束",
+      "asr_raw": "好操作结束",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0551,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
       "score": 0.0,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「好操作结束」",
-        "device: 缺失「8111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「好操作结束」",
+        "device: 缺失「11klp8」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「好操作结束」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「好操作结束」"
       ],
       "slots": [
         {
@@ -2239,7 +2576,7 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护装置置检修确在停用",
+          "expected": "保护装置置检修确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -2247,7 +2584,15 @@
         },
         {
           "name": "device",
-          "expected": "8111开关",
+          "expected": "11klp8",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -2274,22 +2619,26 @@
       "role_label": "唱票人",
       "role_confidence": 0.6214,
       "role_source": "energy",
-      "asr_text": "嗯。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>嗯。",
-      "infer_seconds": 0.061,
+      "asr_text": "嗯",
+      "asr_raw": "嗯",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0547,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.01)，判为无关语音",
       "matched_seq": null,
       "score": 0.0089,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.0357,
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「嗯」",
-        "device: 缺失「8111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「嗯」",
+        "device: 缺失「11klp8」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「嗯」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「嗯」"
       ],
       "slots": [
         {
@@ -2302,7 +2651,7 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护装置置检修确在停用",
+          "expected": "保护装置置检修确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -2310,7 +2659,15 @@
         },
         {
           "name": "device",
-          "expected": "8111开关",
+          "expected": "11klp8",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -2337,22 +2694,26 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "嗯，你把钥匙汇上一下。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>嗯，你把钥匙汇上一下。",
-      "infer_seconds": 0.054,
+      "asr_text": "嗯你把钥匙汇上一下",
+      "asr_raw": "嗯你把钥匙汇上一下",
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.0566,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.03)，判为无关语音",
       "matched_seq": null,
       "score": 0.0268,
-      "verdict": "FAIL",
+      "verdict": "REVIEW",
       "sentence_similarity": 0.1071,
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「嗯你钥匙汇上1下」",
-        "device: 缺失「8111开关」",
-        "handle: 缺失「压板」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「嗯你钥匙汇上1下」",
+        "device: 缺失「11klp8」",
+        "device: 缺失「111开关」",
+        "handle: 缺失「压板」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「嗯你钥匙汇上1下」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「嗯你钥匙汇上1下」"
       ],
       "slots": [
         {
@@ -2365,7 +2726,7 @@
         },
         {
           "name": "residual",
-          "expected": "11klp保护装置置检修确在停用",
+          "expected": "保护装置置检修确在停用",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
@@ -2373,7 +2734,15 @@
         },
         {
           "name": "device",
-          "expected": "8111开关",
+          "expected": "11klp8",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "111开关",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -2397,8 +2766,8 @@
       "state": "FAILED",
       "called": false,
       "attempts": 1,
-      "score": 0.7462,
-      "heard": "检查120kv单独线线路及111开关相关保护压板确在111保护测控及120kv电压并率频内",
+      "score": 0.8029,
+      "heard": "检查120kv单独线线路及111开关相关保护压板却在111保护测控及120kv电压并列瓶内",
       "reasons": [
         "voltage: 票面「110kv」但复述为「120kv」",
         "voltage: 票面「110kv」但复述为「120kv」"
@@ -2413,16 +2782,17 @@
       "text": "检查1-1CLP1 111开关保护跳闸出口压板确在停用位置",
       "state": "FAILED",
       "called": false,
-      "attempts": 2,
-      "score": 0.5406,
-      "heard": "检查eeclpe111开关保护调闸出口压板停在停停位置",
+      "attempts": 1,
+      "score": 0.534,
+      "heard": "检查1杠eclpe111开关保护跳闸出口200贴在停运位置",
       "reasons": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「eeclpe保护调闸出口停在停停」",
-        "device: 票面「1111开关」但复述为「111开关」"
+        "residual: 票面「保护出口确在停用」但复述为「1杠eclpe保护出口200贴在停运」",
+        "device: 票面「11clp1」但复述为「111开关」",
+        "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11clp保护出口确在停用」但复述为「eeclpe保护调闸出口停在停停」",
-        "device: 票面「1111开关」但复述为「111开关」"
+        "residual: 票面「保护出口确在停用」但复述为「1杠eclpe保护出口200贴在停运」",
+        "device: 票面「11clp1」但复述为「111开关」"
       ]
     },
     {
@@ -2431,29 +2801,30 @@
       "state": "FLAGGED",
       "called": true,
       "attempts": 1,
-      "score": 0.75,
-      "heard": "检查eeclp2111开关重合闸出口压边取在停定位置",
+      "score": 0.7019,
+      "heard": "检查11clp2111开关重合闸出口下边确的天线位置",
       "reasons": [
-        "residual: 票面「11clp重出口确在停用」但复述为「eeclp重出口压边取在停定」",
+        "residual: 票面「重合闸出口确在停用」但复述为「重合闸出口下边确天线」",
         "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11clp重出口确在停用」但复述为「eeclp重出口压边取在停定」"
+        "residual: 票面「重合闸出口确在停用」但复述为「重合闸出口下边确天线」"
       ]
     },
     {
       "seq": 4,
       "text": "检查1-1KLP1 111开关差动保护投入压板确在停用位置",
-      "state": "VERIFIED",
+      "state": "FAILED",
       "called": true,
       "attempts": 2,
-      "score": 0.8214,
-      "heard": "检查11k1p1111开关插动保护投入压板皮t优置嗯准确",
+      "score": 0.7852,
+      "heard": "检查11klp1111开关插头保护投入压边区的停位值嗯正确",
       "reasons": [
-        "residual: 票面「11klp差动保护确在停用」但复述为「11k1p插动保护皮t优置嗯准确」"
+        "residual: 票面「差动保护确在停用」但复述为「插头保护压边区停位值嗯」",
+        "handle: 缺失「压板」"
       ],
       "conflicts": [
-        "residual: 票面「11klp差动保护确在停用」但复述为「11k1p插动保护皮t优置嗯准确」"
+        "residual: 票面「差动保护确在停用」但复述为「插头保护压边区停位值嗯」"
       ]
     },
     {
@@ -2462,10 +2833,14 @@
       "state": "VERIFIED",
       "called": false,
       "attempts": 1,
-      "score": 0.9549,
-      "heard": "检查11klp2111开关保护光线通道已投入压板现在通讯位置",
-      "reasons": [],
-      "conflicts": []
+      "score": 0.8833,
+      "heard": "检查11klp2111开关保护光线通道已投入压板器的通讯位置",
+      "reasons": [
+        "residual: 票面「保护光纤通道1确在停用」但复述为「保护光线通道已器通讯」"
+      ],
+      "conflicts": [
+        "residual: 票面「保护光纤通道1确在停用」但复述为「保护光线通道已器通讯」"
+      ]
     },
     {
       "seq": 6,
@@ -2473,13 +2848,15 @@
       "state": "FAILED",
       "called": false,
       "attempts": 1,
-      "score": 0.7473,
-      "heard": "检查11klp311开关保护光纤通道2投入压板车在停行位置",
+      "score": 0.7083,
+      "heard": "检查11klp311开关保护光纤通道2投入压板车的通讯位置",
       "reasons": [
-        "device: 票面「3111开关」但复述为「311开关」"
+        "residual: 票面「保护光纤通道2确在停用」但复述为「保护光纤通道2车通讯」",
+        "device: 票面「111开关」但复述为「11开关」"
       ],
       "conflicts": [
-        "device: 票面「3111开关」但复述为「311开关」"
+        "residual: 票面「保护光纤通道2确在停用」但复述为「保护光纤通道2车通讯」",
+        "device: 票面「111开关」但复述为「11开关」"
       ]
     },
     {
@@ -2488,27 +2865,28 @@
       "state": "VERIFIED",
       "called": false,
       "attempts": 1,
-      "score": 0.9475,
-      "heard": "检查11klp4111开关距离保护投入压板取得停停位置",
-      "reasons": [],
-      "conflicts": []
+      "score": 0.8889,
+      "heard": "检查11klp4111开关距离保护投入压板区的停线位置",
+      "reasons": [
+        "residual: 票面「距离保护确在停用」但复述为「距离保护区停线」"
+      ],
+      "conflicts": [
+        "residual: 票面「距离保护确在停用」但复述为「距离保护区停线」"
+      ]
     },
     {
       "seq": 8,
       "text": "检查1-1KLP5 111开关零序保护投入压板确在停用位置",
-      "state": "FAILED",
+      "state": "VERIFIED",
       "called": false,
-      "attempts": 2,
-      "score": 0.4948,
-      "heard": "检查1杠与kop511开关领续保护图压板取得停留位置嗯正确",
+      "attempts": 1,
+      "score": 0.8889,
+      "heard": "检查11klp5111开关连续保护投入压板车停用位置",
       "reasons": [
-        "residual: 票面「11klp0序保护确在停用」但复述为「1杠kop领续保护图取得停留嗯」",
-        "device: 票面「5111开关」但复述为「511开关」",
-        "action: 缺失「投入」"
+        "residual: 票面「0序保护确在停用」但复述为「连续保护车停用」"
       ],
       "conflicts": [
-        "residual: 票面「11klp0序保护确在停用」但复述为「1杠kop领续保护图取得停留嗯」",
-        "device: 票面「5111开关」但复述为「511开关」"
+        "residual: 票面「0序保护确在停用」但复述为「连续保护车停用」"
       ]
     },
     {
@@ -2517,15 +2895,15 @@
       "state": "FAILED",
       "called": false,
       "attempts": 1,
-      "score": 0.7166,
-      "heard": "检查11klp6121开关停用出货闸投入压板却在投入位置",
+      "score": 0.7482,
+      "heard": "检查11klp6121开关停用出货闸投入压板确在投入位置",
       "reasons": [
-        "device: 票面「6111开关」但复述为「6121开关」",
-        "position: 票面「合闸」但复述为「投入」"
+        "residual: 票面「停用重合闸确在」但复述为「停用出货闸确在」",
+        "device: 票面「111开关」但复述为「121开关」"
       ],
       "conflicts": [
-        "device: 票面「6111开关」但复述为「6121开关」",
-        "position: 票面「合闸」但复述为「投入」"
+        "residual: 票面「停用重合闸确在」但复述为「停用出货闸确在」",
+        "device: 票面「111开关」但复述为「121开关」"
       ]
     },
     {
@@ -2534,28 +2912,28 @@
       "state": "FLAGGED",
       "called": true,
       "attempts": 1,
-      "score": 0.784,
-      "heard": "检查11klp7111开关保护原方操作投入压板取在投入位置检查1杠1klp7111开关保护原方操作投入压板取在投入位置嗯正确",
+      "score": 0.7966,
+      "heard": "检查11klp7111开关保护远方操作投入压板取在投入位置检查11klp7111开关保护原方操作投入压板取在投入位置嗯正确",
       "reasons": [
-        "residual: 票面「11klp保护操作确在」但复述为「11klp保护原方操作取在1杠1klp保护原方操作取在嗯」"
+        "residual: 票面「保护操作确在」但复述为「保护操作取在保护原方操作取在嗯」"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护操作确在」但复述为「11klp保护原方操作取在1杠1klp保护原方操作取在嗯」"
+        "residual: 票面「保护操作确在」但复述为「保护操作取在保护原方操作取在嗯」"
       ]
     },
     {
       "seq": 11,
       "text": "检查1-1KLP8 111开关保护装置置检修压板确在停用位置",
-      "state": "FLAGGED",
+      "state": "VERIFIED",
       "called": true,
       "attempts": 1,
-      "score": 0.7942,
-      "heard": "检查11klp8111开关保护装置至检修压板取在停留卫置检查11klp8",
+      "score": 0.8236,
+      "heard": "检查11klp8111开关保护装置置检修压板取得停运位置检查11klp8",
       "reasons": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「11klp保护装置检修取在停留卫置11klp8」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「保护装置置检修取得停运」"
       ],
       "conflicts": [
-        "residual: 票面「11klp保护装置置检修确在停用」但复述为「11klp保护装置检修取在停留卫置11klp8」"
+        "residual: 票面「保护装置置检修确在停用」但复述为「保护装置置检修取得停运」"
       ]
     }
   ],
@@ -2564,61 +2942,49 @@
       "kind": "FAILED",
       "seq": 1,
       "message": "复述与票面不符：voltage: 票面「110kv」但复述为「120kv」；voltage: 票面「110kv」但复述为「120kv」",
-      "heard": "检查120千伏单独线线路及111开关，相关保护压板确在111保护测控及120千伏电压并率频内。"
+      "heard": "检查120kv单独线线路及111开关相关保护压板却在111保护测控及120kv电压并列瓶内"
     },
     {
       "kind": "FAILED",
       "seq": 2,
-      "message": "复述与票面不符：residual: 票面「11clp保护出口确在停用」但复述为「eeclpe保护调闸出口停在停停」；device: 票面「1111开关」但复述为「111开关」",
-      "heard": "检查E-ECLPE111开关，保护调闸出口压板停在停停位置。"
-    },
-    {
-      "kind": "FAILED",
-      "seq": 2,
-      "message": "复述与票面不符：residual: 票面「11clp保护出口确在停用」但复述为「11cp1111看完保护前查是故下板确实挺幼稚嗯」；device: 缺失「1111开关」；handle: 缺失「压板」",
-      "heard": "检查1-1CP1111看完保护前查是故下板，确实挺幼稚，嗯，正确。"
+      "message": "复述与票面不符：residual: 票面「保护出口确在停用」但复述为「1杠eclpe保护出口200贴在停运」；device: 票面「11clp1」但复述为「111开关」；handle: 缺失「压板」",
+      "heard": "检查1杠eclpe111开关保护跳闸出口200贴在停运位置"
     },
     {
       "kind": "FLAGGED",
       "seq": 3,
-      "message": "灰区，需人工复核：residual: 票面「11clp重出口确在停用」但复述为「eeclp重出口压边取在停定」；handle: 缺失「压板」",
-      "heard": "检查E-ECLP2111开关重合闸出口压边取在停定位置。"
+      "message": "灰区，需人工复核：residual: 票面「重合闸出口确在停用」但复述为「重合闸出口下边确天线」；handle: 缺失「压板」",
+      "heard": "检查11clp2111开关重合闸出口下边确的天线位置"
     },
     {
       "kind": "FAILED",
       "seq": 4,
-      "message": "复述与票面不符：device: 票面「1111开关」但复述为「111开关」",
-      "heard": "检查1-1KLPE111开关插动保护投入压板现在停运位置。"
+      "message": "复述与票面不符：residual: 票面「差动保护确在停用」但复述为「11klpe插动保护夹板车停运」；device: 票面「11klp1」但复述为「111开关」；handle: 缺失「压板」",
+      "heard": "检查11klpe111开关插动保护投入夹板车的停运位置"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 4,
+      "message": "疑似说错条目的后续复述仍未通过：residual: 票面「差动保护确在停用」但复述为「插头保护压边区停位值嗯」；handle: 缺失「压板」",
+      "heard": "检查11klp1111开关插头保护投入压边区的停位值嗯正确"
     },
     {
       "kind": "FAILED",
       "seq": 6,
-      "message": "复述与票面不符：device: 票面「3111开关」但复述为「311开关」",
-      "heard": "检查1-1KLP311开关，保护光纤通道2投入压板车在停行位置。"
-    },
-    {
-      "kind": "FAILED",
-      "seq": 8,
-      "message": "已完成条目出现矛盾复述：residual: 票面「11klp0序保护确在停用」但复述为「1杠kop领续保护图取得停留嗯」；device: 票面「5111开关」但复述为「511开关」；action: 缺失「投入」",
-      "heard": "检查一杠与KOP511开关领续保护图压板取得停留位置嗯，正确。"
+      "message": "复述与票面不符：residual: 票面「保护光纤通道2确在停用」但复述为「保护光纤通道2车通讯」；device: 票面「111开关」但复述为「11开关」",
+      "heard": "检查11klp311开关保护光纤通道2投入压板车的通讯位置"
     },
     {
       "kind": "FAILED",
       "seq": 9,
-      "message": "复述与票面不符：device: 票面「6111开关」但复述为「6121开关」；position: 票面「合闸」但复述为「投入」",
-      "heard": "检查1-1KLP6121开关停用出货闸投入压板，却在投入位置。"
+      "message": "复述与票面不符：residual: 票面「停用重合闸确在」但复述为「停用出货闸确在」；device: 票面「111开关」但复述为「121开关」",
+      "heard": "检查11klp6121开关停用出货闸投入压板确在投入位置"
     },
     {
       "kind": "FLAGGED",
       "seq": 10,
-      "message": "灰区，需人工复核：residual: 票面「11klp保护操作确在」但复述为「11klp保护原方操作取在1杠1klp保护原方操作取在嗯」",
-      "heard": "检查1-1KLP7111开关，保护原方操作投入压板取在投入位置。检查1杠1KLP7111开关保护原方操作投入压板取在投入位置嗯，正确。"
-    },
-    {
-      "kind": "FLAGGED",
-      "seq": 11,
-      "message": "灰区，需人工复核：residual: 票面「11klp保护装置置检修确在停用」但复述为「11klp保护装置检修取在停留卫置11klp8」",
-      "heard": "检查1-1KLP8111开关保护装置至检修压板取在停留卫置。检查1-1KLP8。"
+      "message": "灰区，需人工复核：residual: 票面「保护操作确在」但复述为「保护操作取在保护原方操作取在嗯」",
+      "heard": "检查11klp7111开关保护远方操作投入压板取在投入位置检查11klp7111开关保护原方操作投入压板取在投入位置嗯正确"
     }
   ]
 }

@@ -64,6 +64,16 @@ _ROMAN_MAP = {
 _ROMAN_ASCII = re.compile(r"([IVX]{1,4})(?=[段母号回组])")
 _ROMAN_ASCII_VALUES = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii": 7, "viii": 8, "ix": 9, "x": 10}
 
+# 设备编号里的隔断。票面写 "1-1KLP2"，连字符由 _PUNCT 丢掉；但 ASR 常常
+# 把这个位置念成一个字 —— Paraformer 稳定吐 "一杠一KLP2"。只丢连字符不管
+# "杠"，同一个编号就会分成 "11klp2" 和 "1杠1klp2" 两个串，设备槽位判缺失，
+# 一条本来能通过的复述直接掉到灰区（丹东 ticket11 seq5 就是这么从 0.892
+# 掉到 0.543 的）。两侧必须都是数字才丢，避免误伤"杠杆"这类正常词。
+_DIGIT_CHARS = "".join(re.escape(ch) for ch in CN_DIGITS)
+_LINK_CHAR = re.compile(
+    rf"(?<=[{_DIGIT_CHARS}])[杠刚岗缸钢](?=[{_DIGIT_CHARS}])"
+)
+
 # 需要剔除的标点与空白。引号必须去掉：票面写 由“远方”切至“就地”，
 # ASR 不会输出引号。
 _PUNCT = re.compile(
@@ -153,6 +163,9 @@ def normalize(text: str) -> str:
     for pattern, repl in _UNIT_RULES:
         text = pattern.sub(repl, text)
     text = _convert_roman(text)
+    # 必须在中文数字转换之前：那一步是按连续数字段切run的，"杠"把它断成两半，
+    # 转完再接就晚了（"一杠一" 会变成 "1杠1" 而不是 "11"）。
+    text = _LINK_CHAR.sub("", text)
     text = _convert_cn_numbers(text)
     text = _PUNCT.sub("", text)
     return text.lower()

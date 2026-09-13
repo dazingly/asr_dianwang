@@ -1,4 +1,4 @@
-# 由 scripts/build_station_lexicon.py 从丹东站操作票自动生成。
+# 由 scripts/build_station_lexicon.py 从110kV丹东变电站操作票自动生成。
 # 一行一个设备、间隔、压板或把手全称；请勿手工维护。
 110kV丹东线111、#1PT间隔汇控柜PT二次绕组保护空气开关
 31KLP3 110kV备投闭锁内桥备投方式投入压板

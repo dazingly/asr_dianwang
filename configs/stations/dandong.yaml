@@ -1,6 +1,6 @@
 schema_version: 1
 station: 110kV丹东变电站
-source: data/dandong/tickets/ticket*.json
+source: data/dandong/tickets/*.json
 ticket_count: 13
 entry_count: 99
 categories:

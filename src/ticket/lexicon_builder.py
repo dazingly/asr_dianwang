@@ -9,6 +9,7 @@ from pathlib import Path
 
 import yaml
 
+from src.config import PROJECT_ROOT
 
 _ACTIONS = (
     "检查", "核对", "确认", "验明", "合上", "拉开", "投入", "停用",
@@ -46,11 +47,33 @@ _CODE_RE = re.compile(
     re.IGNORECASE,
 )
 _PLAIN_DEVICE_CODE_RE = re.compile(r"(?<!\d)(\d{3})(?=(?:开关|刀闸|间隔))")
+# 现场命名规律是“电压等级 + 线路名 + 编号”，例如 110kV丹东线111、35kV黄堽线312，
+# 这里只按规律匹配，不绑定任何具体站名。
 _BAY_PATTERNS = (
-    re.compile(r"(?:110kV)?#\d+母线(?:PT)?", re.IGNORECASE),
-    re.compile(r"(?:110kV)?丹东线(?:线路)?(?:111)?", re.IGNORECASE),
-    re.compile(r"(?:丹东线111|#\d+PT)间隔", re.IGNORECASE),
+    # 母线：#编号母线，可带电压等级前缀
+    re.compile(r"(?:\d+(?:\.\d+)?\s*[kK][vV])?#\d+母线(?:PT)?", re.IGNORECASE),
+    # 间隔：线路名 + 编号 + 间隔，或 #编号PT 间隔
+    re.compile(r"(?:[一-鿿]{1,4}线(?:路)?\d*|#\d+PT)间隔", re.IGNORECASE),
+    # 线路名。左侧会粘连动词和屏柜名（“检查黄堽线312开关”），
+    # 由 _clean_bay_term 剥离；接地线、短路线这类非线路名由 _is_bay_term 剔除。
+    re.compile(r"(?:\d+(?:\.\d+)?\s*[kK][vV])?[一-鿿]{1,4}线(?:路)?(?:\d{3})?"),
 )
+
+# 线路名左侧经常直接粘连的动词、屏柜名
+_BAY_LEFT_WORDS = (
+    "检查", "核对", "确认", "验明", "合上", "拉开", "投入", "停用", "将",
+    "汇控柜", "测控屏", "保护屏", "主控屏", "开关柜",
+)
+# 以及单字的连接词、方位词，和“控柜/控屏”这类被贪婪匹配切掉一半的屏柜名
+_BAY_LEFT_CHARS = "柜屏箱盘控内在和与及由至对从的"
+
+# 剥离左侧粘连后仍不是线路名的“线”字尾巴
+_BAY_STOP_TAILS = (
+    "接地线", "短路线", "进线", "出线", "二次线", "控制线",
+    "电缆线", "地线", "引线", "导线", "联络线", "线路侧",
+)
+# 线路名主体不允许以这些设备词开头
+_BAY_STOP_HEADS = ("刀闸", "开关", "接地", "短路", "电流", "电压", "压板", "把手")
 
 
 def build_station_lexicon(ticket_dir: str | Path) -> dict:
@@ -119,7 +142,7 @@ def build_station_lexicon(ticket_dir: str | Path) -> dict:
     return {
         "schema_version": 1,
         "station": station,
-        "source": "data/dandong/tickets/ticket*.json",
+        "source": f"{_display_path(root)}/*.json",
         "ticket_count": ticket_count,
         "entry_count": entry_count,
         "categories": categories,
@@ -161,8 +184,9 @@ def write_station_lexicon(
             lexicon, stream, allow_unicode=True, sort_keys=False, width=120
         )
 
+    station = lexicon.get("station") or "本站"
     header = (
-        "# 由 scripts/build_station_lexicon.py 从丹东站操作票自动生成。\n"
+        f"# 由 scripts/build_station_lexicon.py 从{station}操作票自动生成。\n"
         "# 一行一个设备、间隔、压板或把手全称；请勿手工维护。\n"
     )
     with open(asset_target, "w", encoding="utf-8", newline="\n") as stream:
@@ -186,7 +210,9 @@ def _extract_entry_terms(entry: str, source: str, add) -> None:
             add("handles", handle, source)
     for pattern in _BAY_PATTERNS:
         for match in pattern.finditer(entry):
-            add("lines_and_bays", match.group(0), source)
+            term = _clean_bay_term(match.group(0))
+            if _is_bay_term(term):
+                add("lines_and_bays", term, source)
     for match in _CODE_RE.finditer(entry):
         add("device_codes", match.group(1).upper(), source)
     for match in _PLAIN_DEVICE_CODE_RE.finditer(entry):
@@ -232,6 +258,38 @@ def _extract_asset_targets(entry: str) -> list[str]:
     return [target]
 
 
+def _clean_bay_term(term: str) -> str:
+    """剥掉线路/间隔名左侧粘连的动词、屏柜名和连接词。"""
+    changed = True
+    while changed and term:
+        changed = False
+        for word in _BAY_LEFT_WORDS:
+            if term.startswith(word) and len(term) > len(word):
+                term = term[len(word):]
+                changed = True
+                break
+        if not changed and len(term) > 1 and term[0] in _BAY_LEFT_CHARS:
+            term = term[1:]
+            changed = True
+    return term
+
+
+def _is_bay_term(term: str) -> bool:
+    """剔除“接地线”“短路线”这类不是线路名的“线”字词。"""
+    if len(term) < 3:
+        return False
+    if term.startswith("#"):
+        return True
+    if any(term.startswith(head) for head in _BAY_STOP_HEADS):
+        return False
+    core = re.sub(r"^\d+(?:\.\d+)?\s*[kK][vV]", "", term, flags=re.IGNORECASE)
+    # 线路名后面常跟三位间隔编号（黄堽线312），判断主体时要先去掉
+    core = re.sub(r"\d{3}[A-Za-z]?\d*$", "", core)
+    if any(core.endswith(tail) for tail in _BAY_STOP_TAILS):
+        return False
+    return core.endswith(("线", "线路", "间隔", "母线", "PT"))
+
+
 def _is_specific_asset(term: str) -> bool:
     generic = {
         "开关", "刀闸", "压板", "把手", "保护装置", "母线",
@@ -246,6 +304,14 @@ def _is_device_code(term: str) -> bool:
 
 def _clean_term(term: str) -> str:
     return re.sub(r"\s+", " ", term).strip(" ，,。；;、“”\"'")
+
+
+def _display_path(path: Path) -> str:
+    """能相对项目根就相对，否则退回绝对路径，用于写出来源说明。"""
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return path.resolve().as_posix()
 
 
 def _canonical_voltage(value: str) -> str:

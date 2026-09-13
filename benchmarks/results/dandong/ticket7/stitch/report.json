@@ -6,20 +6,25 @@
     "mission": "110kV丹东线111开关由冷备用转热备用",
     "ticket_id": "新2060070100020042609014",
     "asset_list": "D:\\pycode\\asr_dianwang\\configs\\stations\\dandong_assets.txt",
-    "asr": "SenseVoiceSmall @ cuda:0 (fp32), use_itn=True",
-    "segmenter": "fsmn-vad"
+    "asr": "Paraformer-Large @ cuda:0 (fp32)",
+    "segmenter": "fsmn-vad(静音300ms)",
+    "adhere": "阈值0.9，靶子136条"
   },
   "summary": {
     "audio_seconds": 261.419,
     "segment_count": 69,
-    "total_infer_seconds": 12.833,
-    "rtf": 0.0491,
+    "total_infer_seconds": 20.193,
+    "rtf": 0.0772,
+    "adhere_rewrites": 14,
+    "adhere_segments": 10,
     "state_counts": {
+      "UNCONFIRMED": 3,
+      "VERIFIED": 1,
       "FAILED": 4,
-      "FLAGGED": 2,
-      "UNCONFIRMED": 3
+      "FLAGGED": 1
     },
-    "alert_count": 7
+    "alert_count": 9,
+    "peak_gpu_mb": 921.1
   },
   "segments": [
     {
@@ -33,38 +38,64 @@
       "role_label": "操作人",
       "role_confidence": 0.9392,
       "role_source": "energy",
-      "asr_text": "操作人务120千伏单独线111开关有冷备用转热备用。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>操作人务120千伏单独线111开关有冷备用转热备用。",
-      "infer_seconds": 0.1989,
+      "asr_text": "操作任务一百二千伏丹东线幺幺幺开关有冷备用转热备用",
+      "asr_raw": "操作任务一百二千伏丹东线幺幺幺开关有冷备用转热备用",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2753,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.25)，判为无关语音",
       "matched_seq": null,
-      "score": 0.05,
-      "verdict": "FAIL",
-      "sentence_similarity": 0.2,
+      "score": 0.2543,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.16,
       "reasons": [
-        "action: 缺失「合上」",
-        "device: 票面「丹东线1111刀闸」但复述为「111开关」"
+        "object: 缺失「机械位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "device: 票面「丹东线1111刀闸」但复述为「111开关」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "action",
-          "expected": "合上",
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "丹东线111开关",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "device",
-          "expected": "丹东线1111刀闸",
-          "outcome": "CONFLICT",
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "111开关"
+          "conflicting_value": null
         }
       ]
     },
@@ -79,9 +110,12 @@
       "role_label": "操作人",
       "role_confidence": 0.831,
       "role_source": "energy",
-      "asr_text": "呃，120千伏一号母线PT有冷命软运行。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>呃，120千伏一号母线PT有冷命软运行。",
-      "infer_seconds": 0.1755,
+      "asr_text": "呃一百二十千伏一号母线PT有冷冰转运行",
+      "asr_raw": "呃一百二十千伏一号母线PT有冷冰转运行",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3038,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.03)，判为无关语音",
       "matched_seq": null,
@@ -125,9 +159,12 @@
       "role_label": "操作人",
       "role_confidence": 0.6426,
       "role_source": "energy",
-      "asr_text": "呃，模拟操作。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>呃，模拟操作。",
-      "infer_seconds": 0.1918,
+      "asr_text": "呃模拟操作",
+      "asr_raw": "呃模拟操作",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3004,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -135,14 +172,12 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「呃模拟操作」",
         "device: 缺失「汇控柜丹东线111开关」",
         "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「呃模拟操作」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -155,10 +190,10 @@
         {
           "name": "residual",
           "expected": "确在",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "呃模拟操作"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -181,7 +216,7 @@
           "expected": "分闸",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
         }
       ]
@@ -197,19 +232,32 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "河尚丹东县111杠1多闸。河尚丹东县111杠销多闸重接执行。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>河尚丹东县111杠1多闸。河尚丹东县111杠销多闸重接执行。",
-      "infer_seconds": 0.1875,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.41)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.4107,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.3571,
-      "reasons": [
-        "device: 缺失「丹东线1111刀闸」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
+      "asr_text": "河上丹东线幺幺幺杠幺道闸河昌丹东线幺幺幺杠幺多闸正确执行",
+      "asr_raw": "河上丹东线幺幺幺杠幺道闸河昌丹东线幺幺幺杠幺多闸正确执行",
+      "judged_text": null,
+      "adhered_text": "合上丹东线1111刀闸河昌丹东线1111多闸正确执行",
+      "rewrites": [
+        {
+          "heard": "河上",
+          "term": "合上",
+          "category": "action",
+          "score": 1.0
+        },
+        {
+          "heard": "丹东线1111道闸",
+          "term": "丹东线1111刀闸",
+          "category": "device",
+          "score": 1.0
+        }
       ],
+      "infer_seconds": 0.298,
+      "event": "SKIP_WARNING",
+      "message": "疑似跳项：第 1, 2 条没有复述记录",
+      "matched_seq": 3,
+      "score": 0.8558,
+      "verdict": "PASS",
+      "sentence_similarity": 0.4231,
+      "reasons": [],
       "conflicts": [],
       "slots": [
         {
@@ -223,8 +271,8 @@
         {
           "name": "device",
           "expected": "丹东线1111刀闸",
-          "outcome": "MISSING",
-          "score": 0.0,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": true,
           "conflicting_value": null
         }
@@ -241,44 +289,44 @@
       "role_label": "唱票人",
       "role_confidence": 0.9976,
       "role_source": "energy",
-      "asr_text": "不这。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>不这。",
-      "infer_seconds": 0.1843,
+      "asr_text": "不见",
+      "asr_raw": "不见",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3066,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.06)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0,
+      "score": 0.0595,
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「不这」",
-        "device: 缺失「汇控柜丹东线111开关」",
+        "device: 缺失「汇控柜丹东线1111刀闸」",
         "object: 缺失「电气位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「不这」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
           "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "合好",
           "outcome": "MISSING",
           "score": 0.0,
           "required": false,
           "conflicting_value": null
         },
         {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "不这"
-        },
-        {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "汇控柜丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -293,8 +341,8 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
           "score": 0.0,
           "required": false,
@@ -313,20 +361,31 @@
       "role_label": "操作人",
       "role_confidence": 0.9624,
       "role_source": "energy",
-      "asr_text": "嗯，和尚郸东县11杠3那个和尚郸门县11杠3那啥对。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>嗯，和尚郸东县11杠3那个和尚郸门县11杠3那啥对。",
-      "infer_seconds": 0.1806,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.42)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.4152,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.375,
-      "reasons": [
-        "device: 缺失「丹东线1111刀闸」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
+      "asr_text": "嗯和尚丹东线幺幺幺杠三多少和尚单东线幺幺幺杠三多少对的",
+      "asr_raw": "嗯和尚丹东线幺幺幺杠三多少和尚单东线幺幺幺杠三多少对的",
+      "judged_text": null,
+      "adhered_text": "嗯合上丹东线1113多少和尚单东线1113多少对的",
+      "rewrites": [
+        {
+          "heard": "和尚",
+          "term": "合上",
+          "category": "action",
+          "score": 1.0
+        }
       ],
-      "conflicts": [],
+      "infer_seconds": 0.3318,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.41)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.4114,
+      "verdict": "FAIL",
+      "sentence_similarity": 0.36,
+      "reasons": [
+        "device: 票面「丹东线1111刀闸」但复述为「丹东线111」"
+      ],
+      "conflicts": [
+        "device: 票面「丹东线1111刀闸」但复述为「丹东线111」"
+      ],
       "slots": [
         {
           "name": "action",
@@ -339,10 +398,10 @@
         {
           "name": "device",
           "expected": "丹东线1111刀闸",
-          "outcome": "MISSING",
+          "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "丹东线111"
         }
       ]
     },
@@ -357,9 +416,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "嗯，好的。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>嗯，好的。",
-      "infer_seconds": 0.1734,
+      "asr_text": "嗯好的",
+      "asr_raw": "嗯好的",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2652,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -367,53 +429,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「嗯好」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「嗯好」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "嗯好"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -429,15 +464,18 @@
       "role_label": "操作人",
       "role_confidence": 0.8937,
       "role_source": "energy",
-      "asr_text": "然后是合上120千伏1号PTP要多少？",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>然后是合上120千伏1号PTP要多少？",
-      "infer_seconds": 0.1921,
+      "asr_text": "然后是合上一百二千伏一号PTPL多少",
+      "asr_raw": "然后是合上一百二千伏一号PTPL多少",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2975,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.39)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.38)，判为无关语音",
       "matched_seq": null,
-      "score": 0.3909,
+      "score": 0.377,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.2778,
+      "sentence_similarity": 0.2222,
       "reasons": [
         "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
@@ -473,16 +511,20 @@
       "role_label": "操作人",
       "role_confidence": 0.6449,
       "role_source": "energy",
-      "asr_text": "和尚有想过1P底电有多少对这。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>和尚有想过1P底电有多少对这。",
-      "infer_seconds": 0.1858,
+      "asr_text": "和啥有想过姚PD这要多少对对",
+      "asr_raw": "和啥有想过姚PD这要多少对对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.293,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.38)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.21)，判为无关语音",
       "matched_seq": null,
-      "score": 0.375,
+      "score": 0.2143,
       "verdict": "REVIEW",
       "sentence_similarity": 0.2143,
       "reasons": [
+        "action: 缺失「合上」",
         "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
@@ -491,8 +533,8 @@
         {
           "name": "action",
           "expected": "合上",
-          "outcome": "HIT",
-          "score": 1.0,
+          "outcome": "MISSING",
+          "score": 0.5,
           "required": true,
           "conflicting_value": null
         },
@@ -517,24 +559,24 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "嗯，好的，我已结束，下小时。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>嗯，好的，我已结束，下小时。",
-      "infer_seconds": 0.1676,
+      "asr_text": "嗯好的模拟结束夏老师",
+      "asr_raw": "嗯好的模拟结束夏老师",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2707,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.06)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0584,
+      "score": 0.0516,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0909,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「确在」但复述为「嗯好我已结束下小时」",
-        "device: 缺失「丹东线111开关」",
+        "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「嗯好我已结束下小时」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -546,15 +588,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "嗯好我已结束下小时"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -569,8 +611,8 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
           "score": 0.0,
           "required": false,
@@ -589,9 +631,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "这2。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>这2。",
-      "infer_seconds": 0.1716,
+      "asr_text": "这儿",
+      "asr_raw": "这儿",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3109,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -599,53 +644,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「这2」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「这2」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "这2"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -661,24 +679,24 @@
       "role_label": "唱票人",
       "role_confidence": 0.9163,
       "role_source": "energy",
-      "asr_text": "是2。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>是2。",
-      "infer_seconds": 0.1798,
+      "asr_text": "十二",
+      "asr_raw": "十二",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2896,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.03)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0471,
+      "score": 0.0298,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0455,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「确在」但复述为「是2」",
-        "device: 缺失「丹东线111开关」",
+        "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「是2」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -690,15 +708,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "是2"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -708,15 +726,15 @@
           "name": "object",
           "expected": "机械位置指示",
           "outcome": "MISSING",
-          "score": 0.1667,
+          "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
-          "score": 0.0,
+          "score": 0.5,
           "required": false,
           "conflicting_value": null
         }
@@ -733,9 +751,12 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "喝感啊。对。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>喝感啊。对。",
-      "infer_seconds": 0.1685,
+      "asr_text": "河难啊对",
+      "asr_raw": "河难啊对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3379,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.18)，判为无关语音",
       "matched_seq": null,
@@ -778,9 +799,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "你对。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>你对。",
-      "infer_seconds": 0.1793,
+      "asr_text": "你的",
+      "asr_raw": "你的",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3085,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -788,53 +812,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「你对」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「你对」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "你对"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -850,9 +847,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "啊，对。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>啊，对。",
-      "infer_seconds": 0.1911,
+      "asr_text": "啊对",
+      "asr_raw": "啊对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2683,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -860,53 +860,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「啊对」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「啊对」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "啊对"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -922,63 +895,39 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "好。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>好。",
-      "infer_seconds": 0.1892,
+      "asr_text": "呵",
+      "asr_raw": "呵",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.27,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.18)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0,
+      "score": 0.1834,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0,
+      "sentence_similarity": 0.0909,
       "reasons": [
-        "residual: 票面「确在」但复述为「好」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「好」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
+          "score": 0.5,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "好"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -994,9 +943,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.85,
       "role_source": "energy",
-      "asr_text": "朋友。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>朋友。",
-      "infer_seconds": 0.186,
+      "asr_text": "朋友",
+      "asr_raw": "朋友",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2813,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -1004,53 +956,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「朋友」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「朋友」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "朋友"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1066,9 +991,12 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "嗯嗯对。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>嗯嗯对。",
-      "infer_seconds": 0.1816,
+      "asr_text": "状态对",
+      "asr_raw": "状态对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2808,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -1076,53 +1004,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「嗯嗯对」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「嗯嗯对」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "嗯嗯对"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1138,9 +1039,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.6419,
       "role_source": "energy",
-      "asr_text": "对。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>对。",
-      "infer_seconds": 0.1856,
+      "asr_text": "嗯",
+      "asr_raw": "嗯",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3449,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -1148,53 +1052,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「对」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「对」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "对"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1210,9 +1087,12 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "喝张片呀。对。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>喝张片呀。对。",
-      "infer_seconds": 0.1722,
+      "asr_text": "合张票呀对",
+      "asr_raw": "合张票呀对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.277,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.18)，判为无关语音",
       "matched_seq": null,
@@ -1255,24 +1135,24 @@
       "role_label": "唱票人",
       "role_confidence": 0.9255,
       "role_source": "energy",
-      "asr_text": "是。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>是。",
-      "infer_seconds": 0.19,
+      "asr_text": "是",
+      "asr_raw": "是",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2479,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0471,
+      "score": 0.0516,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0455,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「确在」但复述为「是」",
-        "device: 缺失「丹东线111开关」",
+        "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「是」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -1284,15 +1164,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "是"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -1307,8 +1187,8 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
           "score": 0.0,
           "required": false,
@@ -1327,9 +1207,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "下传。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>下传。",
-      "infer_seconds": 0.1982,
+      "asr_text": "瞎传",
+      "asr_raw": "瞎传",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2669,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -1337,53 +1220,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「下传」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「下传」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "下传"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1399,24 +1255,24 @@
       "role_label": "唱票人",
       "role_confidence": 0.8366,
       "role_source": "energy",
-      "asr_text": "是。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>是。",
-      "infer_seconds": 0.1838,
+      "asr_text": "是",
+      "asr_raw": "是",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2712,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0471,
+      "score": 0.0516,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0455,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「确在」但复述为「是」",
-        "device: 缺失「丹东线111开关」",
+        "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「是」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -1428,15 +1284,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "是"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -1451,8 +1307,8 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
           "score": 0.0,
           "required": false,
@@ -1471,15 +1327,18 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "2号有一个，就这个哦。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>2号有一个，就这个哦。",
-      "infer_seconds": 0.1778,
+      "asr_text": "二号有人啊就这个哦",
+      "asr_raw": "二号有人啊就这个哦",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3477,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0227,
+      "score": 0.0,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0909,
+      "sentence_similarity": 0.0,
       "reasons": [
         "action: 缺失「合上」",
         "device: 缺失「丹东线1111刀闸」",
@@ -1516,228 +1375,18 @@
       "role_label": "唱票人",
       "role_confidence": 0.6661,
       "role_source": "energy",
-      "asr_text": "哦。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>哦。",
-      "infer_seconds": 0.1836,
+      "asr_text": "哦",
+      "asr_raw": "哦",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.277,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
       "score": 0.0,
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
-      "reasons": [
-        "residual: 票面「确在」但复述为「哦」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
-      ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「哦」"
-      ],
-      "slots": [
-        {
-          "name": "check_type",
-          "expected": "检查",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "哦"
-        },
-        {
-          "name": "device",
-          "expected": "汇控柜丹东线111开关",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": null
-        }
-      ]
-    },
-    {
-      "index": 26,
-      "start_ms": 64750,
-      "end_ms": 65390,
-      "duration_ms": 640,
-      "rms": 0.021991,
-      "rms_ratio": 0.4171,
-      "role": "CALLER",
-      "role_label": "唱票人",
-      "role_confidence": 0.9326,
-      "role_source": "energy",
-      "asr_text": "他们。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>他们。",
-      "infer_seconds": 0.1681,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.0,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.0,
-      "reasons": [
-        "residual: 票面「确在」但复述为「他们」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
-      ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「他们」"
-      ],
-      "slots": [
-        {
-          "name": "check_type",
-          "expected": "检查",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "他们"
-        },
-        {
-          "name": "device",
-          "expected": "汇控柜丹东线111开关",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": null
-        }
-      ]
-    },
-    {
-      "index": 27,
-      "start_ms": 65390,
-      "end_ms": 65770,
-      "duration_ms": 380,
-      "rms": 0.015294,
-      "rms_ratio": 0.2901,
-      "role": "CALLER",
-      "role_label": "唱票人",
-      "role_confidence": 1.0,
-      "role_source": "energy",
-      "asr_text": "。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>。",
-      "infer_seconds": 0.167,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.0,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.0,
-      "reasons": [
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
-      ],
-      "conflicts": [],
-      "slots": [
-        {
-          "name": "check_type",
-          "expected": "检查",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": null
-        },
-        {
-          "name": "device",
-          "expected": "汇控柜丹东线111开关",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": null
-        }
-      ]
-    },
-    {
-      "index": 28,
-      "start_ms": 70290,
-      "end_ms": 71040,
-      "duration_ms": 750,
-      "rms": 0.035174,
-      "rms_ratio": 0.6672,
-      "role": "CALLER",
-      "role_label": "唱票人",
-      "role_confidence": 0.35,
-      "role_source": "energy-lean",
-      "asr_text": "可一样。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>可一样。",
-      "infer_seconds": 0.1818,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.0227,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.0909,
       "reasons": [
         "action: 缺失「合上」",
         "device: 缺失「丹东线1111刀闸」",
@@ -1764,34 +1413,34 @@
       ]
     },
     {
-      "index": 29,
-      "start_ms": 71040,
-      "end_ms": 71580,
-      "duration_ms": 540,
-      "rms": 0.036881,
-      "rms_ratio": 0.6995,
+      "index": 26,
+      "start_ms": 64750,
+      "end_ms": 65390,
+      "duration_ms": 640,
+      "rms": 0.021991,
+      "rms_ratio": 0.4171,
       "role": "CALLER",
       "role_label": "唱票人",
-      "role_confidence": 0.35,
-      "role_source": "energy-lean",
-      "asr_text": "嗯，对。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>嗯，对。",
-      "infer_seconds": 0.1903,
+      "role_confidence": 0.9326,
+      "role_source": "energy",
+      "asr_text": "他没事了",
+      "asr_raw": "他没事了",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2907,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0,
+      "score": 0.0516,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「确在」但复述为「嗯对」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "device: 缺失「丹东线1111刀闸」",
+        "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「嗯对」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -1803,15 +1452,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "嗯对"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -1819,18 +1468,165 @@
         },
         {
           "name": "object",
-          "expected": "电气位置指示",
+          "expected": "机械位置指示",
+          "outcome": "MISSING",
+          "score": 0.1667,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "start_ms": 65390,
+      "end_ms": 65770,
+      "duration_ms": 380,
+      "rms": 0.015294,
+      "rms_ratio": 0.2901,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 1.0,
+      "role_source": "energy",
+      "asr_text": "",
+      "asr_raw": "",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3867,
+      "event": "CHATTER",
+      "message": "空文本",
+      "matched_seq": null,
+      "score": null,
+      "verdict": null,
+      "sentence_similarity": null,
+      "reasons": [],
+      "conflicts": [],
+      "slots": []
+    },
+    {
+      "index": 28,
+      "start_ms": 70290,
+      "end_ms": 71040,
+      "duration_ms": 750,
+      "rms": 0.035174,
+      "rms_ratio": 0.6672,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "不一样",
+      "asr_raw": "不一样",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2736,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.03)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0298,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0476,
+      "reasons": [
+        "device: 缺失「丹东线1111刀闸」",
+        "object: 缺失「机械位置指示」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "合好",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "object",
+          "expected": "机械位置指示",
           "outcome": "MISSING",
           "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.5,
           "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "start_ms": 71040,
+      "end_ms": 71580,
+      "duration_ms": 540,
+      "rms": 0.036881,
+      "rms_ratio": 0.6995,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "嗯对",
+      "asr_raw": "嗯对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2789,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0,
+      "reasons": [
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "action",
+          "expected": "合上",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "丹东线1111刀闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
           "conflicting_value": null
         }
       ]
@@ -1846,24 +1642,24 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "就是只有一个地儿。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>就是只有一个地儿。",
-      "infer_seconds": 0.1761,
+      "asr_text": "只有一个地儿地有",
+      "asr_raw": "只有一个地儿地有",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2906,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.07)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0471,
+      "score": 0.0694,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0455,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「确在」但复述为「就是只有1个地儿」",
-        "device: 缺失「丹东线111开关」",
+        "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「就是只有1个地儿」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -1875,15 +1671,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "就是只有1个地儿"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -1898,10 +1694,10 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
-          "score": 0.0,
+          "score": 0.5,
           "required": false,
           "conflicting_value": null
         }
@@ -1918,9 +1714,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "嗯。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>嗯。",
-      "infer_seconds": 0.1633,
+      "asr_text": "啊",
+      "asr_raw": "啊",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2959,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -1928,53 +1727,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「嗯」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「嗯」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
           "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": false,
-          "conflicting_value": "嗯"
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -1990,63 +1762,39 @@
       "role_label": "操作人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "表个讲哥啊。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>表个讲哥啊。",
-      "infer_seconds": 0.1899,
+      "asr_text": "聊聊天哥啊",
+      "asr_raw": "聊聊天哥啊",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2704,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0536,
+      "score": 0.0,
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「表个讲哥啊」",
-        "device: 缺失「汇控柜丹东线111开关」",
-        "object: 缺失「电气位置指示」",
+        "action: 缺失「合上」",
+        "device: 缺失「丹东线1111刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「表个讲哥啊」"
-      ],
+      "conflicts": [],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "action",
+          "expected": "合上",
           "outcome": "MISSING",
-          "score": 0.5,
-          "required": false,
-          "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
           "score": 0.0,
-          "required": false,
-          "conflicting_value": "表个讲哥啊"
+          "required": true,
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": null
-        },
-        {
-          "name": "position",
-          "expected": "分闸",
-          "outcome": "MISSING",
-          "score": 0.0,
-          "required": false,
           "conflicting_value": null
         }
       ]
@@ -2062,22 +1810,30 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "检查后源柜单灯线11开关电器位置只示确在分散位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查后源柜单灯线11开关电器位置只示确在分散位置。",
-      "infer_seconds": 0.1692,
+      "asr_text": "检查货运柜单独线幺幺幺开关电器位置指示却在分闸位置",
+      "asr_raw": "检查货运柜单独线幺幺幺开关电器位置指示却在分闸位置",
+      "judged_text": null,
+      "adhered_text": "检查货运柜单独线111开关电气位置指示却在分闸位置",
+      "rewrites": [
+        {
+          "heard": "电器位置指示",
+          "term": "电气位置指示",
+          "category": "object",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2725,
       "event": "FAILED",
-      "message": "复述与票面不符：residual: 票面「确在」但复述为「后源柜单灯线电器只示确在分散」；device: 票面「汇控柜丹东线111开关」但复述为「11开关」",
-      "matched_seq": 1,
-      "score": 0.575,
+      "message": "复述与票面不符：device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」",
+      "matched_seq": 4,
+      "score": 0.515,
       "verdict": "FAIL",
-      "sentence_similarity": 0.8,
+      "sentence_similarity": 0.56,
       "reasons": [
-        "residual: 票面「确在」但复述为「后源柜单灯线电器只示确在分散」",
-        "device: 票面「汇控柜丹东线111开关」但复述为「11开关」"
+        "device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」"
       ],
       "conflicts": [
-        "residual: 票面「确在」但复述为「后源柜单灯线电器只示确在分散」",
-        "device: 票面「汇控柜丹东线111开关」但复述为「11开关」"
+        "device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」"
       ],
       "slots": [
         {
@@ -2090,19 +1846,19 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "后源柜单灯线电器只示确在分散"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "汇控柜丹东线1111刀闸",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "11开关"
+          "conflicting_value": "111开关"
         },
         {
           "name": "object",
@@ -2113,8 +1869,8 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
           "score": 0.5,
           "required": false,
@@ -2133,23 +1889,23 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "检查后柜单独线111开关，电器位置持全在分压位置嗯，正确。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>检查后柜单独线111开关，电器位置持全在分压位置嗯，正确。",
-      "infer_seconds": 0.1807,
-      "event": "FAILED",
-      "message": "疑似说错条目的后续复述仍未通过：residual: 票面「确在」但复述为「后柜单独线电器持全在分压嗯」；device: 票面「汇控柜丹东线111开关」但复述为「111开关」；object: 缺失「电气位置指示」",
-      "matched_seq": 1,
-      "score": 0.4574,
+      "asr_text": "检查后位单独线幺幺幺开关电器位置是确在分享位置嗯正确",
+      "asr_raw": "检查后位单独线幺幺幺开关电器位置是确在分享位置嗯正确",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.329,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.41)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.4136,
       "verdict": "FAIL",
-      "sentence_similarity": 0.6154,
+      "sentence_similarity": 0.3846,
       "reasons": [
-        "residual: 票面「确在」但复述为「后柜单独线电器持全在分压嗯」",
-        "device: 票面「汇控柜丹东线111开关」但复述为「111开关」",
-        "object: 缺失「电气位置指示」"
+        "device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」"
       ],
       "conflicts": [
-        "residual: 票面「确在」但复述为「后柜单独线电器持全在分压嗯」",
-        "device: 票面「汇控柜丹东线111开关」但复述为「111开关」"
+        "device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」"
       ],
       "slots": [
         {
@@ -2162,15 +1918,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "后柜单独线电器持全在分压嗯"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线111开关",
+          "expected": "汇控柜丹东线1111刀闸",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
@@ -2179,16 +1935,16 @@
         {
           "name": "object",
           "expected": "电气位置指示",
-          "outcome": "MISSING",
-          "score": 0.6667,
+          "outcome": "HIT",
+          "score": 0.8333,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
-          "score": 0.5,
+          "score": 0.0,
           "required": false,
           "conflicting_value": null
         }
@@ -2205,22 +1961,30 @@
       "role_label": "操作人",
       "role_confidence": 0.9617,
       "role_source": "energy",
-      "asr_text": "检查灯能线也要开关机械位置指示确在分叉位置。机械位置。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>检查灯能线也要开关机械位置指示确在分叉位置。机械位置。",
-      "infer_seconds": 0.1823,
-      "event": "FLAGGED",
-      "message": "灰区，需人工复核：residual: 票面「确在」但复述为「灯能线也要开关确在分叉机械」；device: 缺失「丹东线111开关」；匹配证据偏弱，未发现必要槽位矛盾",
-      "matched_seq": 2,
-      "score": 0.535,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.64,
+      "asr_text": "检查单灯线幺幺开关机械位置只示贴在分扇位置机器人",
+      "asr_raw": "检查单灯线幺幺开关机械位置只示贴在分扇位置机器人",
+      "judged_text": null,
+      "adhered_text": "检查单灯线11开关机械位置指示贴在分扇位置机器人",
+      "rewrites": [
+        {
+          "heard": "机械位置只示",
+          "term": "机械位置指示",
+          "category": "object",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.3325,
+      "event": "FAILED",
+      "message": "复述与票面不符：device: 票面「丹东线1111刀闸」但复述为「11开关」",
+      "matched_seq": 5,
+      "score": 0.4792,
+      "verdict": "FAIL",
+      "sentence_similarity": 0.4167,
       "reasons": [
-        "residual: 票面「确在」但复述为「灯能线也要开关确在分叉机械」",
-        "device: 缺失「丹东线111开关」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
+        "device: 票面「丹东线1111刀闸」但复述为「11开关」"
       ],
       "conflicts": [
-        "residual: 票面「确在」但复述为「灯能线也要开关确在分叉机械」"
+        "device: 票面「丹东线1111刀闸」但复述为「11开关」"
       ],
       "slots": [
         {
@@ -2233,19 +1997,19 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "灯能线也要开关确在分叉机械"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
-          "outcome": "MISSING",
+          "expected": "丹东线1111刀闸",
+          "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "11开关"
         },
         {
           "name": "object",
@@ -2256,8 +2020,8 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
           "score": 0.5,
           "required": false,
@@ -2276,26 +2040,24 @@
       "role_label": "操作人",
       "role_confidence": 0.7509,
       "role_source": "energy",
-      "asr_text": "介绍咱们权限要不要开款结婚日起的判赔权嗯，正确。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>介绍咱们权限要不要开款结婚日起的判赔权嗯，正确。",
-      "infer_seconds": 0.1799,
+      "asr_text": "介绍咱们现在要不要开关结尾语写在还要不要嗯正确",
+      "asr_raw": "介绍咱们现在要不要开关结尾语写在还要不要嗯正确",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2602,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.07)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.08)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0709,
+      "score": 0.0832,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.125,
+      "sentence_similarity": 0.1739,
       "reasons": [
-        "residual: 票面「合好」但复述为「介绍咱们权限要不要开款结婚日起判赔权嗯」",
-        "device: 缺失「汇控柜丹东线1111刀闸」",
-        "object: 缺失「电气位置指示」",
-        "state: 票面「确已」但复述为「正确」",
+        "device: 缺失「丹东线1111刀闸」",
+        "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「介绍咱们权限要不要开款结婚日起判赔权嗯」",
-        "state: 票面「确已」但复述为「正确」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -2308,14 +2070,14 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "介绍咱们权限要不要开款结婚日起判赔权嗯"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线1111刀闸",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -2323,7 +2085,7 @@
         },
         {
           "name": "object",
-          "expected": "电气位置指示",
+          "expected": "机械位置指示",
           "outcome": "MISSING",
           "score": 0.1667,
           "required": true,
@@ -2332,10 +2094,10 @@
         {
           "name": "state",
           "expected": "确已",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "正确"
+          "conflicting_value": null
         }
       ]
     },
@@ -2350,20 +2112,37 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "和上单东线111杠有多少？和尚单东线11杠有多少正确直行。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>和上单东线111杠有多少？和尚单东线11杠有多少正确直行。",
-      "infer_seconds": 0.1954,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.40)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.4048,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.3333,
-      "reasons": [
-        "device: 缺失「丹东线1111刀闸」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
+      "asr_text": "和尚丹东县幺幺杠幺多少和尚丹东县幺幺杠幺多少正确执行",
+      "asr_raw": "和尚丹东县幺幺杠幺多少和尚丹东县幺幺杠幺多少正确执行",
+      "judged_text": null,
+      "adhered_text": "合上丹东线111多少和尚丹东县111多少正确执行",
+      "rewrites": [
+        {
+          "heard": "和尚",
+          "term": "合上",
+          "category": "action",
+          "score": 1.0
+        },
+        {
+          "heard": "丹东县111",
+          "term": "丹东线111",
+          "category": "device",
+          "score": 1.0
+        }
       ],
-      "conflicts": [],
+      "infer_seconds": 0.3106,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.42)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.4152,
+      "verdict": "FAIL",
+      "sentence_similarity": 0.375,
+      "reasons": [
+        "device: 票面「丹东线1113刀闸」但复述为「丹东线111」"
+      ],
+      "conflicts": [
+        "device: 票面「丹东线1113刀闸」但复述为「丹东线111」"
+      ],
       "slots": [
         {
           "name": "action",
@@ -2375,11 +2154,11 @@
         },
         {
           "name": "device",
-          "expected": "丹东线1111刀闸",
-          "outcome": "MISSING",
+          "expected": "丹东线1113刀闸",
+          "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": null
+          "conflicting_value": "丹东线111"
         }
       ]
     },
@@ -2394,9 +2173,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "对你查一下。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>对你查一下。",
-      "infer_seconds": 0.1881,
+      "asr_text": "对你查一下去",
+      "asr_raw": "对你查一下去",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2692,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.09)，判为无关语音",
       "matched_seq": null,
@@ -2404,14 +2186,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「合好」但复述为「对你查1下」",
         "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「对你查1下」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -2424,10 +2203,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "对你查1下"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -2466,9 +2245,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.7991,
       "role_source": "energy",
-      "asr_text": "要正确。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>要正确。",
-      "infer_seconds": 0.1807,
+      "asr_text": "要正确",
+      "asr_raw": "要正确",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2859,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
       "matched_seq": null,
@@ -2476,16 +2258,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0952,
       "reasons": [
-        "residual: 票面「合好」但复述为「要」",
         "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
-        "state: 票面「确已」但复述为「正确」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「要」",
-        "state: 票面「确已」但复述为「正确」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -2498,10 +2275,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "要"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -2522,10 +2299,10 @@
         {
           "name": "state",
           "expected": "确已",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "正确"
+          "conflicting_value": null
         }
       ]
     },
@@ -2540,9 +2317,12 @@
       "role_label": "唱票人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "操说。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>操说。",
-      "infer_seconds": 0.1771,
+      "asr_text": "超课",
+      "asr_raw": "超课",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2521,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -2550,14 +2330,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「确在」但复述为「操说」",
-        "device: 缺失「丹东线111开关」",
+        "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「操说」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -2569,15 +2346,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "操说"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -2592,8 +2369,8 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
           "score": 0.0,
           "required": false,
@@ -2612,9 +2389,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "确认设备操作到位，且锁性。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>确认设备操作到位，且锁性。",
-      "infer_seconds": 0.1829,
+      "asr_text": "确认设备操作到位前锁请按",
+      "asr_raw": "确认设备操作到位前锁请按",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.08)，判为无关语音",
       "matched_seq": null,
@@ -2623,14 +2403,12 @@
       "sentence_similarity": 0.0952,
       "reasons": [
         "check_type: 票面「检查」但复述为「确认」",
-        "residual: 票面「合好」但复述为「设备操作位且锁性」",
         "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [
-        "check_type: 票面「检查」但复述为「确认」",
-        "residual: 票面「合好」但复述为「设备操作位且锁性」"
+        "check_type: 票面「检查」但复述为「确认」"
       ],
       "slots": [
         {
@@ -2644,10 +2422,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "设备操作位且锁性"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -2686,24 +2464,24 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "没定。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>没定。",
-      "infer_seconds": 0.2005,
+      "asr_text": "一定样",
+      "asr_raw": "一定样",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2783,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.03)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0,
+      "score": 0.0298,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「确在」但复述为「没定」",
-        "device: 缺失「丹东线111开关」",
+        "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「没定」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -2715,15 +2493,15 @@
         },
         {
           "name": "residual",
-          "expected": "确在",
-          "outcome": "CONFLICT",
+          "expected": "合好",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "没定"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线111开关",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -2738,10 +2516,10 @@
           "conflicting_value": null
         },
         {
-          "name": "position",
-          "expected": "分闸",
+          "name": "state",
+          "expected": "确已",
           "outcome": "MISSING",
-          "score": 0.0,
+          "score": 0.5,
           "required": false,
           "conflicting_value": null
         }
@@ -2758,22 +2536,30 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "检查混龙归丹东线111高压道闸，电器位置只是缺口。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查混龙归丹东线111高压道闸，电器位置只是缺口。",
-      "infer_seconds": 0.1949,
+      "asr_text": "检查费用归丹东线幺幺幺杠幺道闸电梯位置支持吹风",
+      "asr_raw": "检查费用归丹东线幺幺幺杠幺道闸电梯位置支持吹风",
+      "judged_text": null,
+      "adhered_text": "检查汇控柜丹东线1111刀闸电梯位置支持吹风",
+      "rewrites": [
+        {
+          "heard": "费用归丹东线1111道闸",
+          "term": "汇控柜丹东线1111刀闸",
+          "category": "device",
+          "score": 0.9167
+        }
+      ],
+      "infer_seconds": 0.2933,
       "event": "FAILED",
-      "message": "复述与票面不符：residual: 票面「合好」但复述为「混龙归高压道闸电器只是缺口」；device: 票面「汇控柜丹东线1111刀闸」但复述为「丹东线111」",
-      "matched_seq": 4,
-      "score": 0.5521,
+      "message": "疑似说错条目的后续复述仍未通过：object: 票面「机械位置指示」但复述为「位置指示」",
+      "matched_seq": 5,
+      "score": 0.5114,
       "verdict": "FAIL",
-      "sentence_similarity": 0.7083,
+      "sentence_similarity": 0.5455,
       "reasons": [
-        "residual: 票面「合好」但复述为「混龙归高压道闸电器只是缺口」",
-        "device: 票面「汇控柜丹东线1111刀闸」但复述为「丹东线111」"
+        "object: 票面「机械位置指示」但复述为「位置指示」"
       ],
       "conflicts": [
-        "residual: 票面「合好」但复述为「混龙归高压道闸电器只是缺口」",
-        "device: 票面「汇控柜丹东线1111刀闸」但复述为「丹东线111」"
+        "object: 票面「机械位置指示」但复述为「位置指示」"
       ],
       "slots": [
         {
@@ -2787,26 +2573,26 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "混龙归高压道闸电器只是缺口"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线1111刀闸",
-          "outcome": "CONFLICT",
-          "score": 0.0,
-          "required": true,
-          "conflicting_value": "丹东线111"
-        },
-        {
-          "name": "object",
-          "expected": "电气位置指示",
+          "expected": "丹东线1111刀闸",
           "outcome": "HIT",
           "score": 1.0,
           "required": true,
           "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "位置指示"
         },
         {
           "name": "state",
@@ -2829,42 +2615,40 @@
       "role_label": "操作人",
       "role_confidence": 0.9441,
       "role_source": "energy",
-      "asr_text": "经查咱们县111公销多长，定击位置确好嗯，正确。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>经查咱们县111公销多长，定击位置确好嗯，正确。",
-      "infer_seconds": 0.2062,
+      "asr_text": "检查咱根县幺幺幺杠幺作长定义位置确定号嗯正确",
+      "asr_raw": "检查咱根县幺幺幺杠幺作长定义位置确定号嗯正确",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.4005,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.25)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.31)，判为无关语音",
       "matched_seq": null,
-      "score": 0.25,
+      "score": 0.3056,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.2857,
+      "sentence_similarity": 0.4286,
       "reasons": [
-        "residual: 票面「合好」但复述为「经查咱们县111公销多长定击确好嗯」",
         "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
-        "state: 票面「确已」但复述为「正确」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「经查咱们县111公销多长定击确好嗯」",
-        "state: 票面「确已」但复述为「正确」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
           "expected": "检查",
-          "outcome": "MISSING",
-          "score": 0.5,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": false,
           "conflicting_value": null
         },
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "经查咱们县111公销多长定击确好嗯"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -2878,17 +2662,17 @@
           "name": "object",
           "expected": "机械位置指示",
           "outcome": "MISSING",
-          "score": 0.5,
+          "score": 0.3333,
           "required": true,
           "conflicting_value": null
         },
         {
           "name": "state",
           "expected": "确已",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "正确"
+          "conflicting_value": null
         }
       ]
     },
@@ -2903,9 +2687,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "去看今械位置。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>去看今械位置。",
-      "infer_seconds": 0.193,
+      "asr_text": "去看今械位置",
+      "asr_raw": "去看今械位置",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.299,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.15)，判为无关语音",
       "matched_seq": null,
@@ -2913,14 +2700,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.1429,
       "reasons": [
-        "residual: 票面「合好」但复述为「去看今械」",
         "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「去看今械」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -2933,10 +2717,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "去看今械"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -2975,9 +2759,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "看见了吗？",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>看见了吗？",
-      "infer_seconds": 0.1913,
+      "asr_text": "这看见了吗",
+      "asr_raw": "这看见了吗",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2814,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.06)，判为无关语音",
       "matched_seq": null,
@@ -2985,14 +2772,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「合好」但复述为「看见吗」",
-        "device: 缺失「汇控柜丹东线1111刀闸」",
-        "object: 缺失「电气位置指示」",
+        "device: 缺失「丹东线1111刀闸」",
+        "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「看见吗」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -3005,14 +2789,14 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "看见吗"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线1111刀闸",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -3020,7 +2804,7 @@
         },
         {
           "name": "object",
-          "expected": "电气位置指示",
+          "expected": "机械位置指示",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -3047,9 +2831,12 @@
       "role_label": "操作人",
       "role_confidence": 0.9022,
       "role_source": "energy",
-      "asr_text": "刚咬起来是看见了。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>刚咬起来是看见了。",
-      "infer_seconds": 0.1823,
+      "asr_text": "刚摇起来是看见了",
+      "asr_raw": "刚摇起来是看见了",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3263,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.17)，判为无关语音",
       "matched_seq": null,
@@ -3057,14 +2844,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.125,
       "reasons": [
-        "residual: 票面「合好」但复述为「刚咬起来是看见」",
-        "device: 缺失「汇控柜丹东线1111刀闸」",
+        "device: 缺失「汇控柜丹东线1113刀闸」",
         "object: 缺失「电气位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「刚咬起来是看见」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -3077,14 +2861,14 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "刚咬起来是看见"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线1111刀闸",
+          "expected": "汇控柜丹东线1113刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -3119,9 +2903,12 @@
       "role_label": "操作人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "对。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>对。",
-      "infer_seconds": 0.1906,
+      "asr_text": "对",
+      "asr_raw": "对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2879,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -3129,14 +2916,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "residual: 票面「合好」但复述为「对」",
-        "device: 缺失「汇控柜丹东线1111刀闸」",
-        "object: 缺失「电气位置指示」",
+        "device: 缺失「丹东线1111刀闸」",
+        "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「对」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -3149,14 +2933,14 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "对"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线1111刀闸",
+          "expected": "丹东线1111刀闸",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -3164,7 +2948,7 @@
         },
         {
           "name": "object",
-          "expected": "电气位置指示",
+          "expected": "机械位置指示",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -3191,9 +2975,12 @@
       "role_label": "唱票人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "是。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>是。",
-      "infer_seconds": 0.1911,
+      "asr_text": "是",
+      "asr_raw": "是",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2536,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
       "matched_seq": null,
@@ -3201,14 +2988,11 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「合好」但复述为「是」",
         "device: 缺失「丹东线1111刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「是」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -3221,10 +3005,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "是"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -3263,23 +3047,23 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "检查丹东线111杠1道闸，机械位置指示缺核。检查丹东线11杠1道闸，机械位置指示缺核嗯，准确。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>检查丹东线111杠1道闸，机械位置指示缺核。检查丹东线11杠1道闸，机械位置指示缺核嗯，准确。",
-      "infer_seconds": 0.1934,
+      "asr_text": "检查郸独线幺幺幺杠幺道闸机械位置指示确合检查单独线幺幺幺杠幺倒闸机械位置是确合嗯正确",
+      "asr_raw": "检查郸独线幺幺幺杠幺道闸机械位置指示确合检查单独线幺幺幺杠幺倒闸机械位置是确合嗯正确",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3144,
       "event": "FAILED",
-      "message": "复述与票面不符：residual: 票面「合好」但复述为「杠1道闸缺核丹东线11杠1道闸缺核嗯准确」；device: 票面「丹东线1111刀闸」但复述为「丹东线111」",
+      "message": "疑似说错条目的后续复述仍未通过：device: 缺失「丹东线1111刀闸」；匹配证据偏弱，未发现必要槽位矛盾",
       "matched_seq": 5,
-      "score": 0.494,
-      "verdict": "FAIL",
-      "sentence_similarity": 0.4762,
+      "score": 0.4759,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.475,
       "reasons": [
-        "residual: 票面「合好」但复述为「杠1道闸缺核丹东线11杠1道闸缺核嗯准确」",
-        "device: 票面「丹东线1111刀闸」但复述为「丹东线111」"
+        "device: 缺失「丹东线1111刀闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「杠1道闸缺核丹东线11杠1道闸缺核嗯准确」",
-        "device: 票面「丹东线1111刀闸」但复述为「丹东线111」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -3292,18 +3076,18 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "杠1道闸缺核丹东线11杠1道闸缺核嗯准确"
+          "conflicting_value": null
         },
         {
           "name": "device",
           "expected": "丹东线1111刀闸",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "丹东线111"
+          "conflicting_value": null
         },
         {
           "name": "object",
@@ -3317,7 +3101,7 @@
           "name": "state",
           "expected": "确已",
           "outcome": "MISSING",
-          "score": 0.5,
+          "score": 0.0,
           "required": false,
           "conflicting_value": null
         }
@@ -3334,15 +3118,25 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "合尚丹东县也告三道闸。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>合尚丹东县也告三道闸。",
-      "infer_seconds": 0.1871,
+      "asr_text": "和上丹东县幺二杠三道闸",
+      "asr_raw": "和上丹东县幺二杠三道闸",
+      "judged_text": null,
+      "adhered_text": "合上丹东县123道闸",
+      "rewrites": [
+        {
+          "heard": "和上",
+          "term": "合上",
+          "category": "action",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.3404,
       "event": "FLAGGED",
       "message": "灰区，需人工复核：device: 缺失「丹东线1113刀闸」；匹配证据偏弱，未发现必要槽位矛盾",
       "matched_seq": 6,
-      "score": 0.5032,
+      "score": 0.526,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.7273,
+      "sentence_similarity": 0.8182,
       "reasons": [
         "device: 缺失「丹东线1113刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
@@ -3378,15 +3172,25 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "合尚单位片111光献到这。对，真确真敬。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>合尚单位片111光献到这。对，真确真敬。",
-      "infer_seconds": 0.1779,
+      "asr_text": "和尚丹位线幺幺八探作者对正确执行",
+      "asr_raw": "和尚丹位线幺幺八探作者对正确执行",
+      "judged_text": null,
+      "adhered_text": "合上丹位线118探作者对正确执行",
+      "rewrites": [
+        {
+          "heard": "和尚",
+          "term": "合上",
+          "category": "action",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2888,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.42)，判为无关语音",
       "matched_seq": null,
-      "score": 0.4244,
+      "score": 0.4152,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.4118,
+      "sentence_similarity": 0.375,
       "reasons": [
         "device: 缺失「丹东线1113刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
@@ -3422,26 +3226,24 @@
       "role_label": "唱票人",
       "role_confidence": 0.9583,
       "role_source": "energy",
-      "asr_text": "要正确。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>要正确。",
-      "infer_seconds": 0.1895,
+      "asr_text": "交正确",
+      "asr_raw": "交正确",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2836,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.01)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0238,
+      "score": 0.0119,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0952,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "residual: 票面「合好」但复述为「要」",
         "device: 缺失「丹东线1113刀闸」",
         "object: 缺失「机械位置指示」",
-        "state: 票面「确已」但复述为「正确」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「要」",
-        "state: 票面「确已」但复述为「正确」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -3454,10 +3256,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "要"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -3478,10 +3280,10 @@
         {
           "name": "state",
           "expected": "确已",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "正确"
+          "conflicting_value": null
         }
       ]
     },
@@ -3496,28 +3298,42 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "会长设备操合到位。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>会长设备操合到位。",
-      "infer_seconds": 0.188,
+      "asr_text": "确认设备操作到位",
+      "asr_raw": "确认设备操作到位",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2945,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.18)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.08)，判为无关语音",
       "matched_seq": null,
-      "score": 0.1834,
+      "score": 0.0813,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0909,
+      "sentence_similarity": 0.0952,
       "reasons": [
-        "action: 缺失「合上」",
+        "check_type: 票面「检查」但复述为「确认」",
         "device: 缺失「丹东线1113刀闸」",
+        "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [],
+      "conflicts": [
+        "check_type: 票面「检查」但复述为「确认」"
+      ],
       "slots": [
         {
-          "name": "action",
-          "expected": "合上",
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": "确认"
+        },
+        {
+          "name": "residual",
+          "expected": "合好",
           "outcome": "MISSING",
-          "score": 0.5,
-          "required": true,
+          "score": 0.0,
+          "required": false,
           "conflicting_value": null
         },
         {
@@ -3526,6 +3342,22 @@
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
+          "outcome": "MISSING",
+          "score": 0.1667,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -3541,9 +3373,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.35,
       "role_source": "energy-lean",
-      "asr_text": "过来的。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>过来的。",
-      "infer_seconds": 0.1881,
+      "asr_text": "我的",
+      "asr_raw": "我的",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2697,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -3586,9 +3421,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.7552,
       "role_source": "energy",
-      "asr_text": "包括。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>包括。",
-      "infer_seconds": 0.2083,
+      "asr_text": "括oo",
+      "asr_raw": "括oo",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3109,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -3631,25 +3469,36 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "检查后油位单东线11杠3到闸，电梯位置指示确损号。检查后位单东向11杠3到闸。电梯位置置持确号嗯，正确。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>检查后油位单东线11杠3到闸，电梯位置指示确损号。检查后位单东向11杠3到闸。电梯位置置持确号嗯，正确。",
-      "infer_seconds": 0.2066,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.21)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.2148,
+      "asr_text": "检查混位位丹东线幺幺幺杠三倒闸电梯位置只是群号检查混位位丹东线幺幺杠三到闸电梯位置确群号嗯正确",
+      "asr_raw": "检查混位位丹东线幺幺幺杠三倒闸电梯位置只是群号检查混位位丹东线幺幺杠三到闸电梯位置确群号嗯正确",
+      "judged_text": null,
+      "adhered_text": "检查混位位丹东线1113刀闸电梯位置指示群号检查混位位丹东线113到闸电梯位置确群号嗯正确",
+      "rewrites": [
+        {
+          "heard": "丹东线1113倒闸",
+          "term": "丹东线1113刀闸",
+          "category": "device",
+          "score": 1.0
+        },
+        {
+          "heard": "位置只是",
+          "term": "位置指示",
+          "category": "object",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2717,
+      "event": "FAILED",
+      "message": "复述与票面不符：object: 票面「机械位置指示」但复述为「位置指示」",
+      "matched_seq": 8,
+      "score": 0.4516,
       "verdict": "FAIL",
-      "sentence_similarity": 0.383,
+      "sentence_similarity": 0.3778,
       "reasons": [
-        "residual: 票面「合好」但复述为「后油位单东线11杠3闸电梯确损号后位单东向11杠3闸电梯置持确号嗯」",
-        "device: 缺失「汇控柜丹东线1113刀闸」",
-        "object: 票面「电气位置指示」但复述为「位置指示」",
-        "state: 票面「确已」但复述为「正确」"
+        "object: 票面「机械位置指示」但复述为「位置指示」"
       ],
       "conflicts": [
-        "residual: 票面「合好」但复述为「后油位单东线11杠3闸电梯确损号后位单东向11杠3闸电梯置持确号嗯」",
-        "object: 票面「电气位置指示」但复述为「位置指示」",
-        "state: 票面「确已」但复述为「正确」"
+        "object: 票面「机械位置指示」但复述为「位置指示」"
       ],
       "slots": [
         {
@@ -3663,22 +3512,22 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "后油位单东线11杠3闸电梯确损号后位单东向11杠3闸电梯置持确号嗯"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "汇控柜丹东线1113刀闸",
-          "outcome": "MISSING",
-          "score": 0.0,
+          "expected": "丹东线1113刀闸",
+          "outcome": "HIT",
+          "score": 1.0,
           "required": true,
           "conflicting_value": null
         },
         {
           "name": "object",
-          "expected": "电气位置指示",
+          "expected": "机械位置指示",
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
@@ -3687,10 +3536,10 @@
         {
           "name": "state",
           "expected": "确已",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "正确"
+          "conflicting_value": null
         }
       ]
     },
@@ -3705,24 +3554,24 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "检查电动线要继要再从后边看。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>检查电动线要继要再从后边看。",
-      "infer_seconds": 0.1846,
+      "asr_text": "检查电灯线呃机续再从后边看",
+      "asr_raw": "检查电灯线呃机续再从后边看",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2844,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.23)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.21)，判为无关语音",
       "matched_seq": null,
-      "score": 0.2302,
+      "score": 0.2063,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.2857,
+      "sentence_similarity": 0.1905,
       "reasons": [
-        "residual: 票面「合好」但复述为「电动线要继要再从后边看」",
         "device: 缺失「丹东线1113刀闸」",
         "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
-      "conflicts": [
-        "residual: 票面「合好」但复述为「电动线要继要再从后边看」"
-      ],
+      "conflicts": [],
       "slots": [
         {
           "name": "check_type",
@@ -3735,10 +3584,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "电动线要继要再从后边看"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -3777,28 +3626,39 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "东行啊。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>东行啊。",
-      "infer_seconds": 0.1812,
+      "asr_text": "上面都有",
+      "asr_raw": "上面都有",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2793,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.02)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.01)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0227,
+      "score": 0.0119,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0909,
+      "sentence_similarity": 0.0476,
       "reasons": [
-        "action: 缺失「合上」",
         "device: 缺失「丹东线1113刀闸」",
+        "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [],
       "slots": [
         {
-          "name": "action",
-          "expected": "合上",
+          "name": "check_type",
+          "expected": "检查",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": true,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "合好",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
           "conflicting_value": null
         },
         {
@@ -3807,6 +3667,22 @@
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -3822,24 +3698,23 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "检查单东线11刚才那张机械位置指示车号，检查单东线11111刚才到闸，机械位置的缺号。对，正确。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>检查单东线11刚才那张机械位置指示车号，检查单东线11111刚才到闸，机械位置的缺号。对，正确。",
-      "infer_seconds": 0.1977,
-      "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.44)，判为无关语音",
-      "matched_seq": null,
-      "score": 0.4444,
+      "asr_text": "检查丹东线幺幺幺杠三到达机械位置指示车号检查丹东线幺幺幺幺幺杠才到达机械位置示缺号对正确",
+      "asr_raw": "检查丹东线幺幺幺杠三到达机械位置指示车号检查丹东线幺幺幺幺幺杠才到达机械位置示缺号对正确",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2782,
+      "event": "FAILED",
+      "message": "疑似说错条目的后续复述仍未通过：device: 票面「丹东线1113刀闸」但复述为「丹东线111」",
+      "matched_seq": 8,
+      "score": 0.4618,
       "verdict": "FAIL",
-      "sentence_similarity": 0.3488,
+      "sentence_similarity": 0.4186,
       "reasons": [
-        "residual: 票面「合好」但复述为「单东线11刚才那张车号单东线1刚才闸机械缺号对」",
-        "device: 票面「丹东线1113刀闸」但复述为「1111」",
-        "state: 票面「确已」但复述为「正确」"
+        "device: 票面「丹东线1113刀闸」但复述为「丹东线111」"
       ],
       "conflicts": [
-        "residual: 票面「合好」但复述为「单东线11刚才那张车号单东线1刚才闸机械缺号对」",
-        "device: 票面「丹东线1113刀闸」但复述为「1111」",
-        "state: 票面「确已」但复述为「正确」"
+        "device: 票面「丹东线1113刀闸」但复述为「丹东线111」"
       ],
       "slots": [
         {
@@ -3853,10 +3728,10 @@
         {
           "name": "residual",
           "expected": "合好",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "单东线11刚才那张车号单东线1刚才闸机械缺号对"
+          "conflicting_value": null
         },
         {
           "name": "device",
@@ -3864,7 +3739,7 @@
           "outcome": "CONFLICT",
           "score": 0.0,
           "required": true,
-          "conflicting_value": "1111"
+          "conflicting_value": "丹东线111"
         },
         {
           "name": "object",
@@ -3877,10 +3752,10 @@
         {
           "name": "state",
           "expected": "确已",
-          "outcome": "CONFLICT",
+          "outcome": "MISSING",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "正确"
+          "conflicting_value": null
         }
       ]
     },
@@ -3895,63 +3770,75 @@
       "role_label": "操作人",
       "role_confidence": 0.8746,
       "role_source": "energy",
-      "asr_text": "将呃去曹光明给特管人员给他的开关办的时候打过曹光明。对。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>将呃去曹光明给特管人员给他的开关办的时候打过曹光明。对。",
-      "infer_seconds": 0.196,
+      "asr_text": "家啊去草光面给采光店员他来开开把手打火儿草光面对",
+      "asr_raw": "家啊去草光面给采光店员他来开开把手打火儿草光面对",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3415,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.12)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.10)，判为无关语音",
       "matched_seq": null,
-      "score": 0.1184,
-      "verdict": "REVIEW",
-      "sentence_similarity": 0.0769,
+      "score": 0.1019,
+      "verdict": "FAIL",
+      "sentence_similarity": 0.0741,
       "reasons": [
-        "residual: 票面「合好」但复述为「呃去曹光明给特管人员给他开关办时候打过曹光明对」",
-        "device: 缺失「丹东线1113刀闸」",
-        "object: 缺失「机械位置指示」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
+        "device: 缺失「丹东线111开关」",
+        "handle: 票面「操作方式把手」但复述为「把手」",
+        "action: 缺失「切至」",
+        "src_position: 缺失「就地」",
+        "dst_position: 缺失「远方」"
       ],
       "conflicts": [
-        "residual: 票面「合好」但复述为「呃去曹光明给特管人员给他开关办时候打过曹光明对」"
+        "handle: 票面「操作方式把手」但复述为「把手」"
       ],
       "slots": [
         {
-          "name": "check_type",
-          "expected": "检查",
+          "name": "panel",
+          "expected": "测控屏",
           "outcome": "MISSING",
-          "score": 0.5,
-          "required": false,
-          "conflicting_value": null
-        },
-        {
-          "name": "residual",
-          "expected": "合好",
-          "outcome": "CONFLICT",
           "score": 0.0,
           "required": false,
-          "conflicting_value": "呃去曹光明给特管人员给他开关办时候打过曹光明对"
+          "conflicting_value": null
         },
         {
           "name": "device",
-          "expected": "丹东线1113刀闸",
+          "expected": "丹东线111开关",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "object",
-          "expected": "机械位置指示",
+          "name": "handle",
+          "expected": "操作方式把手",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "把手"
+        },
+        {
+          "name": "action",
+          "expected": "切至",
           "outcome": "MISSING",
-          "score": 0.1667,
+          "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "state",
-          "expected": "确已",
+          "name": "src_position",
+          "expected": "就地",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": false,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "dst_position",
+          "expected": "远方",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": true,
           "conflicting_value": null
         }
       ]
@@ -3967,9 +3854,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "操控。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>操控。",
-      "infer_seconds": 0.192,
+      "asr_text": "操控",
+      "asr_raw": "操控",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2633,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.04)，判为无关语音",
       "matched_seq": null,
@@ -4047,9 +3937,12 @@
       "role_label": "操作人",
       "role_confidence": 0.8347,
       "role_source": "energy",
-      "asr_text": "那个是是调控保护是吧？",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>那个是是调控保护是吧？",
-      "infer_seconds": 0.1947,
+      "asr_text": "那个是是操控保护是吧",
+      "asr_raw": "那个是是操控保护是吧",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2607,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.07)，判为无关语音",
       "matched_seq": null,
@@ -4127,33 +4020,71 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "包括。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>包括。",
-      "infer_seconds": 0.1859,
+      "asr_text": "就包括",
+      "asr_raw": "就包括",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2871,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.07)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0,
+      "score": 0.0718,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0,
+      "sentence_similarity": 0.037,
       "reasons": [
-        "action: 缺失「合上」",
-        "device: 缺失「丹东线1113刀闸」",
+        "device: 缺失「丹东线111开关」",
+        "handle: 缺失「操作方式把手」",
+        "action: 缺失「切至」",
+        "src_position: 缺失「就地」",
+        "dst_position: 缺失「远方」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [],
       "slots": [
         {
-          "name": "action",
-          "expected": "合上",
+          "name": "panel",
+          "expected": "测控屏",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "丹东线111开关",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
           "conflicting_value": null
         },
         {
-          "name": "device",
-          "expected": "丹东线1113刀闸",
+          "name": "handle",
+          "expected": "操作方式把手",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "action",
+          "expected": "切至",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "src_position",
+          "expected": "就地",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "dst_position",
+          "expected": "远方",
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
@@ -4172,15 +4103,18 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "呃，这不要要保护车控。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>呃，这不要要保护车控。",
-      "infer_seconds": 0.186,
+      "asr_text": "呃这不幺幺保护操控",
+      "asr_raw": "呃这不幺幺保护操控",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2806,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.06)，判为无关语音",
       "matched_seq": null,
-      "score": 0.0463,
+      "score": 0.0625,
       "verdict": "REVIEW",
-      "sentence_similarity": 0.0741,
+      "sentence_similarity": 0.1111,
       "reasons": [
         "device: 缺失「丹东线111开关」",
         "handle: 缺失「操作方式把手」",
@@ -4195,7 +4129,7 @@
           "name": "panel",
           "expected": "测控屏",
           "outcome": "MISSING",
-          "score": 0.6667,
+          "score": 0.3333,
           "required": false,
           "conflicting_value": null
         },
@@ -4211,7 +4145,7 @@
           "name": "handle",
           "expected": "操作方式把手",
           "outcome": "MISSING",
-          "score": 0.0,
+          "score": 0.1667,
           "required": true,
           "conflicting_value": null
         },
@@ -4252,9 +4186,12 @@
       "role_label": "操作人",
       "role_confidence": 0.8937,
       "role_source": "energy",
-      "asr_text": "供在这呢。",
-      "asr_raw": "<|zh|><|EMO_UNKNOWN|><|Speech|><|withitn|>供在这呢。",
-      "infer_seconds": 0.1974,
+      "asr_text": "在这呢",
+      "asr_raw": "在这呢",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2752,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -4262,18 +4199,26 @@
       "verdict": "REVIEW",
       "sentence_similarity": 0.0,
       "reasons": [
-        "action: 缺失「合上」",
         "device: 缺失「丹东线1113刀闸」",
+        "object: 缺失「机械位置指示」",
         "匹配证据偏弱，未发现必要槽位矛盾"
       ],
       "conflicts": [],
       "slots": [
         {
-          "name": "action",
-          "expected": "合上",
+          "name": "check_type",
+          "expected": "检查",
           "outcome": "MISSING",
           "score": 0.0,
-          "required": true,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "合好",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
           "conflicting_value": null
         },
         {
@@ -4282,6 +4227,22 @@
           "outcome": "MISSING",
           "score": 0.0,
           "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
           "conflicting_value": null
         }
       ]
@@ -4297,40 +4258,53 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "将测控平单独向121开关操作方式把手由就地7水安控位置，将测控屏。",
-      "asr_raw": "<|zh|><|ANGRY|><|Speech|><|withitn|>将测控平单独向121开关操作方式把手由就地7水安控位置，将测控屏。",
-      "infer_seconds": 0.2014,
+      "asr_text": "将测光屏单独向幺幺幺开关操作方式把手由就地切置原换位置将测光屏",
+      "asr_raw": "将测光屏单独向幺幺幺开关操作方式把手由就地切置原换位置将测光屏",
+      "judged_text": null,
+      "adhered_text": "将测光屏丹东线111开关操作方式把手由就地切至原换位置将测光屏",
+      "rewrites": [
+        {
+          "heard": "单独向111开关操作方式把手",
+          "term": "丹东线111开关操作方式把手",
+          "category": "device",
+          "score": 0.9286
+        },
+        {
+          "heard": "切置",
+          "term": "切至",
+          "category": "action",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2781,
       "event": "FAILED",
-      "message": "复述与票面不符：device: 票面「丹东线111开关」但复述为「121开关」；action: 缺失「切至」；dst_position: 票面「远方」但复述为「就地」",
+      "message": "复述与票面不符：dst_position: 票面「远方」但复述为「就地」",
       "matched_seq": 9,
-      "score": 0.5235,
+      "score": 0.7711,
       "verdict": "FAIL",
-      "sentence_similarity": 0.6774,
+      "sentence_similarity": 0.8065,
       "reasons": [
-        "device: 票面「丹东线111开关」但复述为「121开关」",
-        "action: 缺失「切至」",
         "dst_position: 票面「远方」但复述为「就地」"
       ],
       "conflicts": [
-        "device: 票面「丹东线111开关」但复述为「121开关」",
         "dst_position: 票面「远方」但复述为「就地」"
       ],
       "slots": [
         {
           "name": "panel",
           "expected": "测控屏",
-          "outcome": "HIT",
-          "score": 1.0,
+          "outcome": "MISSING",
+          "score": 0.6667,
           "required": false,
           "conflicting_value": null
         },
         {
           "name": "device",
           "expected": "丹东线111开关",
-          "outcome": "CONFLICT",
-          "score": 0.0,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": true,
-          "conflicting_value": "121开关"
+          "conflicting_value": null
         },
         {
           "name": "handle",
@@ -4343,8 +4317,8 @@
         {
           "name": "action",
           "expected": "切至",
-          "outcome": "MISSING",
-          "score": 0.5,
+          "outcome": "HIT",
+          "score": 1.0,
           "required": true,
           "conflicting_value": null
         },
@@ -4377,31 +4351,34 @@
       "role_label": "操作人",
       "role_confidence": 1.0,
       "role_source": "energy",
-      "asr_text": "嗯，咱们县11开关操有号什码时候，由9地协置电话位置真实性。",
-      "asr_raw": "<|zh|><|HAPPY|><|Speech|><|withitn|>嗯，咱们县11开关操有号什码时候，由9地协置电话位置真实性。",
-      "infer_seconds": 0.196,
+      "asr_text": "嗯大门县幺幺开关操作好车码时候有九一斜原原位置置",
+      "asr_raw": "嗯大门县幺幺开关操作好车码时候有九一斜原原位置置",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2733,
       "event": "CHATTER",
-      "message": "对窗口内各条都打不高分(最高0.28)，判为无关语音",
+      "message": "对窗口内各条都打不高分(最高0.36)，判为无关语音",
       "matched_seq": null,
-      "score": 0.2824,
+      "score": 0.3565,
       "verdict": "FAIL",
-      "sentence_similarity": 0.2963,
+      "sentence_similarity": 0.3704,
       "reasons": [
         "device: 票面「丹东线111开关」但复述为「11开关」",
         "handle: 缺失「操作方式把手」",
         "action: 缺失「切至」",
-        "dst_position: 票面「远方」但复述为「就地」"
+        "src_position: 缺失「就地」",
+        "dst_position: 缺失「远方」"
       ],
       "conflicts": [
-        "device: 票面「丹东线111开关」但复述为「11开关」",
-        "dst_position: 票面「远方」但复述为「就地」"
+        "device: 票面「丹东线111开关」但复述为「11开关」"
       ],
       "slots": [
         {
           "name": "panel",
           "expected": "测控屏",
           "outcome": "MISSING",
-          "score": 0.0,
+          "score": 0.3333,
           "required": false,
           "conflicting_value": null
         },
@@ -4417,7 +4394,7 @@
           "name": "handle",
           "expected": "操作方式把手",
           "outcome": "MISSING",
-          "score": 0.1667,
+          "score": 0.3333,
           "required": true,
           "conflicting_value": null
         },
@@ -4432,18 +4409,18 @@
         {
           "name": "src_position",
           "expected": "就地",
-          "outcome": "HIT",
-          "score": 1.0,
+          "outcome": "MISSING",
+          "score": 0.5,
           "required": true,
           "conflicting_value": null
         },
         {
           "name": "dst_position",
           "expected": "远方",
-          "outcome": "CONFLICT",
-          "score": 0.0,
+          "outcome": "MISSING",
+          "score": 0.5,
           "required": true,
-          "conflicting_value": "就地"
+          "conflicting_value": null
         }
       ]
     },
@@ -4458,9 +4435,12 @@
       "role_label": "唱票人",
       "role_confidence": 0.55,
       "role_source": "prior",
-      "asr_text": "你这样。",
-      "asr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>你这样。",
-      "infer_seconds": 0.1825,
+      "asr_text": "你这样",
+      "asr_raw": "你这样",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2754,
       "event": "CHATTER",
       "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
       "matched_seq": null,
@@ -4532,40 +4512,6 @@
     {
       "seq": 1,
       "text": "检查汇控柜丹东线111开关电气位置指示确在分闸位置",
-      "state": "FAILED",
-      "called": false,
-      "attempts": 2,
-      "score": 0.575,
-      "heard": "检查后源柜单灯线11开关电器位置只示确在分散位置",
-      "reasons": [
-        "residual: 票面「确在」但复述为「后源柜单灯线电器只示确在分散」",
-        "device: 票面「汇控柜丹东线111开关」但复述为「11开关」"
-      ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「后源柜单灯线电器只示确在分散」",
-        "device: 票面「汇控柜丹东线111开关」但复述为「11开关」"
-      ]
-    },
-    {
-      "seq": 2,
-      "text": "检查丹东线111开关机械位置指示确在分闸位置",
-      "state": "FLAGGED",
-      "called": false,
-      "attempts": 1,
-      "score": 0.535,
-      "heard": "检查灯能线也要开关机械位置指示确在分叉位置机械位置",
-      "reasons": [
-        "residual: 票面「确在」但复述为「灯能线也要开关确在分叉机械」",
-        "device: 缺失「丹东线111开关」",
-        "匹配证据偏弱，未发现必要槽位矛盾"
-      ],
-      "conflicts": [
-        "residual: 票面「确在」但复述为「灯能线也要开关确在分叉机械」"
-      ]
-    },
-    {
-      "seq": 3,
-      "text": "合上丹东线111-1刀闸",
       "state": "UNCONFIRMED",
       "called": false,
       "attempts": 0,
@@ -4575,20 +4521,40 @@
       "conflicts": []
     },
     {
+      "seq": 2,
+      "text": "检查丹东线111开关机械位置指示确在分闸位置",
+      "state": "UNCONFIRMED",
+      "called": false,
+      "attempts": 0,
+      "score": null,
+      "heard": null,
+      "reasons": [],
+      "conflicts": []
+    },
+    {
+      "seq": 3,
+      "text": "合上丹东线111-1刀闸",
+      "state": "VERIFIED",
+      "called": false,
+      "attempts": 1,
+      "score": 0.8558,
+      "heard": "合上丹东线1111刀闸河昌丹东线1111多闸正确执行",
+      "reasons": [],
+      "conflicts": []
+    },
+    {
       "seq": 4,
       "text": "检查汇控柜丹东线111-1刀闸电气位置指示确已合好",
       "state": "FAILED",
       "called": false,
       "attempts": 1,
-      "score": 0.5521,
-      "heard": "检查混龙归丹东线111高压道闸电器位置只是缺口",
+      "score": 0.515,
+      "heard": "检查货运柜单独线111开关电气位置指示却在分闸位置",
       "reasons": [
-        "residual: 票面「合好」但复述为「混龙归高压道闸电器只是缺口」",
-        "device: 票面「汇控柜丹东线1111刀闸」但复述为「丹东线111」"
+        "device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」"
       ],
       "conflicts": [
-        "residual: 票面「合好」但复述为「混龙归高压道闸电器只是缺口」",
-        "device: 票面「汇控柜丹东线1111刀闸」但复述为「丹东线111」"
+        "device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」"
       ]
     },
     {
@@ -4596,16 +4562,14 @@
       "text": "检查丹东线111-1刀闸机械位置指示确已合好",
       "state": "FAILED",
       "called": false,
-      "attempts": 1,
-      "score": 0.494,
-      "heard": "检查丹东线111杠1道闸机械位置指示缺核检查丹东线11杠1道闸机械位置指示缺核嗯准确",
+      "attempts": 3,
+      "score": 0.5114,
+      "heard": "检查汇控柜丹东线1111刀闸电梯位置支持吹风",
       "reasons": [
-        "residual: 票面「合好」但复述为「杠1道闸缺核丹东线11杠1道闸缺核嗯准确」",
-        "device: 票面「丹东线1111刀闸」但复述为「丹东线111」"
+        "object: 票面「机械位置指示」但复述为「位置指示」"
       ],
       "conflicts": [
-        "residual: 票面「合好」但复述为「杠1道闸缺核丹东线11杠1道闸缺核嗯准确」",
-        "device: 票面「丹东线1111刀闸」但复述为「丹东线111」"
+        "object: 票面「机械位置指示」但复述为「位置指示」"
       ]
     },
     {
@@ -4614,8 +4578,8 @@
       "state": "FLAGGED",
       "called": false,
       "attempts": 1,
-      "score": 0.5032,
-      "heard": "合尚丹东县也告3道闸",
+      "score": 0.526,
+      "heard": "合上丹东县123道闸",
       "reasons": [
         "device: 缺失「丹东线1113刀闸」",
         "匹配证据偏弱，未发现必要槽位矛盾"
@@ -4636,13 +4600,17 @@
     {
       "seq": 8,
       "text": "检查丹东线111-3刀闸机械位置指示确已合好",
-      "state": "UNCONFIRMED",
+      "state": "FAILED",
       "called": false,
-      "attempts": 0,
-      "score": null,
-      "heard": null,
-      "reasons": [],
-      "conflicts": []
+      "attempts": 2,
+      "score": 0.4618,
+      "heard": "检查丹东线1113到达机械位置指示车号检查丹东线11111杠才到达机械位置示缺号对正确",
+      "reasons": [
+        "device: 票面「丹东线1113刀闸」但复述为「丹东线111」"
+      ],
+      "conflicts": [
+        "device: 票面「丹东线1113刀闸」但复述为「丹东线111」"
+      ]
     },
     {
       "seq": 9,
@@ -4650,61 +4618,70 @@
       "state": "FAILED",
       "called": false,
       "attempts": 1,
-      "score": 0.5235,
-      "heard": "将测控平单独向121开关操作方式把手由就地7水安控位置将测控屏",
+      "score": 0.7711,
+      "heard": "将测光屏丹东线111开关操作方式把手由就地切至原换位置将测光屏",
       "reasons": [
-        "device: 票面「丹东线111开关」但复述为「121开关」",
-        "action: 缺失「切至」",
         "dst_position: 票面「远方」但复述为「就地」"
       ],
       "conflicts": [
-        "device: 票面「丹东线111开关」但复述为「121开关」",
         "dst_position: 票面「远方」但复述为「就地」"
       ]
     }
   ],
   "alerts": [
     {
-      "kind": "FAILED",
-      "seq": 1,
-      "message": "复述与票面不符：residual: 票面「确在」但复述为「后源柜单灯线电器只示确在分散」；device: 票面「汇控柜丹东线111开关」但复述为「11开关」",
-      "heard": "检查后源柜单灯线11开关电器位置只示确在分散位置。"
-    },
-    {
-      "kind": "FAILED",
-      "seq": 1,
-      "message": "疑似说错条目的后续复述仍未通过：residual: 票面「确在」但复述为「后柜单独线电器持全在分压嗯」；device: 票面「汇控柜丹东线111开关」但复述为「111开关」；object: 缺失「电气位置指示」",
-      "heard": "检查后柜单独线111开关，电器位置持全在分压位置嗯，正确。"
-    },
-    {
-      "kind": "FLAGGED",
-      "seq": 2,
-      "message": "灰区，需人工复核：residual: 票面「确在」但复述为「灯能线也要开关确在分叉机械」；device: 缺失「丹东线111开关」；匹配证据偏弱，未发现必要槽位矛盾",
-      "heard": "检查灯能线也要开关机械位置指示确在分叉位置。机械位置。"
+      "kind": "SKIP_WARNING",
+      "seq": 3,
+      "message": "疑似跳项：第 1, 2 条没有复述记录",
+      "heard": "合上丹东线1111刀闸河昌丹东线1111多闸正确执行"
     },
     {
       "kind": "FAILED",
       "seq": 4,
-      "message": "复述与票面不符：residual: 票面「合好」但复述为「混龙归高压道闸电器只是缺口」；device: 票面「汇控柜丹东线1111刀闸」但复述为「丹东线111」",
-      "heard": "检查混龙归丹东线111高压道闸，电器位置只是缺口。"
+      "message": "复述与票面不符：device: 票面「汇控柜丹东线1111刀闸」但复述为「111开关」",
+      "heard": "检查货运柜单独线111开关电气位置指示却在分闸位置"
     },
     {
       "kind": "FAILED",
       "seq": 5,
-      "message": "复述与票面不符：residual: 票面「合好」但复述为「杠1道闸缺核丹东线11杠1道闸缺核嗯准确」；device: 票面「丹东线1111刀闸」但复述为「丹东线111」",
-      "heard": "检查丹东线111杠1道闸，机械位置指示缺核。检查丹东线11杠1道闸，机械位置指示缺核嗯，准确。"
+      "message": "复述与票面不符：device: 票面「丹东线1111刀闸」但复述为「11开关」",
+      "heard": "检查单灯线11开关机械位置指示贴在分扇位置机器人"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 5,
+      "message": "疑似说错条目的后续复述仍未通过：object: 票面「机械位置指示」但复述为「位置指示」",
+      "heard": "检查汇控柜丹东线1111刀闸电梯位置支持吹风"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 5,
+      "message": "疑似说错条目的后续复述仍未通过：device: 缺失「丹东线1111刀闸」；匹配证据偏弱，未发现必要槽位矛盾",
+      "heard": "检查郸独线1111道闸机械位置指示确合检查单独线1111倒闸机械位置是确合嗯正确"
     },
     {
       "kind": "FLAGGED",
       "seq": 6,
       "message": "灰区，需人工复核：device: 缺失「丹东线1113刀闸」；匹配证据偏弱，未发现必要槽位矛盾",
-      "heard": "合尚丹东县也告三道闸。"
+      "heard": "合上丹东县123道闸"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 8,
+      "message": "复述与票面不符：object: 票面「机械位置指示」但复述为「位置指示」",
+      "heard": "检查混位位丹东线1113刀闸电梯位置指示群号检查混位位丹东线113到闸电梯位置确群号嗯正确"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 8,
+      "message": "疑似说错条目的后续复述仍未通过：device: 票面「丹东线1113刀闸」但复述为「丹东线111」",
+      "heard": "检查丹东线1113到达机械位置指示车号检查丹东线11111杠才到达机械位置示缺号对正确"
     },
     {
       "kind": "FAILED",
       "seq": 9,
-      "message": "复述与票面不符：device: 票面「丹东线111开关」但复述为「121开关」；action: 缺失「切至」；dst_position: 票面「远方」但复述为「就地」",
-      "heard": "将测控平单独向121开关操作方式把手由就地7水安控位置，将测控屏。"
+      "message": "复述与票面不符：dst_position: 票面「远方」但复述为「就地」",
+      "heard": "将测光屏丹东线111开关操作方式把手由就地切至原换位置将测光屏"
     }
   ]
 }

@@ -12,6 +12,7 @@
 import pytest
 
 from src.ticket.loader import load_ticket
+from src.ticket.slots import SlotExtractor
 from src.verify.matcher import Outcome, SlotMatcher, Verdict
 
 TICKET = "data/tickets/ticket1.json"
@@ -199,3 +200,81 @@ def test_every_ticket_item_matches_itself(ticket, matcher):
         best = matcher.best_match(ticket.items, item.raw)
         assert best.item.seq == item.seq, f"[{item.seq}] 被误匹配到 [{best.item.seq}]"
         assert best.verdict is Verdict.PASS, best.summary()
+
+
+# ---------------------------------------------------------------------------
+# 位置值说反（小留票面：每条都是"确在分闸位置"）
+# ---------------------------------------------------------------------------
+
+XIAOLIU = "data/xiaoliu/tickets/ticket1.json"
+XIAOLIU_ASSETS = "configs/stations/xiaoliu_assets.txt"
+
+
+@pytest.fixture(scope="module")
+def xiaoliu():
+    """小留站票面。它的每一条都落在"确在分闸位置"上，是位置槽位的用例来源。"""
+    extractor = SlotExtractor(lexicon_path="configs/lexicon.yaml",
+                              asset_list_path=XIAOLIU_ASSETS)
+    ticket = load_ticket(XIAOLIU, extractor=extractor)
+    return ticket, SlotMatcher(extractor=extractor)
+
+
+def test_position_reversal_is_failed(xiaoliu):
+    """"确在分闸位置"说成"确在合闸位置"必须拦下。
+
+    position 是兜底槽位：票面里 src/dst 之外的那个位置值落在它上面。不把它
+    算作必要槽位时，分/合说反只得一条 reason、得分 0.881 仍判 PASS —— 而
+    分合说反恰恰是后果最严重的一类错误。
+    """
+    ticket, matcher = xiaoliu
+    item = ticket.by_seq(1)
+    r = matcher.match(item, "检查黄堽线312开关电气位置指示确在合闸位置")
+
+    assert r.verdict is Verdict.FAIL, r.summary()
+    assert ["position"] == [c.slot.name for c in r.conflicts]
+
+
+# ---------------------------------------------------------------------------
+# 设备全称被听残 vs 设备编号真说错
+# ---------------------------------------------------------------------------
+
+def test_fragmented_device_name_is_missing_not_conflict(xiaoliu):
+    """设备全称被听成同编号的另一个名字 —— 判缺失（灰区），不判说错。
+
+    "黄堽线312-3刀闸三相" 和票面的 "黄堽线312-3刀闸开关侧" 数字完全一样，
+    编号那道闸门放行，此时若按整串相似度判矛盾，一段听糊的复述会直接升格成
+    "疑似说错" —— 误报设备说错是后果最严重的一类。所以只有存在互斥取值的
+    槽位（位置、对象、把手、动作、检查词）才判得出矛盾，设备号没有闭集可
+    对照，只能判缺失。
+    """
+    ticket, matcher = xiaoliu
+    item = ticket.by_seq(5)
+    r = matcher.match(item, "检查312-3刀闸三相确已装设4号接地线一组")
+
+    outcomes = {s.slot.name: s.outcome for s in r.slot_results}
+    assert outcomes["device"] is Outcome.MISSING, r.summary()
+    assert r.verdict is not Verdict.FAIL, r.summary()
+
+
+def test_wrong_device_number_is_still_conflict(xiaoliu):
+    """设备编号真说错（312-1 说成 312-3）仍要判矛盾 —— 判缺失是漏报。"""
+    ticket, matcher = xiaoliu
+    item = ticket.by_seq(5)
+    r = matcher.match(item, "检查黄堽线312-1刀闸开关侧确已装设6号接地线一组")
+
+    assert r.verdict is Verdict.FAIL, r.summary()
+    assert any(c.slot.name == "device" for c in r.conflicts), r.summary()
+
+
+def test_device_name_heard_as_bare_number_is_missing(xiaoliu):
+    """设备全称整个没听出来、只剩编号 —— 也是缺失，不是"念成了别的设备"。
+
+    这是现场最常见的一种听残（"黄堽线312-1刀闸开关侧" 只出来 "3121"）。
+    """
+    ticket, matcher = xiaoliu
+    item = ticket.by_seq(6)
+    r = matcher.match(item, "检查3121确已装设6号接地线一组")
+
+    assert r.verdict is not Verdict.FAIL, r.summary()
+    assert any(s.slot.name == "device" and s.outcome is Outcome.MISSING
+               for s in r.slot_results), r.summary()

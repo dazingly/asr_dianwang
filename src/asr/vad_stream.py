@@ -10,6 +10,13 @@
 
 首次运行会联网从魔搭下载 fsmn-vad（约 1.7MB）。没有网络时 VAD 不可用，
 调用方要能退回到"整段直接识别"。
+
+分段器只保留 FSMN 这一个。Silero 试过并否掉了：基准集（FLEURS-VAD-102）
+上它的误报率远低于 FSMN（9.41% vs 44.03%），但现场远场录音底噪高，条目
+之间的停顿达不到它的静音判据，整条操作被并成一段。而这条链路"切长"比
+"切短"代价大得多 —— 对齐器一段文本只认一条票（src/verify/aligner.py
+的 feed），一段吃掉好几条内容时只有一条能得分，其余落进"未确认"。实测
+与取舍见 PROGRESS.md 第十节。
 """
 from __future__ import annotations
 
@@ -43,8 +50,11 @@ class Segment:
 
 class VadSegmenter:
     def __init__(self, config: dict | None = None, **overrides):
-        cfg = config or load_config()
-        self.model_name = overrides.get("model", cfg_get(cfg, "vad.model", "fsmn-vad"))
+        # 只有 None 才是"用当前配置"。传 {} 是"一份空设置"，用 `config or
+        # load_config()` 判断会把空字典当假值，于是仓库里那份 yaml 悄悄接管，
+        # 调用方以为自己什么都没配、实际按 yaml 走了。
+        cfg = load_config() if config is None else config
+        self.model_name = overrides.get("model", cfg_get(cfg, "vad.fsmn_model", "fsmn-vad"))
         self.max_end_silence_time = overrides.get(
             "max_end_silence_time", cfg_get(cfg, "vad.max_end_silence_time", 300)
         )
@@ -101,6 +111,9 @@ class VadSegmenter:
             out = [Segment(0, int(len(wave) / sample_rate * 1000), wave)]
         return out
 
+    def describe(self) -> str:
+        return f"fsmn-vad(静音{self.max_end_silence_time}ms)"
+
     # ------------------------------------------------------------------
     def reset_stream(self) -> None:
         self._stream_cache = {}
@@ -148,16 +161,6 @@ class VadSegmenter:
     def in_speech(self) -> bool:
         """当前是否正处在一段还没结束的语音里。增量提前触发要用它判断。"""
         return self._pending_start_ms is not None
-
-
-_DEFAULT: VadSegmenter | None = None
-
-
-def get_segmenter(config: dict | None = None, **overrides) -> VadSegmenter:
-    global _DEFAULT
-    if _DEFAULT is None:
-        _DEFAULT = VadSegmenter(config, **overrides)
-    return _DEFAULT
 
 
 def energy_segments(wave: np.ndarray, sample_rate: int = SAMPLE_RATE,

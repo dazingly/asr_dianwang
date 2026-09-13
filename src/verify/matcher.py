@@ -184,12 +184,29 @@ class SlotMatcher:
                     return SlotResult(slot, Outcome.CONFLICT, 0.0, required, weight,
                                       conflicting_value=closest.value)
                 candidates = exact
-            best_score = max(self._similar(slot.value, s.value) for s in candidates)
+            # "矛盾"的定义是念成了同组里的另一个值，所以只有当词表里有互斥取值
+            # 可对照时（position/object/handle/action/check_type）才判得出矛盾。
+            if self._rivals(slot):
+                best_score = max(self._similar(slot.value, s.value) for s in candidates)
+                if best_score >= self.hit_threshold:
+                    return SlotResult(slot, Outcome.HIT, best_score, required, weight)
+                closest = max(candidates, key=lambda s: self._similar(slot.value, s.value))
+                return SlotResult(slot, Outcome.CONFLICT, 0.0, required, weight,
+                                  conflicting_value=closest.value)
+
+            # 没有闭集可对照的槽位（设备号、电压、残余实词等）判不了矛盾，只能判
+            # 缺失，最高到灰区。设备全称被听残成半个名字（"黄堽线3121刀闸开关侧"
+            # → "3121"）不是"念成了另一台设备"，按矛盾判会让一段听糊的复述直接
+            # 升级成"疑似说错"，而误报设备说错正是后果最严重的一类。
+            #
+            # 这里还要用子串包含而不是整串相似度：复述比票面长是常态（口语填充、
+            # 同一句说两遍、唱票和复述粘在一段），整串相似度按最长边归一化，多出来
+            # 的字全要记扣分，一段正确复述带个"嗯"就能判不过。子串包含只按 needle
+            # 归一化，问的是"票面这几个字有没有被念出来"，才是这个槽位要问的事。
+            best_score = max(self._contains(slot.value, s.value) for s in candidates)
             if best_score >= self.hit_threshold:
                 return SlotResult(slot, Outcome.HIT, best_score, required, weight)
-            closest = max(candidates, key=lambda s: self._similar(slot.value, s.value))
-            return SlotResult(slot, Outcome.CONFLICT, 0.0, required, weight,
-                              conflicting_value=closest.value)
+            return SlotResult(slot, Outcome.MISSING, 0.0, required, weight)
 
         # 复述没解析出同名槽位时，退回整句模糊包含。
         # 这条路兜住的是"简述导致句式变了、结构没解析出来"的情况。
@@ -215,11 +232,15 @@ class SlotMatcher:
                               conflicting_value=rival)
         return SlotResult(slot, Outcome.MISSING, contain_score, required, weight)
 
+    def _rivals(self, slot: Slot) -> list[str]:
+        """这个槽位可对照的闭集取值。空表示判不了矛盾，只能判缺失。"""
+        return self.extractor.group_values.get(slot.group or "", [])
+
     def _find_rival(self, slot: Slot, norm_text: str, own_score: float) -> str | None:
         if not slot.group:
             return None
         best_value, best_score = None, own_score
-        for value in self.extractor.group_values.get(slot.group, []):
+        for value in self._rivals(slot):
             if value == slot.value:
                 continue
             score = self._contains(value, norm_text)

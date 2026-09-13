@@ -1,0 +1,2530 @@
+{
+  "metadata": {
+    "audio": "D:\\pycode\\asr_dianwang\\data\\xiaoliu\\clips\\ticket1\\full_audio.wav",
+    "ticket": "D:\\pycode\\asr_dianwang\\data\\xiaoliu\\tickets\\ticket1.json",
+    "substation": "35kV小留变电站",
+    "mission": "核对35kV黄堽线312开关在检修状态，现场具备操作条件",
+    "ticket_id": "新2060070100020060309017",
+    "asset_list": "D:\\pycode\\asr_dianwang\\configs\\stations\\xiaoliu_assets.txt",
+    "asr": "Paraformer-Large @ cuda:0 (fp32)",
+    "segmenter": "fsmn-vad(静音300ms)",
+    "adhere": "阈值0.9，靶子68条"
+  },
+  "summary": {
+    "audio_seconds": 179.669,
+    "segment_count": 35,
+    "total_infer_seconds": 9.157,
+    "rtf": 0.051,
+    "adhere_rewrites": 14,
+    "adhere_segments": 13,
+    "state_counts": {
+      "VERIFIED": 5,
+      "FLAGGED": 2
+    },
+    "alert_count": 8,
+    "peak_gpu_mb": 920.3
+  },
+  "segments": [
+    {
+      "index": 1,
+      "start_ms": 0,
+      "end_ms": 2260,
+      "duration_ms": 2260,
+      "rms": 0.046853,
+      "rms_ratio": 0.7144,
+      "role": "UNKNOWN",
+      "role_label": "未定",
+      "role_confidence": 0.3,
+      "role_source": "energy",
+      "asr_text": "状态现场具备调料条件",
+      "asr_raw": "状态现场具备调料条件",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3966,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.09)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0882,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0526,
+      "reasons": [
+        "device: 缺失「黄堽线3121刀闸3相」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸3相",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "start_ms": 2260,
+      "end_ms": 3000,
+      "duration_ms": 740,
+      "rms": 0.034693,
+      "rms_ratio": 0.529,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.7536,
+      "role_source": "energy",
+      "asr_text": "坐边也点开",
+      "asr_raw": "坐边也点开",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2848,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0471,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0455,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.1667,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "start_ms": 3000,
+      "end_ms": 3570,
+      "duration_ms": 570,
+      "rms": 0.029149,
+      "rms_ratio": 0.4444,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.8889,
+      "role_source": "energy",
+      "asr_text": "走",
+      "asr_raw": "走",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2573,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "start_ms": 11320,
+      "end_ms": 12260,
+      "duration_ms": 940,
+      "rms": 0.104316,
+      "rms_ratio": 1.5905,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "联系位置",
+      "asr_raw": "联系位置",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2565,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.11)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.1055,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.1364,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.3333,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "start_ms": 17730,
+      "end_ms": 18460,
+      "duration_ms": 730,
+      "rms": 0.016997,
+      "rms_ratio": 0.2592,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 1.0,
+      "role_source": "energy",
+      "asr_text": "我看不见吗",
+      "asr_raw": "我看不见吗",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2445,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.08)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.075,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0,
+      "reasons": [
+        "device: 缺失「黄堽线3121刀闸3相」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸3相",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "start_ms": 20260,
+      "end_ms": 21280,
+      "duration_ms": 1020,
+      "rms": 0.057876,
+      "rms_ratio": 0.8825,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "去",
+      "asr_raw": "去",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2349,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "start_ms": 21280,
+      "end_ms": 22100,
+      "duration_ms": 820,
+      "rms": 0.052889,
+      "rms_ratio": 0.8064,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "挺好看的",
+      "asr_raw": "挺好看的",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2359,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "start_ms": 47460,
+      "end_ms": 48100,
+      "duration_ms": 640,
+      "rms": 0.024552,
+      "rms_ratio": 0.3744,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 1.0,
+      "role_source": "energy",
+      "asr_text": "是",
+      "asr_raw": "是",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2641,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0471,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0455,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.1667,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "start_ms": 54580,
+      "end_ms": 58350,
+      "duration_ms": 3770,
+      "rms": 0.097939,
+      "rms_ratio": 1.4933,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "呃检查黄岗线三幺两三杆电器位置只是确在分闸位置",
+      "asr_raw": "呃检查黄岗线三幺两三杆电器位置只是确在分闸位置",
+      "judged_text": null,
+      "adhered_text": "呃检查黄岗线3123杆电气位置指示确在分闸位置",
+      "rewrites": [
+        {
+          "heard": "电器位置只是",
+          "term": "电气位置指示",
+          "category": "object",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2682,
+      "event": "FAILED",
+      "message": "复述与票面不符：device: 票面「黄堽线312开关」但复述为「3123」",
+      "matched_seq": 1,
+      "score": 0.7531,
+      "verdict": "FAIL",
+      "sentence_similarity": 0.8696,
+      "reasons": [
+        "device: 票面「黄堽线312开关」但复述为「3123」"
+      ],
+      "conflicts": [
+        "device: 票面「黄堽线312开关」但复述为「3123」"
+      ],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "3123"
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "start_ms": 58350,
+      "end_ms": 63910,
+      "duration_ms": 5560,
+      "rms": 0.095365,
+      "rms_ratio": 1.4541,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查三十五千伏皇冈线三幺两开管电器位置指示却在分闸位置",
+      "asr_raw": "检查三十五千伏皇冈线三幺两开管电器位置指示却在分闸位置",
+      "judged_text": null,
+      "adhered_text": "检查35kv黄堽线312开关电气位置指示却在分闸位置",
+      "rewrites": [
+        {
+          "heard": "皇冈线312开管",
+          "term": "黄堽线312开关",
+          "category": "device",
+          "score": 1.0
+        },
+        {
+          "heard": "电器位置指示",
+          "term": "电气位置指示",
+          "category": "object",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2751,
+      "event": "REPEAT",
+      "message": "后续清晰复述将疑似说错纠正为通过",
+      "matched_seq": 1,
+      "score": 0.9615,
+      "verdict": "PASS",
+      "sentence_similarity": 0.8462,
+      "reasons": [],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "start_ms": 65120,
+      "end_ms": 66260,
+      "duration_ms": 1140,
+      "rms": 0.046138,
+      "rms_ratio": 0.7035,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "看下只有",
+      "asr_raw": "看下只有",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2414,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0471,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0455,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.1667,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "start_ms": 66490,
+      "end_ms": 67140,
+      "duration_ms": 650,
+      "rms": 0.034803,
+      "rms_ratio": 0.5307,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.751,
+      "role_source": "energy",
+      "asr_text": "走",
+      "asr_raw": "走",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.237,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "start_ms": 68750,
+      "end_ms": 69410,
+      "duration_ms": 660,
+      "rms": 0.118445,
+      "rms_ratio": 1.806,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.7287,
+      "role_source": "energy",
+      "asr_text": "嗯",
+      "asr_raw": "嗯",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2896,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.00)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0,
+      "reasons": [
+        "device: 缺失「黄堽线312开关」",
+        "object: 缺失「电气位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "电气位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "start_ms": 83160,
+      "end_ms": 84270,
+      "duration_ms": 1110,
+      "rms": 0.031086,
+      "rms_ratio": 0.474,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.8416,
+      "role_source": "energy",
+      "asr_text": "擦油料",
+      "asr_raw": "擦油料",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3295,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.09)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0882,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0526,
+      "reasons": [
+        "device: 缺失「黄堽线3121刀闸3相」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸3相",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "start_ms": 88910,
+      "end_ms": 92540,
+      "duration_ms": 3630,
+      "rms": 0.065585,
+      "rms_ratio": 1.0,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查黄冈线三幺零开关机械位置指示确在分闸位置",
+      "asr_raw": "检查黄冈线三幺零开关机械位置指示确在分闸位置",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2765,
+      "event": "FAILED",
+      "message": "复述与票面不符：device: 票面「黄堽线312开关」但复述为「310开关」",
+      "matched_seq": 2,
+      "score": 0.7744,
+      "verdict": "FAIL",
+      "sentence_similarity": 0.9545,
+      "reasons": [
+        "device: 票面「黄堽线312开关」但复述为「310开关」"
+      ],
+      "conflicts": [
+        "device: 票面「黄堽线312开关」但复述为「310开关」"
+      ],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "310开关"
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "start_ms": 92540,
+      "end_ms": 94920,
+      "duration_ms": 2380,
+      "rms": 0.100167,
+      "rms_ratio": 1.5273,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "检查黄冈线三幺两开关",
+      "asr_raw": "检查黄冈线三幺两开关",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线312开关",
+      "rewrites": [
+        {
+          "heard": "黄冈线312开关",
+          "term": "黄堽线312开关",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2625,
+      "event": "MERGED",
+      "message": "本段并入下一段，合起来判",
+      "matched_seq": 2,
+      "score": 0.4351,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.4545,
+      "reasons": [
+        "object: 缺失「机械位置指示」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "start_ms": 94920,
+      "end_ms": 97050,
+      "duration_ms": 2130,
+      "rms": 0.090451,
+      "rms_ratio": 1.3791,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "机械位置知识却在分叉位置",
+      "asr_raw": "机械位置知识却在分叉位置",
+      "judged_text": "检查黄堽线312开关机械位置指示却在分叉位置",
+      "adhered_text": "机械位置指示却在分叉位置",
+      "rewrites": [
+        {
+          "heard": "机械位置知识",
+          "term": "机械位置指示",
+          "category": "object",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2458,
+      "event": "FLAGGED",
+      "message": "后续复述得分接近通过且无矛盾，疑似说错改判灰区待复核",
+      "matched_seq": 2,
+      "score": 0.9351,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.9545,
+      "reasons": [
+        "position: 缺失「分闸」"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线312开关",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "object",
+          "expected": "机械位置指示",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "start_ms": 104450,
+      "end_ms": 105690,
+      "duration_ms": 1240,
+      "rms": 0.038858,
+      "rms_ratio": 0.5925,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.652,
+      "role_source": "energy",
+      "asr_text": "再按两杠幺",
+      "asr_raw": "再按两杠幺",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2577,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.047,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0833,
+      "reasons": [
+        "device: 缺失「黄堽线3123刀闸开关侧」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设4接地线1组",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸开关侧",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "start_ms": 108280,
+      "end_ms": 109480,
+      "duration_ms": 1200,
+      "rms": 0.067457,
+      "rms_ratio": 1.0285,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "杠幺杆这边",
+      "asr_raw": "杠幺杆这边",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2526,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.047,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0833,
+      "reasons": [
+        "device: 缺失「黄堽线3123刀闸开关侧」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设4接地线1组",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸开关侧",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "start_ms": 110100,
+      "end_ms": 110820,
+      "duration_ms": 720,
+      "rms": 0.031435,
+      "rms_ratio": 0.4793,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.8331,
+      "role_source": "energy",
+      "asr_text": "这儿",
+      "asr_raw": "这儿",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2562,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.01)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0132,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0526,
+      "reasons": [
+        "device: 缺失「黄堽线3121刀闸3相」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸3相",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "start_ms": 115210,
+      "end_ms": 118720,
+      "duration_ms": 3510,
+      "rms": 0.096384,
+      "rms_ratio": 1.4696,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "检查黄光线三向两杠幺作闸三项确在分叉位置",
+      "asr_raw": "检查黄光线三向两杠幺作闸三项确在分叉位置",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.3482,
+      "event": "FLAGGED",
+      "message": "灰区，需人工复核：device: 缺失「黄堽线3121刀闸3相」；position: 缺失「分闸」；匹配证据偏弱，未发现必要槽位矛盾",
+      "matched_seq": 3,
+      "score": 0.5724,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.7895,
+      "reasons": [
+        "device: 缺失「黄堽线3121刀闸3相」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸3相",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "start_ms": 118720,
+      "end_ms": 123560,
+      "duration_ms": 4840,
+      "rms": 0.087879,
+      "rms_ratio": 1.3399,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查黄冈线三幺两杠幺道闸三项却在分闸位置",
+      "asr_raw": "检查黄冈线三幺两杠幺道闸三项却在分闸位置",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线3121刀闸3相却在分闸位置",
+      "rewrites": [
+        {
+          "heard": "黄冈线3121道闸3项",
+          "term": "黄堽线3121刀闸3相",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2917,
+      "event": "REPEAT",
+      "message": "重复复述，灰区上调为通过",
+      "matched_seq": 3,
+      "score": 1.0,
+      "verdict": "PASS",
+      "sentence_similarity": 1.0,
+      "reasons": [],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸3相",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "start_ms": 124370,
+      "end_ms": 125090,
+      "duration_ms": 720,
+      "rms": 0.016598,
+      "rms_ratio": 0.2531,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 1.0,
+      "role_source": "energy",
+      "asr_text": "干啥",
+      "asr_raw": "干啥",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2212,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.01)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.0132,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.0526,
+      "reasons": [
+        "device: 缺失「黄堽线3121刀闸3相」",
+        "position: 缺失「分闸」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸3相",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "start_ms": 128590,
+      "end_ms": 132660,
+      "duration_ms": 4070,
+      "rms": 0.056475,
+      "rms_ratio": 0.8611,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查黄冈县三幺两杠三道闸三项水电分量位置",
+      "asr_raw": "检查黄冈县三幺两杠三道闸三项水电分量位置",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线3123刀闸3相水电分量位置",
+      "rewrites": [
+        {
+          "heard": "黄冈县3123道闸3项",
+          "term": "黄堽线3123刀闸3相",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2772,
+      "event": "FLAGGED",
+      "message": "灰区，需人工复核：position: 缺失「分闸」",
+      "matched_seq": 4,
+      "score": 0.7355,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.8421,
+      "reasons": [
+        "position: 缺失「分闸」"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸3相",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "start_ms": 132660,
+      "end_ms": 136970,
+      "duration_ms": 4310,
+      "rms": 0.093607,
+      "rms_ratio": 1.4273,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "检查黄冈线三幺两杠三道闸三项却在分叉位置",
+      "asr_raw": "检查黄冈线三幺两杠三道闸三项却在分叉位置",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线3123刀闸3相却在分叉位置",
+      "rewrites": [
+        {
+          "heard": "黄冈线3123道闸3项",
+          "term": "黄堽线3123刀闸3相",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2182,
+      "event": "REPEAT",
+      "message": "重复复述已完成的条目",
+      "matched_seq": 4,
+      "score": 0.9118,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.9474,
+      "reasons": [
+        "position: 缺失「分闸」"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "确在",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸3相",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "position",
+          "expected": "分闸",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": true,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 26,
+      "start_ms": 137230,
+      "end_ms": 140500,
+      "duration_ms": 3270,
+      "rms": 0.055566,
+      "rms_ratio": 0.8472,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "检查黄冈线三幺两杠三道闸开关侧",
+      "asr_raw": "检查黄冈线三幺两杠三道闸开关侧",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线3123刀闸开关侧",
+      "rewrites": [
+        {
+          "heard": "黄冈线3123道闸开关侧",
+          "term": "黄堽线3123刀闸开关侧",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.256,
+      "event": "FLAGGED",
+      "message": "灰区，需人工复核：得分处于灰区",
+      "matched_seq": 5,
+      "score": 0.7171,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.5833,
+      "reasons": [],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设4接地线1组",
+          "outcome": "MISSING",
+          "score": 0.125,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸开关侧",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "start_ms": 140500,
+      "end_ms": 142550,
+      "duration_ms": 2050,
+      "rms": 0.043075,
+      "rms_ratio": 0.6568,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "确已装饰四号接力线一股",
+      "asr_raw": "确已装饰四号接力线一股",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2109,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.11)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.1148,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.25,
+      "reasons": [
+        "device: 缺失「黄堽线3123刀闸开关侧」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设4接地线1组",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸开关侧",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "start_ms": 142550,
+      "end_ms": 149560,
+      "duration_ms": 7010,
+      "rms": 0.087762,
+      "rms_ratio": 1.3381,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.55,
+      "role_source": "prior",
+      "asr_text": "检查黄冈线三幺两开关线路侧确已装置四号接地线一组嗯",
+      "asr_raw": "检查黄冈线三幺两开关线路侧确已装置四号接地线一组嗯",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线312开关线路侧确已装置4号接地线1组嗯",
+      "rewrites": [
+        {
+          "heard": "黄冈线312开关",
+          "term": "黄堽线312开关",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2451,
+      "event": "FAILED",
+      "message": "已完成条目出现矛盾复述：device: 票面「黄堽线3123刀闸开关侧」但复述为「黄堽线312开关」",
+      "matched_seq": 5,
+      "score": 0.5276,
+      "verdict": "FAIL",
+      "sentence_similarity": 0.68,
+      "reasons": [
+        "device: 票面「黄堽线3123刀闸开关侧」但复述为「黄堽线312开关」"
+      ],
+      "conflicts": [
+        "device: 票面「黄堽线3123刀闸开关侧」但复述为「黄堽线312开关」"
+      ],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设4接地线1组",
+          "outcome": "HIT",
+          "score": 0.75,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸开关侧",
+          "outcome": "CONFLICT",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": "黄堽线312开关"
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "start_ms": 149560,
+      "end_ms": 151920,
+      "duration_ms": 2360,
+      "rms": 0.073949,
+      "rms_ratio": 1.1275,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查黄冈线重稳啊啊",
+      "asr_raw": "检查黄冈线重稳啊啊",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2374,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.42)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.425,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.2,
+      "reasons": [
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "现场具备操作",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "start_ms": 151920,
+      "end_ms": 154570,
+      "duration_ms": 2650,
+      "rms": 0.09676,
+      "rms_ratio": 1.4753,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查黄光线三幺两杠三道闸开关侧",
+      "asr_raw": "检查黄光线三幺两杠三道闸开关侧",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线3123刀闸开关侧",
+      "rewrites": [
+        {
+          "heard": "黄光线3123道闸开关侧",
+          "term": "黄堽线3123刀闸开关侧",
+          "category": "device",
+          "score": 0.9167
+        }
+      ],
+      "infer_seconds": 0.2489,
+      "event": "FAILED",
+      "message": "疑似说错条目的后续复述仍未通过：得分不足",
+      "matched_seq": 5,
+      "score": 0.7171,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.5833,
+      "reasons": [],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设4接地线1组",
+          "outcome": "MISSING",
+          "score": 0.125,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸开关侧",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "MISSING",
+          "score": 0.5,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 31,
+      "start_ms": 154570,
+      "end_ms": 161050,
+      "duration_ms": 6480,
+      "rms": 0.087928,
+      "rms_ratio": 1.3407,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "确已装饰四号接地线一组检查黄冈线三幺两杠三道闸开关侧却已装饰四号接地线一组嗯",
+      "asr_raw": "确已装饰四号接地线一组检查黄冈线三幺两杠三道闸开关侧却已装饰四号接地线一组嗯",
+      "judged_text": null,
+      "adhered_text": "确已装饰4号接地线1组检查黄堽线3123刀闸开关侧却已装饰4号接地线1组嗯",
+      "rewrites": [
+        {
+          "heard": "黄冈线3123道闸开关侧",
+          "term": "黄堽线3123刀闸开关侧",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2574,
+      "event": "REPEAT",
+      "message": "后续清晰复述将疑似说错纠正为通过",
+      "matched_seq": 5,
+      "score": 0.8618,
+      "verdict": "PASS",
+      "sentence_similarity": 0.6216,
+      "reasons": [],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设4接地线1组",
+          "outcome": "HIT",
+          "score": 0.75,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3123刀闸开关侧",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 32,
+      "start_ms": 161170,
+      "end_ms": 166050,
+      "duration_ms": 4880,
+      "rms": 0.086918,
+      "rms_ratio": 1.3253,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查黄冈线三幺两杠幺道闸开关侧确已装饰六号接地线一组",
+      "asr_raw": "检查黄冈线三幺两杠幺道闸开关侧确已装饰六号接地线一组",
+      "judged_text": null,
+      "adhered_text": "检查黄堽线3121刀闸开关侧确已装饰6号接地线1组",
+      "rewrites": [
+        {
+          "heard": "黄冈线3121道闸开关侧",
+          "term": "黄堽线3121刀闸开关侧",
+          "category": "device",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2339,
+      "event": "VERIFIED",
+      "message": "一致",
+      "matched_seq": 6,
+      "score": 0.9364,
+      "verdict": "PASS",
+      "sentence_similarity": 0.92,
+      "reasons": [],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设6接地线1组",
+          "outcome": "HIT",
+          "score": 0.75,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸开关侧",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 33,
+      "start_ms": 166050,
+      "end_ms": 174400,
+      "duration_ms": 8350,
+      "rms": 0.086574,
+      "rms_ratio": 1.32,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查黄冈线三幺两杠幺侧杠幺开关侧到三幺两杠幺倒闸开关侧却已装饰六号接地线一组",
+      "asr_raw": "检查黄冈线三幺两杠幺侧杠幺开关侧到三幺两杠幺倒闸开关侧却已装饰六号接地线一组",
+      "judged_text": null,
+      "adhered_text": "检查黄冈线3121侧杠1开关侧到3121倒闸开关侧确已装饰6号接地线1组",
+      "rewrites": [
+        {
+          "heard": "却已",
+          "term": "确已",
+          "category": "state",
+          "score": 1.0
+        }
+      ],
+      "infer_seconds": 0.2544,
+      "event": "REPEAT",
+      "message": "重复复述已完成的条目",
+      "matched_seq": 6,
+      "score": 0.5173,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.6389,
+      "reasons": [
+        "device: 缺失「黄堽线3121刀闸开关侧」",
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "装设6接地线1组",
+          "outcome": "HIT",
+          "score": 0.75,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "device",
+          "expected": "黄堽线3121刀闸开关侧",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": true,
+          "conflicting_value": null
+        },
+        {
+          "name": "state",
+          "expected": "确已",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "start_ms": 174400,
+      "end_ms": 178190,
+      "duration_ms": 3790,
+      "rms": 0.092733,
+      "rms_ratio": 1.4139,
+      "role": "OPERATOR",
+      "role_label": "操作人",
+      "role_confidence": 0.35,
+      "role_source": "energy-lean",
+      "asr_text": "检查现场具备操作条件检查现场确已具备操作条件",
+      "asr_raw": "检查现场具备操作条件检查现场确已具备操作条件",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2547,
+      "event": "VERIFIED",
+      "message": "一致",
+      "matched_seq": 7,
+      "score": 0.8636,
+      "verdict": "PASS",
+      "sentence_similarity": 0.4545,
+      "reasons": [],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "现场具备操作",
+          "outcome": "HIT",
+          "score": 1.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    },
+    {
+      "index": 35,
+      "start_ms": 178190,
+      "end_ms": 179120,
+      "duration_ms": 930,
+      "rms": 0.040521,
+      "rms_ratio": 0.6178,
+      "role": "CALLER",
+      "role_label": "唱票人",
+      "role_confidence": 0.6115,
+      "role_source": "energy",
+      "asr_text": "操作结束",
+      "asr_raw": "操作结束",
+      "judged_text": null,
+      "adhered_text": null,
+      "rewrites": [],
+      "infer_seconds": 0.2356,
+      "event": "CHATTER",
+      "message": "对窗口内各条都打不高分(最高0.05)，判为无关语音",
+      "matched_seq": null,
+      "score": 0.05,
+      "verdict": "REVIEW",
+      "sentence_similarity": 0.2,
+      "reasons": [
+        "匹配证据偏弱，未发现必要槽位矛盾"
+      ],
+      "conflicts": [],
+      "slots": [
+        {
+          "name": "check_type",
+          "expected": "检查",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        },
+        {
+          "name": "residual",
+          "expected": "现场具备操作",
+          "outcome": "MISSING",
+          "score": 0.0,
+          "required": false,
+          "conflicting_value": null
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "seq": 1,
+      "text": "检查黄堽线312开关电气位置指示确在分闸位置",
+      "state": "VERIFIED",
+      "called": false,
+      "attempts": 2,
+      "score": 0.9615,
+      "heard": "检查35kv黄堽线312开关电气位置指示却在分闸位置",
+      "reasons": [],
+      "conflicts": []
+    },
+    {
+      "seq": 2,
+      "text": "检查黄堽线312开关机械位置指示确在分闸位置",
+      "state": "FLAGGED",
+      "called": true,
+      "attempts": 2,
+      "score": 0.9351,
+      "heard": "检查黄堽线312开关机械位置指示却在分叉位置",
+      "reasons": [
+        "position: 缺失「分闸」"
+      ],
+      "conflicts": []
+    },
+    {
+      "seq": 3,
+      "text": "检查黄堽线312-1刀闸三相确在分闸位置",
+      "state": "VERIFIED",
+      "called": false,
+      "attempts": 2,
+      "score": 1.0,
+      "heard": "检查黄堽线3121刀闸3相却在分闸位置",
+      "reasons": [],
+      "conflicts": []
+    },
+    {
+      "seq": 4,
+      "text": "检查黄堽线312-3刀闸三相确在分闸位置",
+      "state": "FLAGGED",
+      "called": true,
+      "attempts": 2,
+      "score": 0.9118,
+      "heard": "检查黄堽线3123刀闸3相却在分叉位置",
+      "reasons": [
+        "position: 缺失「分闸」"
+      ],
+      "conflicts": []
+    },
+    {
+      "seq": 5,
+      "text": "检查黄堽线312-3刀闸开关侧确已装设#4接地线一组",
+      "state": "VERIFIED",
+      "called": true,
+      "attempts": 4,
+      "score": 0.8618,
+      "heard": "确已装饰4号接地线1组检查黄堽线3123刀闸开关侧却已装饰4号接地线1组嗯",
+      "reasons": [],
+      "conflicts": []
+    },
+    {
+      "seq": 6,
+      "text": "检查黄堽线312-1刀闸开关侧确已装设#6接地线一组",
+      "state": "VERIFIED",
+      "called": false,
+      "attempts": 2,
+      "score": 0.9364,
+      "heard": "检查黄堽线3121刀闸开关侧确已装饰6号接地线1组",
+      "reasons": [],
+      "conflicts": []
+    },
+    {
+      "seq": 7,
+      "text": "检查现场具备操作条件",
+      "state": "VERIFIED",
+      "called": false,
+      "attempts": 1,
+      "score": 0.8636,
+      "heard": "检查现场具备操作条件检查现场确已具备操作条件",
+      "reasons": [],
+      "conflicts": []
+    }
+  ],
+  "alerts": [
+    {
+      "kind": "FAILED",
+      "seq": 1,
+      "message": "复述与票面不符：device: 票面「黄堽线312开关」但复述为「3123」",
+      "heard": "呃检查黄岗线3123杆电气位置指示确在分闸位置"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 2,
+      "message": "复述与票面不符：device: 票面「黄堽线312开关」但复述为「310开关」",
+      "heard": "检查黄冈线310开关机械位置指示确在分闸位置"
+    },
+    {
+      "kind": "FLAGGED",
+      "seq": 2,
+      "message": "后续复述得分接近通过且无矛盾，疑似说错改判灰区待复核",
+      "heard": "检查黄堽线312开关机械位置指示却在分叉位置"
+    },
+    {
+      "kind": "FLAGGED",
+      "seq": 3,
+      "message": "灰区，需人工复核：device: 缺失「黄堽线3121刀闸3相」；position: 缺失「分闸」；匹配证据偏弱，未发现必要槽位矛盾",
+      "heard": "检查黄光线3向21作闸3项确在分叉位置"
+    },
+    {
+      "kind": "FLAGGED",
+      "seq": 4,
+      "message": "灰区，需人工复核：position: 缺失「分闸」",
+      "heard": "检查黄堽线3123刀闸3相水电分量位置"
+    },
+    {
+      "kind": "FLAGGED",
+      "seq": 5,
+      "message": "灰区，需人工复核：得分处于灰区",
+      "heard": "检查黄堽线3123刀闸开关侧"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 5,
+      "message": "已完成条目出现矛盾复述：device: 票面「黄堽线3123刀闸开关侧」但复述为「黄堽线312开关」",
+      "heard": "检查黄堽线312开关线路侧确已装置4号接地线1组嗯"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 5,
+      "message": "疑似说错条目的后续复述仍未通过：得分不足",
+      "heard": "检查黄堽线3123刀闸开关侧"
+    }
+  ]
+}

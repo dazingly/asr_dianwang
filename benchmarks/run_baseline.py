@@ -146,7 +146,6 @@ def run_pass(engine: AsrEngine, clips, ticket, matcher: SlotMatcher, label: str)
     summary = {
         "label": label,
         "device": engine.device,
-        "fp16": engine.fp16,
         "use_itn": engine.use_itn,
         "clips": len(rows),
         "total_audio_seconds": round(total_audio, 2),
@@ -176,7 +175,7 @@ def write_report(results: list[dict], out_dir: Path) -> Path:
         lines += [
             f"## {s['label']}",
             "",
-            f"- 设备: {s['device']}  精度: {'fp16' if s['fp16'] else 'fp32'}  use_itn: {s['use_itn']}",
+            f"- 设备: {s['device']}  精度: fp32  use_itn: {s['use_itn']}",
             f"- 片段数: {s['clips']}  音频总时长: {s['total_audio_seconds']}s  "
             f"推理总耗时: {s['total_infer_seconds']}s  RTF: {s['rtf']}",
             f"- 显存峰值: {s['gpu_peak_mb']} MB",
@@ -218,7 +217,6 @@ def main() -> int:
     parser.add_argument("--ticket", default="data/tickets/ticket1.json")
     parser.add_argument("--out", default="benchmarks/results")
     parser.add_argument("--device", default=None, help="cpu / cuda:0 / auto")
-    parser.add_argument("--no-fp16", action="store_true")
     parser.add_argument("--compare-itn", action="store_true",
                         help="同时跑 use_itn 开与关两种模式做对比")
     parser.add_argument("--speed-only", action="store_true",
@@ -252,8 +250,6 @@ def main() -> int:
         overrides = {"use_itn": use_itn}
         if args.device:
             overrides["device"] = args.device
-        if args.no_fp16:
-            overrides["fp16"] = False
 
         engine = AsrEngine(cfg, **overrides)
         label = f"use_itn={use_itn}"

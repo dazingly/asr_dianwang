@@ -1,0 +1,91 @@
+schema_version: 1
+station: 35kV小留变电站
+source: data/xiaoliu/tickets/*.json
+ticket_count: 1
+entry_count: 7
+categories:
+  substations:
+  - term: 35kV小留变电站
+    count: 1
+    sources:
+    - ticket1
+  missions:
+  - term: 核对35kV黄堽线312开关在检修状态，现场具备操作条件
+    count: 1
+    sources:
+    - ticket1
+  voltage_levels: []
+  lines_and_bays:
+  - term: 黄堽线312
+    count: 6
+    sources:
+    - ticket1#1
+    - ticket1#2
+    - ticket1#3
+    - ticket1#4
+    - ticket1#5
+    - ticket1#6
+  devices:
+  - term: 黄堽线312-1刀闸开关侧
+    count: 1
+    sources:
+    - ticket1#6
+  - term: 黄堽线312-3刀闸开关侧
+    count: 1
+    sources:
+    - ticket1#5
+  - term: 黄堽线312-1刀闸三相
+    count: 1
+    sources:
+    - ticket1#3
+  - term: 黄堽线312-3刀闸三相
+    count: 1
+    sources:
+    - ticket1#4
+  - term: 黄堽线312开关
+    count: 2
+    sources:
+    - ticket1#1
+    - ticket1#2
+  device_codes:
+  - term: 312-1
+    count: 2
+    sources:
+    - ticket1#3
+    - ticket1#6
+  - term: 312-3
+    count: 2
+    sources:
+    - ticket1#4
+    - ticket1#5
+  - term: '312'
+    count: 2
+    sources:
+    - ticket1#1
+    - ticket1#2
+  protection_plates: []
+  panels: []
+  handles: []
+  actions:
+  - term: 检查
+    count: 7
+    sources:
+    - ticket1#1
+    - ticket1#2
+    - ticket1#3
+    - ticket1#4
+    - ticket1#5
+    - ticket1#6
+    - ticket1#7
+  positions_and_states:
+  - term: 具备操作条件
+    count: 1
+    sources:
+    - ticket1#7
+  - term: 分闸
+    count: 4
+    sources:
+    - ticket1#1
+    - ticket1#2
+    - ticket1#3
+    - ticket1#4
