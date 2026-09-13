@@ -149,35 +149,44 @@ class RoleClassifier:
 
     # ------------------------------------------------------------------
     @staticmethod
-    def apply_temporal_prior(decisions: list[RoleDecision]) -> list[RoleDecision]:
-        """唱票在前、复述在后：把 UNKNOWN 段按相邻关系补齐。
+    def prior_for(decision: RoleDecision, prev_role: Role) -> RoleDecision | None:
+        """给一个判不出角色的段按"唱票在前、复述在后"补一个。补不出来返回 None。
 
-        一条操作内容固定是"唱票人念一遍、操作人复述一遍"，所以两个相邻的
-        UNKNOWN 段里，后一个是操作人的概率明显更高。
+        一条操作内容固定是"唱票人念一遍、操作人复述一遍"，所以相邻两段里后一
+        段的角色可以由前一段反推。
 
         但"交替"只是先验，不能盖过声学证据。UNKNOWN 只说明能量倍率没到判定
-        阈值，不代表它没有倾向性 —— 倍率 1.5 虽然够不到 1.6，指向的仍然是
-        近场。所以先验与能量倾向一致时才提高置信度，两者冲突时以能量为准：
-        现场会出现连着两段都是操作人说话（复述完又自言自语确认）这类情况，
-        硬按交替填反而会把角色标反。
+        阈值，不代表它没有倾向性 —— 倍率 1.5 虽然够不到 1.6，指向的仍然是近场。
+        所以先验与能量倾向一致时才提高置信度，两者冲突时以能量为准：现场会出现
+        连着两段都是操作人说话（复述完又自言自语确认）这类情况，硬按交替填反而
+        会把角色标反。
+
+        离线（apply_temporal_prior）和流式（OnlineRoleClassifier.observe）走的是
+        同一条规则，所以抽在这里 —— 两个实现各写一份，迟早会跑偏成两种行为。
         """
+        if prev_role is Role.CALLER:
+            expected = Role.OPERATOR
+        elif prev_role is Role.OPERATOR:
+            expected = Role.CALLER
+        else:
+            return None
+
+        lean = Role.OPERATOR if decision.rms_ratio > 1.0 else Role.CALLER
+        if lean is expected:
+            return RoleDecision(expected, 0.55, decision.rms, decision.rms_ratio, "prior")
+        return RoleDecision(lean, 0.35, decision.rms, decision.rms_ratio, "energy-lean")
+
+    @staticmethod
+    def apply_temporal_prior(decisions: list[RoleDecision]) -> list[RoleDecision]:
+        """整段判完之后，统一把 UNKNOWN 段按时序先验补齐。"""
         out = list(decisions)
         for i, d in enumerate(out):
             if d.role is not Role.UNKNOWN:
                 continue
             prev_role = out[i - 1].role if i > 0 else Role.UNKNOWN
-            if prev_role is Role.CALLER:
-                expected = Role.OPERATOR
-            elif prev_role is Role.OPERATOR:
-                expected = Role.CALLER
-            else:
-                continue
-
-            lean = Role.OPERATOR if d.rms_ratio > 1.0 else Role.CALLER
-            if lean is expected:
-                out[i] = RoleDecision(expected, 0.55, d.rms, d.rms_ratio, "prior")
-            else:
-                out[i] = RoleDecision(lean, 0.35, d.rms, d.rms_ratio, "energy-lean")
+            filled = RoleClassifier.prior_for(d, prev_role)
+            if filled is not None:
+                out[i] = filled
         return out
 
 
@@ -187,6 +196,10 @@ class OnlineRoleClassifier:
     实时链路里拿不到全局中位数，只能用最近若干段的中位数近似。窗口太短会
     被连续几段大声说话带偏，太长又跟不上人走动导致的音量变化，128 段
     （现场大约十几分钟）是个折中。
+
+    除了基线来源，判定规则和离线的 RoleClassifier 完全一致（包括那条时序
+    先验，见 RoleClassifier.prior_for）—— 流式和离线给出不同的角色标签，
+    会让人分不清是链路差异还是算法差异。
     """
 
     def __init__(self, config: dict | None = None, window: int = 128):
@@ -211,11 +224,10 @@ class OnlineRoleClassifier:
             decision = RoleDecision(Role.OPERATOR, min(1.0, ratio / self.ratio * 0.6), rms, ratio)
         elif ratio <= 1.0 / self.ratio:
             decision = RoleDecision(Role.CALLER, 0.6, rms, ratio)
-        elif self._last_role is Role.CALLER:
-            # 时序先验：上一段是唱票，这段多半就是复述
-            decision = RoleDecision(Role.OPERATOR, 0.5, rms, ratio, "prior")
         else:
-            decision = RoleDecision(Role.UNKNOWN, 0.3, rms, ratio)
+            # 中间地带交给时序先验；补不出来（上一段自己也没定）才是 UNKNOWN
+            unknown = RoleDecision(Role.UNKNOWN, 0.3, rms, ratio)
+            decision = RoleClassifier.prior_for(unknown, self._last_role) or unknown
 
         self._last_role = decision.role
         return decision

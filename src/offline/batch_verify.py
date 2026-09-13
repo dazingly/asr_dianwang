@@ -105,7 +105,7 @@ def verify_recording(
     aligner.finalize()
     item_report = aligner.report()
     rows = [
-        _segment_row(index, segment, decision, result, adhered, event)
+        segment_row(index, segment, decision, result, adhered, event)
         for index, (segment, decision, (result, adhered), event) in enumerate(
             zip(segments, decisions, transcribed, aligner.events), start=1
         )
@@ -150,7 +150,7 @@ def verify_recording(
     return report
 
 
-def _segment_row(
+def segment_row(
     index: int,
     segment: Any,
     decision: Any,
@@ -163,6 +163,9 @@ def _segment_row(
     `event` 取的是**最终**事件：一段的判定可能被挂起到下一段到达时才定案
     （见 aligner 的挂起/拼合），届时事件对象被原地改写。所以这一行只能等
     对齐跑完之后再拼，循环里就地取会拿到过期的结论。
+
+    流式演示（scripts/stream_demo.py）复用这个函数，因此报告里的
+    `segments[]` 和流式输出是同一组字段，前端的对接结构只有一份。
     """
     match = event.match
     return {

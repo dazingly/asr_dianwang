@@ -157,6 +157,38 @@ class VadSegmenter:
         self._stream_offset_ms += chunk_ms
         return [(s, e) for s, e in finished if e - s >= self.min_speech_ms]
 
+    def flush(self) -> list[tuple[int, int]]:
+        """流结束收尾：让 VAD 吐出还没定案的最后一段语音。
+
+        尾静音判据（max_end_silence_time）意味着最后一段要再等一段静音才会
+        定案；音频播完直接收工会把最后一段丢掉。这里喂一段等长的静音并用
+        is_final=True 收尾，把还挂着的那段逼出来。
+        """
+        if self._pending_start_ms is None:
+            return []
+        silence = np.zeros(
+            int(SAMPLE_RATE * self.max_end_silence_time / 1000), dtype=np.float32
+        )
+        try:
+            res = self.model.generate(
+                input=silence, fs=SAMPLE_RATE, cache=self._stream_cache,
+                is_final=True, chunk_size=self.max_end_silence_time,
+            )
+        except Exception:
+            return []
+
+        finished: list[tuple[int, int]] = []
+        spans = res[0].get("value", []) if res else []
+        for span in spans:
+            if not isinstance(span, (list, tuple)) or len(span) < 2:
+                continue
+            start_ms, end_ms = int(span[0]), int(span[1])
+            if start_ms >= 0 and end_ms >= 0 and end_ms - start_ms >= self.min_speech_ms:
+                finished.append((start_ms, end_ms))
+        self._stream_offset_ms += self.max_end_silence_time
+        self._pending_start_ms = None
+        return finished
+
     @property
     def in_speech(self) -> bool:
         """当前是否正处在一段还没结束的语音里。增量提前触发要用它判断。"""
