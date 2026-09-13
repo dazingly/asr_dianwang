@@ -172,9 +172,8 @@ def normalize(text: str) -> str:
 
 
 def strip_asr_tags(text: str) -> str:
-    """去掉 SenseVoice 的富文本标签（情感、事件、语种等）。
+    """去掉模型输出里的富文本标签（情感、事件、语种等）。
 
-    funasr 的 rich_transcription_postprocess 会做这件事，但流式链路里我们
-    直接拿原始输出，需要自己清一遍。
+    funasr 的富文本后处理会做这件事，但我们直接拿原始输出，需要自己清一遍。
     """
     return re.sub(r"<\|[^|]*\|>", "", text).strip()

@@ -1,35 +1,29 @@
 # 倒闸操作唱票复述校验 - 主配置
 
 paths:
-  # 主识别模型。Paraformer-Large 的中文 CER 明显低于 SenseVoiceSmall，
-  # 代价是权重 848MB、显存占用更高。
+  # 识别模型。换成别的模型目录时，engine 只认目录名和 funasr 能否加载它。
   model_dir: models/Paraformer-Large
-  # 主模型加载失败时降级用它，保证离线跑批不至于全挂。
-  model_dir_fallback: models/SenseVoiceSmall
   lexicon: configs/lexicon.yaml
   dialect: configs/dialect_heze.yaml
   # 现场设备台账，一行一个设备/间隔全称。文件不存在时自动降级为纯正则抽取。
-  asset_list: configs/asset_list.txt
+  asset_list: configs/stations/xiaoliu_assets.txt
 
 asr:
   # auto = 有 CUDA 就用 GPU，否则回退 CPU
   device: auto
-  # 精度固定 fp32。fp16 autocast 试过并否掉了：两个模型上都是负收益
-  # （RTF 慢约 2.5 倍、峰值显存还多占约 25%）。详见 PROGRESS.md 第十节。
-  language: zh
-  # 逆文本正则化。开启后口语数字会转成阿拉伯数字。
-  # 归一化层对两种模式都做了兼容，P0 的 use_itn 对比实验用它来切换。
-  # 换模型时如果 Paraformer 不认这个参数，AsrEngine 会自动把它摘掉。
-  use_itn: true
   batch_size_s: 60
 
+service:
+  # 常驻识别服务（scripts/asr_service.py）监听在哪里。
+  # 只监听本机：模型没有鉴权，不该让局域网里的任何机器都能调。
+  host: 127.0.0.1
+  port: 8766
+
 vad:
-  # 只有 FSMN 一个分段器。Silero 试过并否掉了：基准集（FLEURS-VAD-102）上
-  # 它的误报率远低于 FSMN（9.41% vs 44.03%），但现场远场录音底噪高，条目
-  # 之间的停顿达不到它的静音判据，整条操作被并成一段（丹东 ticket11 上只
-  # 切出 13 段、最长一段 51 秒含 5 条票面内容）。而这条链路"切长"比"切短"
-  # 代价大得多 —— 对齐器一段文本只认一条票，一段吃掉好几条内容时只有一条
-  # 能得分，其余落进"未确认"。实测见 PROGRESS.md 第十节。
+  # FSMN 是唯一的分段器。Silero 试过并否掉了：它在干净基准集上误报率低得多，
+  # 但现场远场录音底噪高，条目之间的停顿达不到它的静音判据，会把整条操作并成
+  # 一段 —— 而这条链路"切长"比"切短"代价大得多，一段文本只认一条票，一段吃掉
+  # 好几条内容时只有一条能得分，其余落进"未确认"。
   fsmn_model: fsmn-vad
   # 尾静音判定时长(ms)，直接决定实时链路的端点延迟。
   # 默认 500ms 是 funasr 的值，实时场景压到 300ms 换取更低延迟。
@@ -40,11 +34,8 @@ vad:
 
 speaker:
   # 设备绑在操作人身上，操作人是近场高能量、唱票人是远场低能量。
-  # 段级 RMS 高于全局中位数这个倍数的判为操作人（近场）。
+  # 段级 RMS 高于能量基线这个倍数的判为操作人（近场）。
   near_field_rms_ratio: 1.6
-  # 是否启用 CAM++ 声纹做二次校正。首次运行会联网下载约 7MB 模型。
-  use_speaker_embedding: false
-  embedding_model: iic/speech_campplus_sv_zh-cn_16k-common
 
 adhere:
   # 识别后吸附：把 ASR 听岔的领域词按读音吸附回台账/词表的标准写法。
@@ -79,8 +70,8 @@ matcher:
   #
   # position 是兜底项，管的是 src/dst 之外的那个位置值 —— "检查...
   # 确在分闸位置"里的"分闸"落在它上面。不加它的话，"确在分闸位置"
-  # 说成"确在合闸位置"只能得到一条 reason，判定仍是 PASS（实测得分
-  # 0.881），而分/合说反恰恰是最不能漏报的一类。
+  # 说成"确在合闸位置"只能得到一条 reason，判定仍是 PASS，而分/合说反
+  # 恰恰是最不能漏报的一类。
   required_slots:
     - voltage
     - device
@@ -142,10 +133,10 @@ aligner:
   # 才认，否则照原样落地（见 aligner._try_stitch）。
   #
   # 判据选"增益"而不是"静音间隔"或"角色"，是因为只有它能自校验：音频层
-  # 按间隔合并已经把唱票和复述粘到一起过（PROGRESS 第十节），而这两者的
-  # 内容本来就是同一句，按内容也不分不开。实测小留 ticket1 的增益分布，
-  # 该拼的（同一句话被切成上下半截）+0.38，勉强够格的 +0.07，而唱票尾巴
-  # 粘操作人头、闲聊两段相拼一律为负。门槛取在这两档之间。
+  # 按间隔合并会把唱票和复述粘到一起，而这两者的内容本来就是同一句，按内容
+  # 也分不开。实测小留 ticket1 的增益分布：该拼的（同一句话被切成上下半截）
+  # +0.38，勉强够格的 +0.07，而唱票尾巴粘操作人头、闲聊两段相拼一律为负。
+  # 门槛取在这两档之间。
   stitch_gain: 0.10
 
   # 角色是否参与判定。
@@ -160,12 +151,3 @@ aligner:
   # 关闭角色判定后，这件事由 REPEAT 分支的"灰区可被后一段上调"取代。
   # 只在操作人"只是漏说、没有说错"时才上调，有矛盾槽位一律不上调。
   use_call_corroboration: true
-
-stream:
-  host: 0.0.0.0
-  port: 8765
-  sample_rate: 16000
-  # 增量提前触发：不等 VAD 端点，每隔这么久就对累积缓冲跑一次识别+匹配，
-  # 一旦必要槽位全部命中就立刻出结果。这是把端到端延迟压到 1s 以内的关键。
-  incremental_interval_ms: 300
-  enable_early_fire: true

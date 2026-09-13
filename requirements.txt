@@ -11,7 +11,7 @@
 torch>=2.1
 torchaudio>=2.1
 
-# ASR / VAD / 声纹
+# ASR / VAD（funasr 会用到 onnxruntime）
 funasr==1.4.2
 modelscope>=1.39.1
 onnxruntime>=1.17
@@ -23,9 +23,3 @@ numpy>=1.24
 
 # 音频 IO
 soundfile>=0.12
-
-# 流式服务
-websockets>=12.0
-
-# 测试
-pytest>=8.0
