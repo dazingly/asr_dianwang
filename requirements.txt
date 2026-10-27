@@ -23,3 +23,5 @@ numpy>=1.24
 
 # 音频 IO
 soundfile>=0.12
+# 麦克风实时采集（scripts/mic_demo.py）
+sounddevice>=0.4

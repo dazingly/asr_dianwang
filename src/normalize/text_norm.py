@@ -69,7 +69,7 @@ _ROMAN_ASCII_VALUES = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii
 # "杠"，同一个编号就会分成 "11klp2" 和 "1杠1klp2" 两个串，设备槽位判缺失，
 # 一条本来能通过的复述直接掉到灰区（丹东 ticket11 seq5 就是这么从 0.892
 # 掉到 0.543 的）。两侧必须都是数字才丢，避免误伤"杠杆"这类正常词。
-_DIGIT_CHARS = "".join(re.escape(ch) for ch in CN_DIGITS)
+_DIGIT_CHARS = "0123456789" + "".join(re.escape(ch) for ch in CN_DIGITS)
 _LINK_CHAR = re.compile(
     rf"(?<=[{_DIGIT_CHARS}])[杠刚岗缸钢](?=[{_DIGIT_CHARS}])"
 )
@@ -145,6 +145,44 @@ def _convert_roman(text: str) -> str:
     return _ROMAN_ASCII.sub(
         lambda m: str(_ROMAN_ASCII_VALUES.get(m.group(1).lower(), m.group(1))), text
     )
+
+
+def _convert_roman_spaced(text: str) -> str:
+    """KIR 解析用：罗马数字转换后留一个空格。
+
+    设备编号和母线编号可能直接粘在一起，例如 "母线分段Ⅱ320-2"。
+    如果像 normalize() 那样直接替换成 "2"，会变成 "母线分段2320-2"，
+    编号 320-2 的边界就没了。留空格后是 "母线分段 2 320-2"，KIR 才能把
+    罗马数字当成独立段号。
+    """
+    for ch, value in _ROMAN_MAP.items():
+        text = text.replace(ch, f" {value} ")
+    return _ROMAN_ASCII.sub(
+        lambda m: f" {_ROMAN_ASCII_VALUES.get(m.group(1).lower(), m.group(1))} ",
+        text,
+    )
+
+
+def normalize_parse(text: str) -> str:
+    """KIR 解析用的归一化：保留标点、引号、#、连字符和空格。
+
+    normalize() 是给整句比对用的，会把分隔符全部抹掉；KIR 却需要知道
+    "由 ... 至 ..."、"#4"、"312-1" 这些结构。这里复用同一套数字/单位规则，
+    但最后不清标点，并把罗马数字与相邻编号隔开。
+
+    两侧都走这个函数；OCR 纠错不在这一层做，由 KirExtractor 打标。
+    """
+    if not text:
+        return ""
+    text = _fullwidth_to_halfwidth(text)
+    for pattern, repl in _UNIT_RULES:
+        text = pattern.sub(repl, text)
+    text = _convert_roman_spaced(text)
+    text = _LINK_CHAR.sub("", text)
+    text = _convert_cn_numbers(text)
+    text = text.lower()
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 def normalize(text: str) -> str:

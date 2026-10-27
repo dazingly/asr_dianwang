@@ -13,11 +13,33 @@ asr:
   device: auto
   batch_size_s: 60
 
+  # 流式 Paraformer（src/asr/streaming.py）。打开后服务端边收音频边识别，
+  # VAD 定段时直接返回该段文本；关闭则退回离线 VAD + 整段识别。
+  # 模型目录不存在/加载失败时服务自动回退，不会起不来。
+  streaming:
+    enabled: true
+    model_dir: models/Paraformer-Streaming
+    # 600ms 一喂；与模型训练时的 chunk_size=[0,10,5] 对齐。
+    chunk_ms: 600
+    encoder_chunk_look_back: 4
+    decoder_chunk_look_back: 1
+    # VAD 自己的块长与句首预卷。VAD 报起点有延迟，预卷保证不丢句首。
+    vad_chunk_ms: 200
+    preroll_ms: 400
+    vad_device: cpu
+    # 未定段文本（partial），仅供前端做实时字幕，不参与判定。
+    partial: true
+    # 2-pass：段结束后用离线大模型复核流式文本。现场远场录音上流式模型
+    # 漏字明显，严格判定必须吃离线文本；流式文本保留在 stream_text 里。
+    refine_with_offline: true
+
 service:
   # 常驻识别服务（scripts/asr_service.py）监听在哪里。
   # 只监听本机：模型没有鉴权，不该让局域网里的任何机器都能调。
   host: 127.0.0.1
   port: 8766
+  # 流式会话保留的音频秒数：VAD 起点晚到时回切句首用。
+  buffer_seconds: 60
 
 vad:
   # FSMN 是唯一的分段器。Silero 试过并否掉了：它在干净基准集上误报率低得多，
@@ -51,61 +73,22 @@ adhere:
   include_lexicon: true
 
 matcher:
-  # 槽位权重。required 的槽位缺失或矛盾会直接否决，权重只影响得分高低。
-  slot_weights:
-    voltage: 1.0
-    device: 2.0
-    handle: 1.5
-    object: 2.0
-    src_position: 1.5
-    dst_position: 2.0
-    action: 1.5
-    check_type: 1.0
-    panel: 0.5
-    state: 0.3
-    residual: 1.0
+  # 书写层必须区分、但语音层同音的词对。拼音等价会把它们判成
+  # "念对了"，只有在这里登记才能拦住（负荷/符合、电压/电牙…）。
+  confusable_pairs:
+    - ["负荷", "符合"]
 
-  # 必要槽位：票面里出现了就必须在复述里命中，缺失即判不通过。
-  # 这些是"说错了会出事故"的要素。
-  #
-  # position 是兜底项，管的是 src/dst 之外的那个位置值 —— "检查...
-  # 确在分闸位置"里的"分闸"落在它上面。不加它的话，"确在分闸位置"
-  # 说成"确在合闸位置"只能得到一条 reason，判定仍是 PASS，而分/合说反
-  # 恰恰是最不能漏报的一类。
-  required_slots:
-    - voltage
-    - device
-    - handle
-    - object
-    - src_position
-    - dst_position
-    - position
-    - action
-
-  # 单个槽位判定命中的模糊相似度下限
-  slot_hit_threshold: 0.75
-
-  # 这些槽位里的数字必须逐位对上，不走模糊匹配。
-  # "桥100开关" 与 "桥200开关" 只差一个音节，编辑距离相似度高达 0.8，
-  # 按阈值判会直接放行 —— 而设备编号说错恰恰是后果最严重的一类错误。
-  exact_digit_slots:
-    - voltage
-    - device
-    - handle
-
-  # 整句相似度只作为辅助信号参与候选排序，不作为判据
-  sentence_similarity_weight: 0.25
-
-  # 复述里出现了票面没有的区分性要素时，每个扣多少分。
-  # 操作票第 3 条 "拉开110kV桥100开关" 的槽位是第 4 条
-  # "检查...电气位置指示确已拉开" 的子集，不扣分的话两条会打成平手。
-  extra_slot_penalty: 0.12
-  discriminative_slots:
-    - object
-    - check_type
-    - src_position
-    - dst_position
-    - handle
+kir:
+  # KIR 严格匹配（src/verify/kir_matcher.py）。
+  # VERIFIED 必须所有字段 EXACT/EQUIVALENT；没有分数阈值可调。
+  strict: true
+  # 方言等价后拼音完全相等视为同一事实。
+  pinyin_equivalent: true
+  # 编号只比 core（312-1 与 3121 分隔符差异在语音层不可靠，不判差异）。
+  id_core_only: true
+  # 判 CONFLICT 所需的最低证据权重：动作命中 1、目标配对 2、状态 0.5。
+  # 低于这个值说明只是"字面有重合"，不能据此报"说错了"。
+  min_evidence: 2.0
 
 verdict:
   # 三档判定阈值。灰区交人工复核。
@@ -121,6 +104,13 @@ verdict:
   missing_required_action: review
 
 aligner:
+  # single = 谁说对都算过（现有行为）；dual = 唱票人和操作人分开攒证据，
+  # 两侧都完全匹配才 VERIFIED，任一侧矛盾即 FAILED，缺一侧进灰区。
+  mode: single
+  # dual 模式下角色置信度低于该值当作 UNKNOWN：匿名证据只能把条目推进
+  # 灰区，不冒充唱票人或操作人。
+  dual_min_role_confidence: 0.5
+
   # 严格按序执行，但留前瞻窗口容忍偶发的重复确认和返工
   lookahead: 2
   # 允许回看已完成的条目，用于识别"重复复述同一条"
@@ -151,3 +141,9 @@ aligner:
   # 关闭角色判定后，这件事由 REPEAT 分支的"灰区可被后一段上调"取代。
   # 只在操作人"只是漏说、没有说错"时才上调，有矛盾槽位一律不上调。
   use_call_corroboration: true
+
+alerts:
+  # 严格提醒：任何非完全匹配都产生一条前端可消费的提醒。
+  # 提醒是旁路通知 —— 只读判定结果，不改变指针、不跳过条目、不阻塞流程。
+  # 关闭后逐段行的提醒字段为空，判定结果与开启时完全一致（回退开关）。
+  enabled: true

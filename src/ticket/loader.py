@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from src.normalize.text_norm import normalize
-from src.ticket.slots import SlotExtractor, SlotSet, get_extractor
+from src.ticket.kir import Kir, KirExtractor, get_kir_extractor
 
 
 @dataclass
@@ -25,7 +25,8 @@ class OperationItem:
     seq: int
     raw: str
     norm: str = ""
-    slots: SlotSet | None = None
+    parse_text: str = ""
+    kir: Kir | None = None
 
     def __str__(self) -> str:
         return f"[{self.seq}] {self.raw}"
@@ -55,7 +56,9 @@ class Ticket:
         return None
 
 
-def load_ticket(path: str | Path, extractor: SlotExtractor | None = None) -> Ticket:
+def load_ticket(path: str | Path,
+                kir_extractor: KirExtractor | None = None,
+                with_kir: bool = True) -> Ticket:
     path = Path(path)
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -79,15 +82,19 @@ def load_ticket(path: str | Path, extractor: SlotExtractor | None = None) -> Tic
     else:
         raise ValueError(f"无法识别的操作票格式: {type(data)}")
 
-    ext = extractor or get_extractor()
+    k_ext = kir_extractor or (get_kir_extractor() if with_kir else None)
     items = []
     for seq, raw in sorted(pairs, key=lambda p: p[0]):
         if not isinstance(raw, str):
             raw = str(raw)
         norm = normalize(raw)
+        kir = k_ext.extract(raw, source="ticket") if k_ext else None
         items.append(
-            OperationItem(seq=seq, raw=raw, norm=norm,
-                          slots=ext.extract(norm, already_normalized=True))
+            OperationItem(
+                seq=seq, raw=raw, norm=norm,
+                parse_text=kir.parse_text if kir else "",
+                kir=kir,
+            )
         )
     return Ticket(
         items=items,

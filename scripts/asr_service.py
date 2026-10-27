@@ -44,44 +44,138 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.asr.engine import SAMPLE_RATE, AsrEngine  # noqa: E402
+from src.asr.streaming import (  # noqa: E402
+    StreamingAsrEngine,
+    StreamingSession,
+    StreamingVad,
+)
 from src.asr.vad_stream import VadSegmenter  # noqa: E402
 from src.config import get as cfg_get  # noqa: E402
 from src.config import load_config  # noqa: E402
 
 
 class Runtime:
-    """服务端握着的那两个模型，外加一把锁。"""
+    """服务端握着的模型，外加一把锁。
+
+    流式开关（asr.streaming.enabled）打开时，push/flush 走 StreamingSession：
+    VAD 定段的同时把音频增量喂给流式 Paraformer，段一结束就有文本。流式
+    模型加载失败不拖垮服务 —— 自动退回原来的离线 VAD + 整段识别路径。
+    """
 
     def __init__(self, config: dict, device: str | None = None):
         cfg = config
         self.engine = AsrEngine(cfg, **({"device": device} if device else {}))
         self.segmenter = VadSegmenter(cfg)
+        self.refine_with_offline = bool(
+            cfg_get(cfg, "asr.streaming.refine_with_offline", False)
+        )
+        self.session: StreamingSession | None = None
+        self.stream_asr: StreamingAsrEngine | None = None
+        self.stream_vad: StreamingVad | None = None
+        self.stream_error: str | None = None
+        self.stream_load_seconds = 0.0
+        self.stream_warmup_seconds = 0.0
+        self.streaming_requested = bool(
+            cfg_get(cfg, "asr.streaming.enabled", False)
+        )
 
         started = time.monotonic()
         self.engine.model
         self.warmup_seconds = self.engine.warmup()
         self.segmenter.model
+        if self.streaming_requested:
+            self._load_streaming(cfg, device)
         self.startup_seconds = time.monotonic() - started
         self.lock = threading.Lock()
 
+    def _load_streaming(self, cfg: dict, device: str | None = None) -> None:
+        try:
+            self.stream_asr = StreamingAsrEngine(
+                cfg, **({"device": device} if device else {})
+            )
+            self.stream_vad = StreamingVad(cfg)
+            self.stream_warmup_seconds = self.stream_asr.warmup()
+            self.stream_vad.model
+            self.stream_load_seconds = (
+                self.stream_asr.load_seconds + self.stream_vad.load_seconds
+            )
+            self.session = StreamingSession(self.stream_asr, self.stream_vad, cfg)
+        except Exception as exc:
+            # 首次运行可能没网/没下载模型。服务照常起，走离线路径并大声
+            # 说明原因，避免现场以为流式已经生效。
+            self.stream_error = f"{type(exc).__name__}: {exc}"
+            self.session = None
+            print(f"# 流式 ASR 加载失败，已回退离线路径：{self.stream_error}",
+                  file=sys.stderr, flush=True)
+
     def describe(self) -> dict:
+        if self.session is not None:
+            stream = self.stream_asr.describe()
+        elif self.streaming_requested and self.stream_error:
+            stream = f"fallback ({self.stream_error})"
+        else:
+            stream = "off"
         return {
             "asr": self.engine.describe(),
+            "asr_stream": stream,
             "vad": self.segmenter.describe(),
             "load_seconds": round(self.engine.load_seconds, 2),
             "warmup_seconds": round(self.warmup_seconds, 2),
+            "stream_load_seconds": round(self.stream_load_seconds, 2),
+            "stream_warmup_seconds": round(self.stream_warmup_seconds, 2),
             "startup_seconds": round(self.startup_seconds, 2),
             "up_seconds": round(time.monotonic() - self._t0, 1),
         }
 
-    def push(self, wave: np.ndarray) -> list[tuple[int, int]]:
-        return [tuple(span) for span in self.segmenter.push(wave)]
+    def push(self, wave: np.ndarray) -> dict:
+        if self.session is not None:
+            result = self.session.push(wave)
+            self._refine(result["segments"])
+            return result
+        return {"segments": _spans(self.segmenter.push(wave)), "partial": []}
 
-    def flush(self) -> list[tuple[int, int]]:
-        return [tuple(span) for span in self.segmenter.flush()]
+    def flush(self) -> dict:
+        if self.session is not None:
+            result = self.session.finish()
+            self._refine(result["segments"])
+            return result
+        return {"segments": _spans(self.segmenter.flush()), "partial": []}
 
     def reset(self) -> None:
+        if self.session is not None:
+            self.session.reset()
         self.segmenter.reset_stream()
+
+    def _refine(self, segments: list[dict]) -> None:
+        """可选 2-pass：用离线大模型复核流式文本（默认关）。
+
+        不管流式侧有没有听出字，只要拿到段音频就用离线文本覆盖 —— 现场
+        实测流式模型在这批远场录音上漏字明显，判定必须吃离线结果；流式
+        文本仍保留在 `stream_text` 里供前端做实时字幕对照。
+        """
+        if not self.refine_with_offline:
+            return
+        for segment in segments:
+            try:
+                wave = self.session.wave_for(
+                    segment["start_ms"], segment["end_ms"]
+                )
+                if len(wave) == 0:
+                    continue
+                result = self.engine.transcribe(wave)
+            except Exception as exc:
+                print(f"# 离线复核失败（保留流式文本）：{type(exc).__name__}: {exc}",
+                      file=sys.stderr, flush=True)
+                continue
+            if result.text:
+                segment["stream_text"] = segment.get("text", "")
+                segment["text"] = result.text
+                segment["raw_text"] = result.raw_text
+                segment["refine_seconds"] = round(result.infer_seconds, 4)
+                segment["infer_seconds"] = round(
+                    segment["infer_seconds"] + result.infer_seconds, 4
+                )
+                segment["refined"] = True
 
     def transcribe(self, wave: np.ndarray) -> dict:
         result = self.engine.transcribe(wave)
@@ -115,14 +209,26 @@ class _Handler(socketserver.StreamRequestHandler):
             return {"ok": True, **runtime.describe()}
         with runtime.lock:
             if op == "push":
-                return {"segments": _spans(runtime.push(self._read_pcm(int(req["bytes"]))))}
+                return runtime.push(self._read_pcm(int(req["bytes"])))
             if op == "asr":
                 return runtime.transcribe(self._read_pcm(int(req["bytes"])))
             if op == "flush":
-                return {"segments": _spans(runtime.flush())}
+                return runtime.flush()
             if op == "reset":
                 runtime.reset()
-                return {"ok": True}
+                return {"ok": True, "streaming": runtime.session is not None}
+            # 低层流式原语：给将来的麦克风/独立前端留的显式入口。
+            if op == "stream_reset":
+                runtime.reset()
+                return {"ok": True, "streaming": runtime.session is not None}
+            if op == "stream_push":
+                if runtime.session is None:
+                    raise ValueError("流式识别未启用")
+                return runtime.push(self._read_pcm(int(req["bytes"])))
+            if op == "stream_end":
+                if runtime.session is None:
+                    raise ValueError("流式识别未启用")
+                return runtime.flush()
         raise ValueError(f"未知请求: {op!r}")
 
     def _read_pcm(self, n_bytes: int) -> np.ndarray:
@@ -158,6 +264,7 @@ def main(argv: list[str] | None = None) -> int:
     info = runtime.describe()
     print(f"# 就绪 {info['startup_seconds']}s（加载 {info['load_seconds']}s "
           f"+ 预热 {info['warmup_seconds']}s）｜{info['asr']}｜{info['vad']}", flush=True)
+    print(f"# 流式 ASR：{info['asr_stream']}", flush=True)
     print(f"# 监听 {args.host}:{args.port}，客户端：python scripts\\stream_demo.py", flush=True)
 
     with _Server((args.host, args.port), _Handler) as server:

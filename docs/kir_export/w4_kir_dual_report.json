@@ -1,0 +1,1065 @@
+{
+  "ticket": "D:\\pycode\\asr_dianwang\\data\\xiaoliu\\tickets\\ticket1.json",
+  "total_items": 7,
+  "state_counts": {
+    "FLAGGED": 6,
+    "FAILED": 1
+  },
+  "alert_counts": {
+    "ERROR": 2,
+    "WARN": 23
+  },
+  "alerts": [
+    {
+      "alert_id": "1:CALLER:role:ROLE_MISSING",
+      "seq": 1,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "CALLER",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第1条 缺少唱票证据",
+      "audio_ms": 58350,
+      "utterance_index": 10,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "2:OPERATOR:target[开关].id:FIELD_CONFLICT",
+      "seq": 2,
+      "level": "ERROR",
+      "code": "FIELD_CONFLICT",
+      "role": "OPERATOR",
+      "field": "target[开关].id",
+      "expected": "312",
+      "heard": "310",
+      "match_level": "CONFLICT",
+      "message": "第2条 target[开关].id: 票面「312」复述「310」",
+      "audio_ms": 88910,
+      "utterance_index": 15,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "2:OPERATOR:target[机械位置指示].id:FIELD_CONFLICT",
+      "seq": 2,
+      "level": "ERROR",
+      "code": "FIELD_CONFLICT",
+      "role": "OPERATOR",
+      "field": "target[机械位置指示].id",
+      "expected": "312",
+      "heard": "310",
+      "match_level": "CONFLICT",
+      "message": "第2条 target[机械位置指示].id: 票面「312」复述「310」",
+      "audio_ms": 88910,
+      "utterance_index": 15,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "3:OPERATOR:role:ROLE_MISSING",
+      "seq": 3,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "OPERATOR",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第3条 缺少复述证据",
+      "audio_ms": 118720,
+      "utterance_index": 22,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "3:CALLER:role:ROLE_MISSING",
+      "seq": 3,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "CALLER",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第3条 缺少唱票证据",
+      "audio_ms": 118720,
+      "utterance_index": 22,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "3:UNKNOWN:role:ROLE_UNKNOWN",
+      "seq": 3,
+      "level": "WARN",
+      "code": "ROLE_UNKNOWN",
+      "role": "UNKNOWN",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FULL",
+      "message": "第3条 角色未判准，证据只作灰区处理",
+      "audio_ms": 118720,
+      "utterance_index": 22,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "4:OPERATOR:state:FIELD_MISSING",
+      "seq": 4,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "OPERATOR",
+      "field": "state",
+      "expected": "分闸位置",
+      "heard": null,
+      "match_level": "PARTIAL",
+      "message": "第4条 state: 缺失「分闸位置」",
+      "audio_ms": 128590,
+      "utterance_index": 24,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "4:CALLER:role:ROLE_MISSING",
+      "seq": 4,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "CALLER",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第4条 缺少唱票证据",
+      "audio_ms": 132660,
+      "utterance_index": 25,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:CALLER:target[DEVICE]:FIELD_MISSING",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "CALLER",
+      "field": "target[DEVICE]",
+      "expected": "#4接地线",
+      "heard": null,
+      "match_level": "PARTIAL",
+      "message": "第5条 target[DEVICE]: 缺失「#4接地线」",
+      "audio_ms": 137230,
+      "utterance_index": 26,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:CALLER:state:FIELD_MISSING",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "CALLER",
+      "field": "state",
+      "expected": "装设",
+      "heard": null,
+      "match_level": "PARTIAL",
+      "message": "第5条 state: 缺失「装设」",
+      "audio_ms": 137230,
+      "utterance_index": 26,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:CALLER:quantity:FIELD_MISSING",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "CALLER",
+      "field": "quantity",
+      "expected": "1组",
+      "heard": null,
+      "match_level": "PARTIAL",
+      "message": "第5条 quantity: 缺失「1组」",
+      "audio_ms": 137230,
+      "utterance_index": 26,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:OPERATOR:target[DEVICE]:FIELD_MISSING",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "OPERATOR",
+      "field": "target[DEVICE]",
+      "expected": "黄堽线312-3刀闸开关侧",
+      "heard": null,
+      "match_level": "EXTRA",
+      "message": "第5条 target[DEVICE]: 缺失「黄堽线312-3刀闸开关侧」",
+      "audio_ms": 142550,
+      "utterance_index": 28,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:OPERATOR:target[DEVICE]:FIELD_EXTRA",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_EXTRA",
+      "role": "OPERATOR",
+      "field": "target[DEVICE]",
+      "expected": null,
+      "heard": "黄堽线312开关线路侧",
+      "match_level": "EXTRA",
+      "message": "第5条 target[DEVICE]: 多出「黄堽线312开关线路侧」",
+      "audio_ms": 142550,
+      "utterance_index": 28,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:OPERATOR:state:FIELD_MISSING",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "OPERATOR",
+      "field": "state",
+      "expected": "装设",
+      "heard": null,
+      "match_level": "EXTRA",
+      "message": "第5条 state: 缺失「装设」",
+      "audio_ms": 142550,
+      "utterance_index": 28,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:UNKNOWN:target[DEVICE]:FIELD_EXTRA",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_EXTRA",
+      "role": "UNKNOWN",
+      "field": "target[DEVICE]",
+      "expected": null,
+      "heard": "黄堽线3123刀闸开关侧却已装饰4号接地线",
+      "match_level": "EXTRA",
+      "message": "第5条 target[DEVICE]: 多出「黄堽线3123刀闸开关侧却已装饰4号接地线」",
+      "audio_ms": 154570,
+      "utterance_index": 31,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:UNKNOWN:state:FIELD_MISSING",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "UNKNOWN",
+      "field": "state",
+      "expected": "装设",
+      "heard": null,
+      "match_level": "EXTRA",
+      "message": "第5条 state: 缺失「装设」",
+      "audio_ms": 154570,
+      "utterance_index": 31,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:UNKNOWN:quantity:FIELD_EXTRA",
+      "seq": 5,
+      "level": "WARN",
+      "code": "FIELD_EXTRA",
+      "role": "UNKNOWN",
+      "field": "quantity",
+      "expected": null,
+      "heard": "1组",
+      "match_level": "EXTRA",
+      "message": "第5条 quantity: 多出「1组」",
+      "audio_ms": 154570,
+      "utterance_index": 31,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "5:UNKNOWN:role:ROLE_UNKNOWN",
+      "seq": 5,
+      "level": "WARN",
+      "code": "ROLE_UNKNOWN",
+      "role": "UNKNOWN",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "EXTRA",
+      "message": "第5条 角色未判准，证据只作灰区处理",
+      "audio_ms": 154570,
+      "utterance_index": 31,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "6:OPERATOR:role:ROLE_MISSING",
+      "seq": 6,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "OPERATOR",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第6条 缺少复述证据",
+      "audio_ms": 166050,
+      "utterance_index": 33,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "6:CALLER:role:ROLE_MISSING",
+      "seq": 6,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "CALLER",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第6条 缺少唱票证据",
+      "audio_ms": 166050,
+      "utterance_index": 33,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "6:UNKNOWN:state:FIELD_MISSING",
+      "seq": 6,
+      "level": "WARN",
+      "code": "FIELD_MISSING",
+      "role": "UNKNOWN",
+      "field": "state",
+      "expected": "装设",
+      "heard": null,
+      "match_level": "PARTIAL",
+      "message": "第6条 state: 缺失「装设」",
+      "audio_ms": 161170,
+      "utterance_index": 32,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "6:UNKNOWN:role:ROLE_UNKNOWN",
+      "seq": 6,
+      "level": "WARN",
+      "code": "ROLE_UNKNOWN",
+      "role": "UNKNOWN",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "PARTIAL",
+      "message": "第6条 角色未判准，证据只作灰区处理",
+      "audio_ms": 161170,
+      "utterance_index": 32,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "7:OPERATOR:role:ROLE_MISSING",
+      "seq": 7,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "OPERATOR",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第7条 缺少复述证据",
+      "audio_ms": 174400,
+      "utterance_index": 34,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "7:CALLER:role:ROLE_MISSING",
+      "seq": 7,
+      "level": "WARN",
+      "code": "ROLE_MISSING",
+      "role": "CALLER",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FLAGGED",
+      "message": "第7条 缺少唱票证据",
+      "audio_ms": 174400,
+      "utterance_index": 34,
+      "status": "OPEN"
+    },
+    {
+      "alert_id": "7:UNKNOWN:role:ROLE_UNKNOWN",
+      "seq": 7,
+      "level": "WARN",
+      "code": "ROLE_UNKNOWN",
+      "role": "UNKNOWN",
+      "field": "role",
+      "expected": null,
+      "heard": null,
+      "match_level": "FULL",
+      "message": "第7条 角色未判准，证据只作灰区处理",
+      "audio_ms": 174400,
+      "utterance_index": 34,
+      "status": "OPEN"
+    }
+  ],
+  "items": [
+    {
+      "seq": 1,
+      "text": "检查黄堽线312开关电气位置指示确在分闸位置",
+      "state": "FLAGGED",
+      "called": false,
+      "attempts": 2,
+      "score": 1.0,
+      "heard": "检查35kv黄堽线312开关电气位置指示却在分闸位置",
+      "reasons": [],
+      "conflicts": [],
+      "match_level": "FULL",
+      "strict_match": false,
+      "alerts": [
+        {
+          "alert_id": "1:CALLER:role:ROLE_MISSING",
+          "seq": 1,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "CALLER",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第1条 缺少唱票证据",
+          "audio_ms": 58350,
+          "utterance_index": 10,
+          "status": "OPEN"
+        }
+      ],
+      "evidence": {
+        "OPERATOR": {
+          "verdict": "PASS",
+          "level": "FULL",
+          "matched": 5.5,
+          "score": 1.0,
+          "heard": "检查35kv黄堽线312开关电气位置指示却在分闸位置",
+          "reasons": []
+        }
+      },
+      "state_basis": "缺唱票证据"
+    },
+    {
+      "seq": 2,
+      "text": "检查黄堽线312开关机械位置指示确在分闸位置",
+      "state": "FAILED",
+      "called": false,
+      "attempts": 3,
+      "score": 0.55,
+      "heard": "检查黄冈线310开关机械位置指示确在分闸位置",
+      "reasons": [
+        "target[开关].id: 票面「312」复述「310」",
+        "target[机械位置指示].id: 票面「312」复述「310」"
+      ],
+      "conflicts": [
+        "target[开关].id: 票面「312」复述「310」",
+        "target[机械位置指示].id: 票面「312」复述「310」"
+      ],
+      "match_level": "CONFLICT",
+      "strict_match": false,
+      "alerts": [
+        {
+          "alert_id": "2:OPERATOR:target[开关].id:FIELD_CONFLICT",
+          "seq": 2,
+          "level": "ERROR",
+          "code": "FIELD_CONFLICT",
+          "role": "OPERATOR",
+          "field": "target[开关].id",
+          "expected": "312",
+          "heard": "310",
+          "match_level": "CONFLICT",
+          "message": "第2条 target[开关].id: 票面「312」复述「310」",
+          "audio_ms": 88910,
+          "utterance_index": 15,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "2:OPERATOR:target[机械位置指示].id:FIELD_CONFLICT",
+          "seq": 2,
+          "level": "ERROR",
+          "code": "FIELD_CONFLICT",
+          "role": "OPERATOR",
+          "field": "target[机械位置指示].id",
+          "expected": "312",
+          "heard": "310",
+          "match_level": "CONFLICT",
+          "message": "第2条 target[机械位置指示].id: 票面「312」复述「310」",
+          "audio_ms": 88910,
+          "utterance_index": 15,
+          "status": "OPEN"
+        }
+      ],
+      "evidence": {
+        "OPERATOR": {
+          "verdict": "FAIL",
+          "level": "CONFLICT",
+          "matched": 5.5,
+          "score": 0.55,
+          "heard": "检查黄冈线310开关机械位置指示确在分闸位置",
+          "reasons": [
+            "target[开关].id: 票面「312」复述「310」",
+            "target[机械位置指示].id: 票面「312」复述「310」"
+          ]
+        }
+      },
+      "state_basis": "至少一侧存在矛盾"
+    },
+    {
+      "seq": 3,
+      "text": "检查黄堽线312-1刀闸三相确在分闸位置",
+      "state": "FLAGGED",
+      "called": false,
+      "attempts": 1,
+      "score": 1.0,
+      "heard": "检查黄堽线3121刀闸3相却在分闸位置",
+      "reasons": [],
+      "conflicts": [],
+      "match_level": "FULL",
+      "strict_match": false,
+      "alerts": [
+        {
+          "alert_id": "3:OPERATOR:role:ROLE_MISSING",
+          "seq": 3,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "OPERATOR",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第3条 缺少复述证据",
+          "audio_ms": 118720,
+          "utterance_index": 22,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "3:CALLER:role:ROLE_MISSING",
+          "seq": 3,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "CALLER",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第3条 缺少唱票证据",
+          "audio_ms": 118720,
+          "utterance_index": 22,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "3:UNKNOWN:role:ROLE_UNKNOWN",
+          "seq": 3,
+          "level": "WARN",
+          "code": "ROLE_UNKNOWN",
+          "role": "UNKNOWN",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FULL",
+          "message": "第3条 角色未判准，证据只作灰区处理",
+          "audio_ms": 118720,
+          "utterance_index": 22,
+          "status": "OPEN"
+        }
+      ],
+      "evidence": {
+        "UNKNOWN": {
+          "verdict": "PASS",
+          "level": "FULL",
+          "matched": 3.5,
+          "score": 1.0,
+          "heard": "检查黄堽线3121刀闸3相却在分闸位置",
+          "reasons": []
+        }
+      },
+      "state_basis": "缺唱票、复述证据"
+    },
+    {
+      "seq": 4,
+      "text": "检查黄堽线312-3刀闸三相确在分闸位置",
+      "state": "FLAGGED",
+      "called": false,
+      "attempts": 2,
+      "score": 0.75,
+      "heard": "检查黄堽线3123刀闸3相水电分量位置",
+      "reasons": [
+        "state: 缺失「分闸位置」"
+      ],
+      "conflicts": [],
+      "match_level": "PARTIAL",
+      "strict_match": false,
+      "alerts": [
+        {
+          "alert_id": "4:OPERATOR:state:FIELD_MISSING",
+          "seq": 4,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "OPERATOR",
+          "field": "state",
+          "expected": "分闸位置",
+          "heard": null,
+          "match_level": "PARTIAL",
+          "message": "第4条 state: 缺失「分闸位置」",
+          "audio_ms": 128590,
+          "utterance_index": 24,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "4:CALLER:role:ROLE_MISSING",
+          "seq": 4,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "CALLER",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第4条 缺少唱票证据",
+          "audio_ms": 132660,
+          "utterance_index": 25,
+          "status": "OPEN"
+        }
+      ],
+      "evidence": {
+        "OPERATOR": {
+          "verdict": "REVIEW",
+          "level": "PARTIAL",
+          "matched": 3.0,
+          "score": 0.75,
+          "heard": "检查黄堽线3123刀闸3相水电分量位置",
+          "reasons": [
+            "state: 缺失「分闸位置」"
+          ]
+        }
+      },
+      "state_basis": "缺唱票、复述证据"
+    },
+    {
+      "seq": 5,
+      "text": "检查黄堽线312-3刀闸开关侧确已装设#4接地线一组",
+      "state": "FLAGGED",
+      "called": true,
+      "attempts": 4,
+      "score": 0.75,
+      "heard": "确已装饰4号接地线1组检查黄堽线3123刀闸开关侧却已装饰4号接地线1组嗯",
+      "reasons": [
+        "target[DEVICE]: 多出「黄堽线3123刀闸开关侧却已装饰4号接地线」",
+        "state: 缺失「装设」",
+        "quantity: 多出「1组」"
+      ],
+      "conflicts": [],
+      "match_level": "EXTRA",
+      "strict_match": false,
+      "alerts": [
+        {
+          "alert_id": "5:CALLER:target[DEVICE]:FIELD_MISSING",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "CALLER",
+          "field": "target[DEVICE]",
+          "expected": "#4接地线",
+          "heard": null,
+          "match_level": "PARTIAL",
+          "message": "第5条 target[DEVICE]: 缺失「#4接地线」",
+          "audio_ms": 137230,
+          "utterance_index": 26,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:CALLER:state:FIELD_MISSING",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "CALLER",
+          "field": "state",
+          "expected": "装设",
+          "heard": null,
+          "match_level": "PARTIAL",
+          "message": "第5条 state: 缺失「装设」",
+          "audio_ms": 137230,
+          "utterance_index": 26,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:CALLER:quantity:FIELD_MISSING",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "CALLER",
+          "field": "quantity",
+          "expected": "1组",
+          "heard": null,
+          "match_level": "PARTIAL",
+          "message": "第5条 quantity: 缺失「1组」",
+          "audio_ms": 137230,
+          "utterance_index": 26,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:OPERATOR:target[DEVICE]:FIELD_MISSING",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "OPERATOR",
+          "field": "target[DEVICE]",
+          "expected": "黄堽线312-3刀闸开关侧",
+          "heard": null,
+          "match_level": "EXTRA",
+          "message": "第5条 target[DEVICE]: 缺失「黄堽线312-3刀闸开关侧」",
+          "audio_ms": 142550,
+          "utterance_index": 28,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:OPERATOR:target[DEVICE]:FIELD_EXTRA",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_EXTRA",
+          "role": "OPERATOR",
+          "field": "target[DEVICE]",
+          "expected": null,
+          "heard": "黄堽线312开关线路侧",
+          "match_level": "EXTRA",
+          "message": "第5条 target[DEVICE]: 多出「黄堽线312开关线路侧」",
+          "audio_ms": 142550,
+          "utterance_index": 28,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:OPERATOR:state:FIELD_MISSING",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "OPERATOR",
+          "field": "state",
+          "expected": "装设",
+          "heard": null,
+          "match_level": "EXTRA",
+          "message": "第5条 state: 缺失「装设」",
+          "audio_ms": 142550,
+          "utterance_index": 28,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:UNKNOWN:target[DEVICE]:FIELD_EXTRA",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_EXTRA",
+          "role": "UNKNOWN",
+          "field": "target[DEVICE]",
+          "expected": null,
+          "heard": "黄堽线3123刀闸开关侧却已装饰4号接地线",
+          "match_level": "EXTRA",
+          "message": "第5条 target[DEVICE]: 多出「黄堽线3123刀闸开关侧却已装饰4号接地线」",
+          "audio_ms": 154570,
+          "utterance_index": 31,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:UNKNOWN:state:FIELD_MISSING",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "UNKNOWN",
+          "field": "state",
+          "expected": "装设",
+          "heard": null,
+          "match_level": "EXTRA",
+          "message": "第5条 state: 缺失「装设」",
+          "audio_ms": 154570,
+          "utterance_index": 31,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:UNKNOWN:quantity:FIELD_EXTRA",
+          "seq": 5,
+          "level": "WARN",
+          "code": "FIELD_EXTRA",
+          "role": "UNKNOWN",
+          "field": "quantity",
+          "expected": null,
+          "heard": "1组",
+          "match_level": "EXTRA",
+          "message": "第5条 quantity: 多出「1组」",
+          "audio_ms": 154570,
+          "utterance_index": 31,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "5:UNKNOWN:role:ROLE_UNKNOWN",
+          "seq": 5,
+          "level": "WARN",
+          "code": "ROLE_UNKNOWN",
+          "role": "UNKNOWN",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "EXTRA",
+          "message": "第5条 角色未判准，证据只作灰区处理",
+          "audio_ms": 154570,
+          "utterance_index": 31,
+          "status": "OPEN"
+        }
+      ],
+      "evidence": {
+        "CALLER": {
+          "verdict": "REVIEW",
+          "level": "PARTIAL",
+          "matched": 3.0,
+          "score": 0.75,
+          "heard": "检查黄堽线3123刀闸开关侧",
+          "reasons": [
+            "target[DEVICE]: 缺失「#4接地线」",
+            "state: 缺失「装设」",
+            "quantity: 缺失「1组」"
+          ]
+        },
+        "OPERATOR": {
+          "verdict": "REVIEW",
+          "level": "EXTRA",
+          "matched": 3.5,
+          "score": 0.75,
+          "heard": "检查黄堽线312开关线路侧确已装置4号接地线1组嗯",
+          "reasons": [
+            "target[DEVICE]: 缺失「黄堽线312-3刀闸开关侧」",
+            "target[DEVICE]: 多出「黄堽线312开关线路侧」",
+            "state: 缺失「装设」"
+          ]
+        },
+        "UNKNOWN": {
+          "verdict": "REVIEW",
+          "level": "EXTRA",
+          "matched": 5.5,
+          "score": 0.75,
+          "heard": "确已装饰4号接地线1组检查黄堽线3123刀闸开关侧却已装饰4号接地线1组嗯",
+          "reasons": [
+            "target[DEVICE]: 多出「黄堽线3123刀闸开关侧却已装饰4号接地线」",
+            "state: 缺失「装设」",
+            "quantity: 多出「1组」"
+          ]
+        }
+      },
+      "state_basis": "缺唱票、复述证据"
+    },
+    {
+      "seq": 6,
+      "text": "检查黄堽线312-1刀闸开关侧确已装设#6接地线一组",
+      "state": "FLAGGED",
+      "called": false,
+      "attempts": 2,
+      "score": 0.75,
+      "heard": "检查黄堽线3121刀闸开关侧确已装饰6号接地线1组",
+      "reasons": [
+        "state: 缺失「装设」"
+      ],
+      "conflicts": [],
+      "match_level": "PARTIAL",
+      "strict_match": false,
+      "alerts": [
+        {
+          "alert_id": "6:OPERATOR:role:ROLE_MISSING",
+          "seq": 6,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "OPERATOR",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第6条 缺少复述证据",
+          "audio_ms": 166050,
+          "utterance_index": 33,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "6:CALLER:role:ROLE_MISSING",
+          "seq": 6,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "CALLER",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第6条 缺少唱票证据",
+          "audio_ms": 166050,
+          "utterance_index": 33,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "6:UNKNOWN:state:FIELD_MISSING",
+          "seq": 6,
+          "level": "WARN",
+          "code": "FIELD_MISSING",
+          "role": "UNKNOWN",
+          "field": "state",
+          "expected": "装设",
+          "heard": null,
+          "match_level": "PARTIAL",
+          "message": "第6条 state: 缺失「装设」",
+          "audio_ms": 161170,
+          "utterance_index": 32,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "6:UNKNOWN:role:ROLE_UNKNOWN",
+          "seq": 6,
+          "level": "WARN",
+          "code": "ROLE_UNKNOWN",
+          "role": "UNKNOWN",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "PARTIAL",
+          "message": "第6条 角色未判准，证据只作灰区处理",
+          "audio_ms": 161170,
+          "utterance_index": 32,
+          "status": "OPEN"
+        }
+      ],
+      "evidence": {
+        "UNKNOWN": {
+          "verdict": "REVIEW",
+          "level": "PARTIAL",
+          "matched": 5.5,
+          "score": 0.75,
+          "heard": "检查黄堽线3121刀闸开关侧确已装饰6号接地线1组",
+          "reasons": [
+            "state: 缺失「装设」"
+          ]
+        }
+      },
+      "state_basis": "缺唱票、复述证据"
+    },
+    {
+      "seq": 7,
+      "text": "检查现场具备操作条件",
+      "state": "FLAGGED",
+      "called": false,
+      "attempts": 1,
+      "score": 1.0,
+      "heard": "检查现场具备操作条件检查现场确已具备操作条件",
+      "reasons": [],
+      "conflicts": [],
+      "match_level": "FULL",
+      "strict_match": false,
+      "alerts": [
+        {
+          "alert_id": "7:OPERATOR:role:ROLE_MISSING",
+          "seq": 7,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "OPERATOR",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第7条 缺少复述证据",
+          "audio_ms": 174400,
+          "utterance_index": 34,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "7:CALLER:role:ROLE_MISSING",
+          "seq": 7,
+          "level": "WARN",
+          "code": "ROLE_MISSING",
+          "role": "CALLER",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FLAGGED",
+          "message": "第7条 缺少唱票证据",
+          "audio_ms": 174400,
+          "utterance_index": 34,
+          "status": "OPEN"
+        },
+        {
+          "alert_id": "7:UNKNOWN:role:ROLE_UNKNOWN",
+          "seq": 7,
+          "level": "WARN",
+          "code": "ROLE_UNKNOWN",
+          "role": "UNKNOWN",
+          "field": "role",
+          "expected": null,
+          "heard": null,
+          "match_level": "FULL",
+          "message": "第7条 角色未判准，证据只作灰区处理",
+          "audio_ms": 174400,
+          "utterance_index": 34,
+          "status": "OPEN"
+        }
+      ],
+      "evidence": {
+        "UNKNOWN": {
+          "verdict": "PASS",
+          "level": "FULL",
+          "matched": 4.0,
+          "score": 1.0,
+          "heard": "检查现场具备操作条件检查现场确已具备操作条件",
+          "reasons": []
+        }
+      },
+      "state_basis": "缺唱票、复述证据"
+    }
+  ],
+  "event_alerts": [
+    {
+      "kind": "FAILED",
+      "seq": 1,
+      "message": "操作人复述与票面不符：target[电气位置指示].id: 票面「312」复述「3123」；target[电气位置指示].qualifier: 缺失「开关」；target[DEVICE]: 缺失「黄堽线312开关」",
+      "heard": "呃检查黄岗线3123杆电气位置指示确在分闸位置"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 2,
+      "message": "操作人复述与票面不符：target[开关].id: 票面「312」复述「310」；target[机械位置指示].id: 票面「312」复述「310」",
+      "heard": "检查黄冈线310开关机械位置指示确在分闸位置"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 2,
+      "message": "操作人复述与票面不符：target[OBJECT]: 缺失「黄堽线312开关机械位置指示」；state: 缺失「分闸位置」",
+      "heard": "检查黄堽线312开关"
+    },
+    {
+      "kind": "FAILED",
+      "seq": 2,
+      "message": "操作人复述与票面不符：action: 缺失「检查」；target[机械位置指示].interval: 缺失「黄堽线」；target[机械位置指示].id: 缺失「312」；target[机械位置指示].qualifier: 缺失「开关」；target[DEVICE]: 缺失「黄堽线312开关」；state: 缺失「分闸位置」",
+      "heard": "机械位置指示却在分叉位置"
+    },
+    {
+      "kind": "UNATTRIBUTED",
+      "seq": 3,
+      "message": "角色未判准，仅作灰区证据：缺唱票、复述；复述不完整",
+      "heard": "检查黄堽线3121刀闸3相却在分闸位置"
+    },
+    {
+      "kind": "FLAGGED",
+      "seq": 4,
+      "message": "灰区，需人工复核：缺唱票、复述；state: 缺失「分闸位置」",
+      "heard": "检查黄堽线3123刀闸3相水电分量位置"
+    },
+    {
+      "kind": "FLAGGED",
+      "seq": 5,
+      "message": "灰区，需人工复核：缺唱票、复述；target[DEVICE]: 缺失「#4接地线」；state: 缺失「装设」；quantity: 缺失「1组」",
+      "heard": "检查黄堽线3123刀闸开关侧"
+    },
+    {
+      "kind": "UNATTRIBUTED",
+      "seq": 5,
+      "message": "角色未判准，仅作灰区证据：缺唱票、复述；target[DEVICE]: 多出「黄堽线3123刀闸开关侧却已装饰4号接地线」；state: 缺失「装设」；quantity: 多出「1组」",
+      "heard": "确已装饰4号接地线1组检查黄堽线3123刀闸开关侧却已装饰4号接地线1组嗯"
+    },
+    {
+      "kind": "UNATTRIBUTED",
+      "seq": 6,
+      "message": "角色未判准，仅作灰区证据：缺唱票、复述；state: 缺失「装设」",
+      "heard": "检查黄堽线3121刀闸开关侧确已装饰6号接地线1组"
+    },
+    {
+      "kind": "UNATTRIBUTED",
+      "seq": 6,
+      "message": "角色未判准，仅作灰区证据：缺唱票、复述；target[刀闸].suffix: 缺失「刀闸」；target[刀闸].qualifier: 多出「3121侧杠1开关侧到」；target[DEVICE]: 多出「黄冈线3121侧杠1开关侧」；state: 缺失「装设」",
+      "heard": "检查黄冈线3121侧杠1开关侧到3121倒闸开关侧确已装饰6号接地线1组"
+    },
+    {
+      "kind": "UNATTRIBUTED",
+      "seq": 7,
+      "message": "角色未判准，仅作灰区证据：缺唱票、复述；复述不完整",
+      "heard": "检查现场具备操作条件检查现场确已具备操作条件"
+    }
+  ]
+}
