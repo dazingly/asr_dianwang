@@ -25,7 +25,7 @@ from src.config import PROJECT_ROOT, get as cfg_get
 from src.normalize.adhere import Adherer
 from src.speaker.role import OnlineRoleClassifier, RoleDecision
 from src.ticket.loader import load_ticket
-from src.verify.aligner import AlignEvent, SequentialAligner
+from src.verify.aligner import AlignEvent, SequentialAligner, split_recitations
 
 ROLE_LABEL = {"OPERATOR": "操作人", "CALLER": "唱票人", "UNKNOWN": "未定"}
 
@@ -80,6 +80,18 @@ def segment_row(
         "role_source": decision.source,
         "asr_text": result.text,
         "asr_raw": result.raw_text,
+        # 一个 VAD 段并了多遍复述时，这一行只对应其中一遍。span_text 是
+        # 这一行实际参与匹配的那一段，span_index/span_count 是它在段内的
+        # 序号。单遍的段这两项保持 null，输出与原来逐字节一致。
+        "span_text": (
+            event.utterance
+            if (event.span_count or 0) > 1 and not event.stitched else None
+        ),
+        "span_index": event.span_index,
+        "span_count": event.span_count,
+        # 这一遍吃的是"逐遍复核"文本：整段复核没听出编号时，服务端按遍
+        # 切开音频重新识别，救回来的那一遍在这里标出来。
+        "repaired": event.repaired,
         # 被拼合判定的段，实际参与匹配的是它和上一段的拼接文本。单独记一栏
         # 而不是覆盖 asr_text —— 看的人要能看出来"这一行之所以得分高，是因为
         # 把上一段的内容也算进来了"，否则分数对不上会以为是匹配器算错了。
@@ -261,8 +273,12 @@ class JudgePipeline:
         ticket = load_ticket(ticket_path)
         return cls(ticket, config, service, role_classifier=role_classifier)
 
-    def process(self, info: dict[str, Any], segment: Segment) -> Heard:
-        """判定一个 VAD 段。
+    def process(self, info: dict[str, Any], segment: Segment) -> list[Heard]:
+        """判定一个 VAD 段，返回这一段产生的所有逐段记录。
+
+        一段里可能并着好几遍复述（唱票和复诵只隔一次换气），这时每一遍
+        各自是一行：`aligner.feed_all` 按检查词切开逐遍匹配。单遍的段仍然
+        只返回一行，行为与原来一致。
 
         流式服务会在 `info` 里直接带回 text 字段（可能为空，表示这段没听
         出字）；旧服务/流式未启用时根本没有这个字段，才回退成整段离线识别。
@@ -281,16 +297,39 @@ class JudgePipeline:
         self.total_infer += result.infer_seconds
 
         adhered = self.adherer.adhere(result.text) if self.adherer else None
+        judged_text = adhered.text if adhered else result.text
+        alternatives = self._alternatives(info, judged_text)
         decision = self.role_classifier.observe(segment.wave)
-        event = self.aligner.feed(
-            adhered.text if adhered else result.text,
-            decision.role, audio_ms=segment.start_ms,
+        events = self.aligner.feed_all(
+            judged_text, decision.role, audio_ms=segment.start_ms,
+            alternatives=alternatives,
         )
-        heard = Heard(
-            len(self.heard) + 1, segment, decision, result, adhered, event,
-        )
-        self.heard.append(heard)
-        return heard
+        heards = [
+            Heard(
+                len(self.heard) + offset, segment, decision, result,
+                adhered, event,
+            )
+            for offset, event in enumerate(events, 1)
+        ]
+        self.heard.extend(heards)
+        return heards
+
+    def _alternatives(self, info: dict[str, Any],
+                      judged_text: str) -> list[str] | None:
+        """把服务端的逐遍复核文本切成与整段文本对应的各遍。
+
+        两边的遍数由对齐器再校验一次：对不上就不补，绝不张冠李戴。
+        """
+        reseg_text = str(info.get("reseg_text") or "")
+        if not reseg_text:
+            return None
+        adhered = self.adherer.adhere(reseg_text) if self.adherer else None
+        text = adhered.text if adhered else reseg_text
+        spans = split_recitations(text, self.aligner.recitation_markers)
+        primary = split_recitations(judged_text, self.aligner.recitation_markers)
+        if len(spans) != len(primary):
+            return None
+        return spans
 
     def finalize(self) -> dict[str, Any]:
         """收尾：挂起段落地，返回条目级四态报告。"""
@@ -315,7 +354,9 @@ def format_event(row: dict[str, Any]) -> str:
         f"[#{row['index']:<3d} {row['start_ms'] / 1000:7.2f}~"
         f"{row['end_ms'] / 1000:7.2f}s {row['role_label']}]"
     )
-    text = row["judged_text"] or row["asr_text"]
+    text = row["judged_text"] or row.get("span_text") or row["asr_text"]
+    if row.get("repaired"):
+        text = f"〔逐遍复核〕{text}"
     if row["judged_text"]:
         text = f"〔拼合〕{text}"
     if row.get("restarted"):
@@ -331,6 +372,21 @@ def format_event(row: dict[str, Any]) -> str:
     if row["message"]:
         line += f"｜{row['message']}"
     return line
+
+
+def format_partial(item: dict[str, Any]) -> str:
+    """未定段实时字幕的一行。
+
+    段还没说完时流式模型给出的中间文本，只用于让现场看到"话正在被听见"，
+    不参与判定。`first_text_latency_ms` 只在第一块文本上出现。
+    """
+    latency = item.get("first_text_latency_ms")
+    tail = f"（首字 {latency:.0f}ms）" if latency else ""
+    return (
+        f"  … 实时 #{item.get('utterance_id')} "
+        f"{item.get('audio_start_ms', 0) / 1000:6.2f}s "
+        f"{item.get('text')}{tail}"
+    )
 
 
 def format_pending(index: int, segment: Segment, message: str) -> str:

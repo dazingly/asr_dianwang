@@ -23,5 +23,6 @@ numpy>=1.24
 
 # 音频 IO
 soundfile>=0.12
-# 麦克风实时采集（scripts/mic_demo.py）
+# 麦克风实时采集与 44.1k/48k → 16k 多相重采样（scripts/mic_demo.py）
 sounddevice>=0.4
+scipy>=1.10

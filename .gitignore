@@ -20,6 +20,8 @@ venv/
 *_svc.log
 _*.txt
 _*.json
+# mic_demo --save-audio 的本地回放音频
+debug/
 
 # IDE
 .idea/

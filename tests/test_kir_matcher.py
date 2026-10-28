@@ -88,6 +88,27 @@ def test_ground_wire_hash_and_hao_are_same_fact(matcher, extractor) -> None:
     assert result.level is MatchLevel.FULL, result.reasons
 
 
+@pytest.mark.parametrize(
+    ("ticket", "heard"),
+    [
+        # 现场口语会把 #4接地线 读成"四号接地线"或"4号接地线"，两种都
+        # 必须等同于票面的 #4，不能因为"号"和"#"的书写差异判矛盾。
+        ("检查黄堽线312-3刀闸开关侧确已装设#4接地线一组",
+         "检查黄堽线312-3刀闸开关侧确已装设四号接地线一组"),
+        ("检查黄堽线312-3刀闸开关侧确已装设#4接地线一组",
+         "检查黄堽线312-3刀闸开关侧确已装设4号接地线一组"),
+        ("检查黄堽线312-1刀闸开关侧确已装设#6接地线一组",
+         "检查黄堽线312-1刀闸开关侧确已装设六号接地线一组"),
+        ("检查黄堽线312-1刀闸开关侧确已装设#6接地线一组",
+         "检查黄堽线312-1刀闸开关侧确已装设6号接地线一组"),
+    ],
+)
+def test_ground_wire_number_spoken_as_hao_is_same_fact(
+        matcher, extractor, ticket: str, heard: str) -> None:
+    result = matcher.match(_item(extractor, ticket), heard)
+    assert result.level is MatchLevel.FULL, result.reasons
+
+
 def test_switch_id_separator_is_same_fact(matcher, extractor) -> None:
     ticket = "检查黄堽线312-1刀闸开关侧确已装设#4接地线一组"
     heard = "检查黄堽线3121刀闸开关侧确已装设#4接地线一组"
@@ -311,6 +332,34 @@ def test_ticket_issue_is_unverifiable(matcher, extractor) -> None:
         f.level is FieldLevel.UNVERIFIABLE and f.path == "quality.ticket"
         for f in result.fields
     )
+
+
+def test_unparsable_numeric_id_is_unverifiable(matcher, extractor) -> None:
+    # “幺”被听成字母 o / 汉字“欧”：编号串本身不是数字，不能断言说错了
+    # 另一个编号。判 UNVERIFIABLE，让对齐层记未完成尝试而不是直接失败。
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    item = _item(extractor, ticket)
+
+    for heard in (
+        "检查黄堽线3o2开关机械位置指示却在分闸位置",
+        "检查黄堽线3欧2开关机械位置指示却在分闸位置",
+    ):
+        result = matcher.match(item, heard)
+        assert result.level is MatchLevel.UNVERIFIABLE, (heard, result.reasons)
+        assert FieldLevel.CONFLICT not in _field_levels(result)
+
+
+def test_wrong_digit_id_is_still_conflict(matcher, extractor) -> None:
+    # 听清了一个明确的数字（312→310）就是编号说错，必须判矛盾；
+    # UNVERIFIABLE 只留给"听不出是什么"的写法。
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    result = matcher.match(
+        _item(extractor, ticket),
+        "检查黄堽线310开关机械位置指示却在分闸位置",
+    )
+    assert result.level is MatchLevel.CONFLICT
+    assert any(f.path.endswith(".id") and f.level is FieldLevel.CONFLICT
+               for f in result.fields), result.reasons
 
 
 def test_unrelated_speech_is_no_evidence(matcher, extractor) -> None:

@@ -21,7 +21,12 @@ from src.normalize.text_norm import normalize
 from src.pipeline import segment_row
 from src.speaker.role import Role, RoleDecision
 from src.ticket.loader import OperationItem, Ticket
-from src.verify.aligner import EventKind, ItemState, SequentialAligner
+from src.verify.aligner import (
+    EventKind,
+    ItemState,
+    SequentialAligner,
+    split_recitations,
+)
 from src.verify.engine import EngineResult
 from src.verify.verdict import Verdict
 
@@ -44,6 +49,9 @@ class Entry:
     matched: float = 3.0
     # 票面被这段复述覆盖的比例。对齐器用它区分"完整念错"和"没念完"。
     coverage: float = 1.0
+    # KIR 的 MatchLevel 字符串。逐遍复核只救 UNVERIFIABLE 这类"没听清"，
+    # 必须能区分它和明确的 CONFLICT。
+    level: str | None = None
     reasons: list[str] = field(default_factory=list)
 
 
@@ -60,6 +68,7 @@ class StubEngine:
                 item=item, utterance=utterance, verdict=entry.verdict,
                 score=entry.score, matched=entry.matched,
                 coverage=entry.coverage,
+                level=entry.level,
                 reasons=list(entry.reasons),
                 conflicts=(
                     [StubConflict("冲突")]
@@ -394,21 +403,24 @@ def test_restart_across_segments_counts_the_full_segment() -> None:
     assert aligner.feed(ticket).kind is EventKind.VERIFIED
 
 
-def test_restart_in_one_segment_uses_suffix_full() -> None:
+def test_merged_segment_splits_each_recitation() -> None:
+    """一段里并着"半句 + 完整重读"：后半遍独立计一次。"""
     ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
-    doubled = ticket + ticket
+    half = "检查黄堽线312开关"
+    combined = half + ticket
     engine = StubEngine({
-        doubled: _review(1),
+        combined: _review(1),
         normalize(ticket): _pass(1),
         ticket: _pass(1),
     })
     aligner = _aligner(engine, texts=[ticket])
 
-    event = aligner.feed(doubled)
+    events = aligner.feed_all(combined)
 
-    assert event.kind is EventKind.CONFIRMED
+    # 按检查词切开：前半句单独落地，后半遍自己就是完整复述。
+    assert [event.span_index for event in events] == [1, 2]
+    assert events[-1].kind is EventKind.CONFIRMED
     assert aligner.records[0].confirmations == 1
-    assert aligner.records[0].restarts == 1
     assert aligner.feed(ticket).kind is EventKind.VERIFIED
 
 
@@ -440,39 +452,139 @@ def test_merged_row_refreshes_progress_and_alert_snapshot() -> None:
     assert aligner.report()["alerts"] == []
 
 
-def test_restart_prefix_conflict_is_recorded_as_aborted() -> None:
+def test_merged_segment_half_conflict_is_recorded_as_aborted() -> None:
+    """前半句里有口误：只留 ABORTED_CONFLICT，后半遍照常计数。"""
     ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
-    doubled = ticket + ticket
+    half = "检查黄堽线312开关"
     engine = StubEngine({
-        doubled: _fail(1, coverage=0.3),
+        half: _fail(1, coverage=0.3),
         normalize(ticket): _pass(1),
         ticket: _pass(1),
     })
     aligner = _aligner(engine, texts=[ticket])
 
-    event = aligner.feed(doubled)
+    events = aligner.feed_all(half + ticket)
 
-    assert event.kind is EventKind.CONFIRMED
+    assert events[0].kind is EventKind.ATTEMPT
+    assert {a["code"] for a in events[0].alerts} == {"ABORTED_CONFLICT"}
+    assert events[-1].kind is EventKind.CONFIRMED
     assert aligner.records[0].aborted_conflicts
     assert aligner.records[0].aborted_attempts == 1
-    assert {a["code"] for a in event.alerts} == {"ABORTED_CONFLICT"}
+    assert aligner.records[0].confirmations == 1
 
 
-def test_complete_conflict_is_not_overridden_by_restart() -> None:
+def test_merged_segment_judges_each_recitation_independently() -> None:
+    """两遍完整复述各自判定，整段旧口径的矛盾不再参与。"""
     ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
     doubled = ticket + ticket
     engine = StubEngine({
         doubled: _fail(1, coverage=1.0),
         normalize(ticket): _pass(1),
+        ticket: _pass(1),
     })
     aligner = _aligner(engine, texts=[ticket])
 
-    event = aligner.feed(doubled)
+    events = aligner.feed_all(doubled)
 
+    assert [event.kind for event in events] == [
+        EventKind.CONFIRMED, EventKind.VERIFIED,
+    ]
+    assert aligner.records[0].confirmations == 2
+    assert aligner.records[0].state is ItemState.VERIFIED
+
+
+def _unverifiable(seq: int, score: float = 0.7) -> Entry:
+    return Entry(seq, Verdict.REVIEW, score=score, matched=5.5,
+                 coverage=0.9, level="UNVERIFIABLE")
+
+
+def test_unverifiable_span_is_repaired_by_per_recitation_decode() -> None:
+    """整段复核把编号听成 3o2、逐遍复核听成 312：这一遍应当补上。"""
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    engine = StubEngine({
+        "检查黄堽线3o2开关机械位置指示却在分闸位置": _unverifiable(1),
+        ticket: _pass(1),
+    })
+    aligner = _aligner(engine, texts=[ticket])
+
+    events = aligner.feed_all(
+        "检查黄堽线3o2开关机械位置指示却在分闸位置",
+        alternatives=[ticket],
+    )
+
+    assert events[0].repaired is True
+    assert events[0].utterance == ticket
+    assert events[0].kind is EventKind.CONFIRMED
+    assert aligner.records[0].confirmations == 1
+
+
+def test_clear_conflict_is_never_repaired() -> None:
+    """整段复核听清了另一个编号（312→310）：逐遍复核不能把它洗白。"""
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    engine = StubEngine({
+        "检查黄堽线310开关机械位置指示却在分闸位置": _fail(1),
+        ticket: _pass(1),
+    })
+    aligner = _aligner(engine, texts=[ticket])
+
+    event = aligner.feed_all(
+        "检查黄堽线310开关机械位置指示却在分闸位置",
+        alternatives=[ticket],
+    )[0]
+
+    assert event.repaired is False
     assert event.kind is EventKind.FAILED
     assert aligner.records[0].state is ItemState.FAILED
+
+
+def test_repair_does_not_switch_to_another_item() -> None:
+    """整段结果已经明确指向第 1 条时，复核不能把它改成第 2 条。"""
+    engine = StubEngine({
+        "half1": Entry(1, Verdict.REVIEW, score=0.7, coverage=0.5,
+                       level="UNVERIFIABLE"),
+        "ok2": _pass(2),
+    })
+    aligner = _aligner(engine, count=2, texts=["操作一", "操作二"])
+
+    event = aligner.feed_all("half1", alternatives=["ok2"])[0]
+
+    assert event.repaired is False
     assert aligner.records[0].confirmations == 0
-    assert aligner.records[0].restarts == 0
+    assert aligner.records[1].confirmations == 0
+
+
+def test_repair_requires_one_alternative_per_span() -> None:
+    # 两遍文本对不上号时不补，宁可少补也不张冠李戴。
+    engine = StubEngine({
+        "3o2": _unverifiable(1),
+        "312": _pass(1),
+    })
+    aligner = _aligner(engine, count=1, texts=["操作一"])
+
+    event = aligner.feed_all("3o2", alternatives=["312", "312"])[0]
+
+    assert event.repaired is False
+    assert event.kind is not EventKind.CONFIRMED
+
+
+def test_passing_span_ignores_alternative() -> None:
+    # 整段已经 FULL 就按整段算，不拿复核结果再计一次（同一遍不能算两次）。
+    engine = StubEngine({"ok": _pass(1), "also-ok": _pass(1)})
+    aligner = _aligner(engine)
+
+    event = aligner.feed_all("ok", alternatives=["also-ok"])[0]
+
+    assert event.repaired is False
+    assert event.utterance == "ok"
+    assert aligner.records[0].confirmations == 1
+
+
+def test_split_recitations_keeps_prefix_and_unknown_text() -> None:
+    # 服务端逐遍复核和对齐器共用这一个切分口径，两边数出的遍次必须一致。
+    assert split_recitations("好的，检查A检查B") == ["好的，", "检查A", "检查B"]
+    assert split_recitations("检查A") == ["检查A"]
+    assert split_recitations("没有任何标记") == ["没有任何标记"]
+    assert split_recitations("检查A", ("核对",)) == ["检查A"]
 
 
 # ---------------------------------------------------------------------------

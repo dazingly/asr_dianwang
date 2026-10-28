@@ -43,6 +43,44 @@ from src.verify import alerts as alerting
 from src.verify.engine import EngineResult, MatchEngine, build_engine
 from src.verify.verdict import Verdict
 
+# 一段识别文本里，唱票和复诵都以操作动词开头。数到几次就是并了几遍。
+# 对齐器按它拆遍次，服务端复核按同一个口径切音频 —— 两边必须一致。
+DEFAULT_RECITATION_MARKERS = ("检查", "核对", "确认", "验明")
+
+
+def split_recitations(
+    text: str, markers: tuple[str, ...] = DEFAULT_RECITATION_MARKERS,
+) -> list[str]:
+    """把一段识别文本按检查词出现的位置切成若干遍复述。
+
+    检查词前面还有内容（"好的，检查…"）时，前面那段单独成一片 ——
+    通常是语气词，匹配不上任何票面，会自然落成闲聊；没有检查词就
+    只有一遍。
+    """
+    text = (text or "").strip()
+    if not text or not markers:
+        return [text]
+
+    starts: set[int] = set()
+    for marker in markers:
+        pos = text.find(marker)
+        while pos != -1:
+            starts.add(pos)
+            pos = text.find(marker, pos + 1)
+    if not starts:
+        return [text]
+    ordered = sorted(starts)
+    if ordered[0] != 0:
+        ordered.insert(0, 0)
+    if len(ordered) == 1:
+        return [text]
+    bounds = ordered + [len(text)]
+    spans = [
+        text[start:end].strip()
+        for start, end in zip(bounds, bounds[1:])
+    ]
+    return [span for span in spans if span] or [text]
+
 
 class ItemState(str, Enum):
     PENDING = "PENDING"          # 还没凑够完整复述次数
@@ -119,6 +157,13 @@ class AlignEvent:
     # 这一段落地后，整张票当前校验到第几项。视频/前端直接读这个结构，
     # 不必自己数事件。
     progress: TicketProgress | None = None
+    # 一个 VAD 段里可能并着好几遍复述（唱票和复诵挨得太近）。这里记下
+    # 这一段是其中第几遍、一共几遍，逐段输出时才知道一行对应一句话。
+    span_index: int | None = None
+    span_count: int | None = None
+    # 这一遍的结论吃的是"逐遍复核"文本（整段复核听不出编号时的第二次
+    # 切分识别），不是整段文本。报告里标出来，便于回放核对。
+    repaired: bool = False
 
     @property
     def is_alert(self) -> bool:
@@ -209,8 +254,25 @@ class SequentialAligner:
         )
         # 同一段里"半句 + 完整重读"的后缀匹配开关。
         self.restart_aware = bool(cfg_get(cfg, "aligner.restart_aware", True))
+        # 同一段里完整念了同一条多次时，按内容逐次计数（而不是一段只算
+        # 一次）。VAD 会把只隔一次换气的唱票和复诵并进同一段，关掉它严格
+        # 校验就永远等不到第二次。
+        self.count_in_segment_repeats = bool(
+            cfg_get(cfg, "aligner.count_in_segment_repeats", True)
+        )
         self.max_restart_candidates = max(
             1, int(cfg_get(cfg, "aligner.max_restart_candidates", 12))
+        )
+        # 一次复述总以检查词开头（"检查/核对/确认/验明…"）。VAD 把唱票和
+        # 复诵并进同一段时，这些词就是天然的切分点：切开后每一遍都能独立
+        # 匹配、独立计数。票面内容里不会在句子中间再出现检查词，所以按
+        # 字面出现位置切分不会把一次复述切坏。
+        markers = cfg_get(
+            cfg, "aligner.recitation_markers",
+            list(DEFAULT_RECITATION_MARKERS),
+        )
+        self.recitation_markers = tuple(
+            str(marker) for marker in markers if str(marker).strip()
         )
 
         # 提醒是旁路：enabled=false 时 builder 全部空转，判定一行都不变。
@@ -227,6 +289,7 @@ class SequentialAligner:
         self._utterance_index = 0
         self._audio_ms: int | None = None
         self._role = Role.OPERATOR.value
+        self._repaired = False
 
     # ------------------------------------------------------------------
     @property
@@ -372,18 +435,115 @@ class SequentialAligner:
                     break
         return sorted(starts)[:self.max_restart_candidates]
 
+    def _count_full_occurrences(self, item: OperationItem,
+                                utterance: str) -> int:
+        """数这一段里完整念对了同一条几次。
+
+        VAD 按静音切段，唱票和复诵之间只隔一次换气时，两个人会被并进
+        同一段。按"一段算一次"计数，严格要求两次复述时就永远凑不满。
+        这里按内容而不是按段计数：每次出现都必须独立完整匹配上这条票面。
+
+        半句口误接完整重读仍然只算一次 —— 前半截自己匹配不完整，
+        不因为它后面跟了一次完整复述就升级成一次"完整复述"。
+        """
+        norm = normalize(utterance)
+        if not norm:
+            return 0
+
+        cache: dict[str, int] = {}
+
+        def count(text: str, depth: int = 0) -> int:
+            if not text or depth > 8:
+                return 0
+            if text in cache:
+                return cache[text]
+            cache[text] = 0  # 防止同一段文本绕回来
+            for pos in self._restart_positions(item, text):
+                if pos <= 0 or pos >= len(text):
+                    continue
+                # 切点后面必须自己就是一次完整复述，否则这里只是
+                # 设备名碰巧又出现了一次，不是重新开始念。
+                suffix = self.matcher.match(item, text[pos:])
+                if suffix is None or suffix.verdict is not Verdict.PASS:
+                    continue
+                # 先看切点前面是不是完整的一次；不是就换下一个切点，
+                # 不要递归进后缀（否则半句开头的每个候选位置都会指数展开）。
+                head = count(text[:pos], depth + 1)
+                if not head:
+                    continue
+                tail = count(text[pos:], depth + 1)
+                if tail:
+                    cache[text] = head + tail
+                    return head + tail
+            whole = self.matcher.match(item, text)
+            cache[text] = (
+                1 if whole is not None and whole.verdict is Verdict.PASS else 0
+            )
+            return cache[text]
+
+        return count(norm)
+
     def _new_event(self, kind: EventKind, utterance: str, role: Role,
                    **kwargs) -> AlignEvent:
         return AlignEvent(
             kind, utterance, role,
             audio_ms=self._audio_ms,
             utterance_index=self._utterance_index,
+            repaired=self._repaired,
             **kwargs,
         )
 
     def feed(self, utterance: str, role: Role = Role.OPERATOR, *,
              audio_ms: int | None = None) -> AlignEvent:
-        """喂入一段语音的识别文本，返回这一段引发的事件。
+        """喂入一段语音的识别文本，返回**最后**一个事件。
+
+        兼容老调用方：一段里只有一遍复述时，这就是唯一的事件；并了多遍
+        时见 `feed_all`。
+        """
+        events = self.feed_all(utterance, role, audio_ms=audio_ms)
+        return events[-1]
+
+    def feed_all(self, utterance: str, role: Role = Role.OPERATOR, *,
+                 audio_ms: int | None = None,
+                 alternatives: list[str] | None = None) -> list[AlignEvent]:
+        """喂入一段语音，按检查词拆成若干遍复述，逐遍判定。
+
+        VAD 按静音切段，唱票和复诵之间只隔一次换气时会被并进同一段；
+        现场节奏下甚至会一段并进四条（两条票各唱一遍复诵一遍）。整段
+        一起匹配只能挑出一条最佳，其余内容会以"多出设备"的形式把这条
+        也拖成未完成。按检查词切开逐遍匹配，每一条都能独立落账。
+
+        `alternatives` 是与各遍一一对应的"逐遍复核"文本（服务端按遍切
+        音频重新识别的结果）。只在整段复核下不了结论时用来补一次，见
+        `_repair_span`。
+
+        没有检查词（或只有开头一个）时就是原来的一段一次，行为不变。
+        """
+        spans = self._recitation_spans(utterance)
+        if alternatives is not None and len(alternatives) != len(spans):
+            # 两次识别的遍数对不上，没法按遍对应；宁可不补，也不张冠李戴。
+            alternatives = None
+        events = [
+            self._feed_one(
+                span, role, audio_ms=audio_ms,
+                alternative=alternatives[index] if alternatives else None,
+            )
+            for index, span in enumerate(spans)
+        ]
+        if len(events) > 1:
+            for index, event in enumerate(events, 1):
+                event.span_index = index
+                event.span_count = len(events)
+        return events
+
+    def _recitation_spans(self, utterance: str) -> list[str]:
+        """按本配置的检查词切遍次。"""
+        return split_recitations(utterance, self.recitation_markers)
+
+    def _feed_one(self, utterance: str, role: Role, *,
+                  audio_ms: int | None = None,
+                  alternative: str | None = None) -> AlignEvent:
+        """喂入一遍复述，返回它引发的事件。
 
         一段话被 VAD 切成两半是常态。两半各自拿去匹配谁都不完整，合起来
         才是一条干净复述。所以内容不完整的段先挂起，等下一段拼起来重判。
@@ -396,13 +556,17 @@ class SequentialAligner:
         self._utterance_index += 1
         self._audio_ms = audio_ms
         self._role = role.value
+        self._repaired = False
 
         text = utterance.strip()
         alone: EngineResult | None = None
 
+        if text:
+            alone = self._best(text, allow_restart=True)
+            text, alone = self._repair_span(text, alternative, alone)
+
         if self._pending is not None:
             if text:
-                alone = self._best(text, allow_restart=True)
                 # 下一段自己就是完整复述：挂起的前半句按未完成尝试落地，
                 # 这一整段直接计数，避免拼合吞掉一次完整复述。
                 if alone is not None and alone.verdict is Verdict.PASS:
@@ -430,6 +594,31 @@ class SequentialAligner:
             self._attach_alerts(event)
             return self._emit(event)
         return self._commit(text, role, alone)
+
+    def _repair_span(self, text: str, alternative: str | None,
+                     alone: EngineResult | None) -> tuple[str, EngineResult | None]:
+        """整段复核下不了结论时，用逐遍复核的文本补一次。
+
+        只救"没听清"的遍次：整段结果必须是 REVIEW 类（无法验证/不完整/
+        多说/无证据）。完整矛盾（FAIL）绝不替换 —— 逐遍复核只是同一段
+        音频的第二次切分，不能把明确说错的编号洗成正确。
+
+        替换后必须对窗口内某条是 FULL；整段结果本来就有明确指向时，还
+        要求复核指向同一条，避免把一段语音改判成另一条操作。
+        """
+        alternative = (alternative or "").strip()
+        if not alternative or alternative == text or alone is None:
+            return text, alone
+        if alone.verdict is not Verdict.REVIEW:
+            return text, alone
+        alt = self._best(alternative, allow_restart=True)
+        if alt is None or alt.verdict is not Verdict.PASS:
+            return text, alone
+        if (alone.score >= self.chatter_threshold
+                and alt.item.seq != alone.item.seq):
+            return text, alone
+        self._repaired = True
+        return alternative, alt
 
     def _should_hold(self, best: EngineResult | None) -> bool:
         """这段值不值得等下一段拼起来再判。
@@ -603,8 +792,16 @@ class SequentialAligner:
                           item=best.item, match=best)
         if index is not None:
             record.confirmation_indices.add(index)
-        record.confirmation_results.append(best)
-        record.confirmations += 1
+        occurrences = 1
+        if self.count_in_segment_repeats:
+            occurrences = max(
+                1, self._count_full_occurrences(best.item, utterance),
+            )
+        record.confirmation_results.extend([best] * occurrences)
+        record.confirmations += occurrences
+        # 一段里念了两次，attempts 也要按两次记，否则报告里会出现
+        # "尝试 1 次、完整复述 2 次"的怪数字。
+        record.attempts += occurrences - 1
         if best.restarted:
             record.restarts += 1
         if best.restart_aborted is not None:

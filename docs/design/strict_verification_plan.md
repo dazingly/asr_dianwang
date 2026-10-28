@@ -697,13 +697,21 @@ aligner:
   complete_coverage: 0.7      # 区分"完整念错"和"没念完"
   restart_aware: true
   max_restart_candidates: 12
-  lookahead: 2
+  lookahead: 6
   lookback: 2
   chatter_threshold: 0.45
   stitch_gain: 0.10
 
 alerts:
   enabled: true               # 关闭只影响提醒字段，不改变判定
+
+vad:
+  # funasr 1.4.2 流式 VAD 自带动态静音调度（开头 2s、5s 后 1.5s、10s 后 1s…），
+  # 比固定阈值更不容易把一条复述从中间切断。注意：不显式给 generate() 传
+  # max_end_silence_time 时动态调度会覆盖构造参数，所以代码每块都显式传
+  # dynamic_silence，配置写什么、实际就跑什么。
+  dynamic_silence: true
+  max_end_silence_time: 800   # 仅 dynamic_silence=false 时生效
 
 asr:
   streaming:
@@ -713,7 +721,10 @@ asr:
     encoder_chunk_look_back: 4
     decoder_chunk_look_back: 1
     partial: true
-    refine_with_offline: true # 2-pass：流式定段 + 离线复核文本
+    # 2-pass：流式定段 + 离线复核文本。复核切片必须从
+    # "VAD 起点 - preroll_ms"（段里的 refine_start_ms）开始，和流式识别器
+    # 实际吃到的音频一致；从 VAD 起点切会丢掉句首音素。
+    refine_with_offline: true
 
 service:
   buffer_seconds: 60
@@ -769,8 +780,10 @@ commit 可 revert。
 - `负荷/符合` 这类同音异形词：靠 `confusable_pairs` 在书写层拦；未收录的
   词对仍可能等价放过。
 - 票面 38 条 TICKET_ISSUE 条目：结构上不可能 VERIFIED，全部走 WARN 提醒。
-- W7 计数口径：不区分说话人（同一人念两遍也算通过）；同一 VAD 段连念
-  两遍只计一次；完整矛盾默认不可撤销。详见 §11.8。
+- W7 计数口径：不区分说话人（同一人念两遍也算通过）；完整矛盾默认不可
+  撤销。同一 VAD 段连念多遍按检查词拆开逐遍计数（W9/W10，见 §11.8、§12）。
+- 逐遍复核不是主证据：离线模型对切片总长度敏感（尾部多 0.2s 静音就可能
+  改变句首数字的解码），所以只在整段结果“没听清”时补判，明确矛盾绝不替换。
 
 ## 10. 实施顺序（历史记录）
 
@@ -802,12 +815,13 @@ W1/W2 完成后接口稳定，W4 换成流式识别文本后无需改动。
 
 ### 11.2 计数单位与判定
 
-一次“完整复述”= 一段语音（或挂起后拼合的组合）经 KIR 比较为 `FULL`。
-VAD 碎片本身不计数；被 VAD 切开的同一句话拼合后算一次。
+一次“完整复述”= 一段语音（或挂起后拼合的组合）里，一次**独立**经 KIR
+比较为 `FULL` 的内容。VAD 碎片本身不计数；被 VAD 切开的同一句话拼合后
+算一次；同一段里完整念了两遍（唱票+复诵被粘在一起）则按两遍计。
 
 | 本段结果 | 计数 | 说明 |
 |---|---|---|
-| `FULL` | +1 | 所有字段 EXACT/EQUIVALENT |
+| `FULL` | +N | 段内完整出现几次就加几次；每遍都必须独立匹配上票面 |
 | `PARTIAL` / `EXTRA` / `UNVERIFIABLE` | 0 | 未完成尝试；不推进指针、不立即报警 |
 | `CONFLICT` 且完整 | 0 | `FAILED`；完整矛盾不可被后续复述洗白（默认） |
 | `CONFLICT` 且不完整 | 0 | `ABORTED_CONFLICT` WARN，留痕；后续两次 FULL 可 VERIFIED |
@@ -840,6 +854,14 @@ complete_coverage`（默认 0.7）才按完整矛盾处理。
 - **同一段内重读**：整段不是 `FULL`、也不是完整矛盾时，用票面开头 4/5/6 字
   或目标设备名在文本中再次出现的位置截断后缀，对后缀重做 KIR 匹配；
   只接受 `FULL`。整段最佳结果是完整矛盾时，不得用后缀 `FULL` 覆盖。
+- **同一段两遍完整**：唱票和复诵之间只隔一次换气时 VAD 会并进同一段。
+  此时按内容而不是按段计数：把段文本在重读切点处递归切开，前缀和后缀都
+  必须各自独立匹配成 `FULL` 才各计一次（`aligner.count_in_segment_repeats`）。
+  半句口误接完整重读仍然只计一次 —— 前缀不完整，不因为它后面跟了一次
+  完整复述就升级。递归带记忆化与深度上限，候选切点不展开指数分支。
+- **吸附按检查词分段**：合并段里两遍复述要各自吸附。`Adherer.adhere()` 按
+  “检查/核对/确认/验明”把文本切开，逐段吸附后再拼回。整段一起跑的话，
+  每个目标词只改写最佳的一处，第二遍的听错会原样留下，段内计数也会认不出。
 
 ### 11.5 角色与提醒
 
@@ -873,13 +895,14 @@ complete_coverage`（默认 0.7）才按完整矛盾处理。
 
 ### 11.7 验收
 
-- 全量单测 **126 passed**（`python -m pytest -q`，约 1.5s）。
+- 全量单测 **138 passed**（`python -m pytest -q`，约 2s）。
   - `tests/test_aligner_confirmations.py`：两次 FULL→VERIFIED、一次收尾
     FLAGGED、第三次幂等、完整矛盾不可撤销/可配置纠正、未完成矛盾不失败、
     PARTIAL/闲聊不计数、跳项迟到补齐、跨段重读、同段后缀重读、重读前缀
     口误留痕、完整矛盾不被后缀覆盖、audit/strict、角色仅元数据、
     拼合行进度与提醒快照刷新。
-  - `tests/test_aligner_kir.py`：真实 KIR 端到端覆盖上述主路径。
+  - `tests/test_aligner_kir.py`：真实 KIR 端到端覆盖上述主路径；新增同一
+    VAD 段两遍完整→计两次并 `VERIFIED`、半句+完整→只计一次。
   - `tests/test_alerts.py`：不变式、NEED_MORE/ABORTED、HELD 快照、
     `SYSTEM` 定位、开关与异常隔离。
   - `tests/test_kir_matcher.py`：`ticket_coverage` 方向回归（半句 < 0.7，
@@ -891,11 +914,22 @@ complete_coverage`（默认 0.7）才按完整矛盾处理。
   只完整念了一次，且两处编号被 ASR 听岔（312→3123、312→310）触发完整
   矛盾，所以没有条目达到两次——与录音内容一致，不是计数漏判。完整/未完成
   矛盾、CONFIRMED、ATTEMPT、REPEAT、NEED_MORE 均按预期出现。
+- 段内计数 + 吸附分段修复后复跑同一录音：固定 800ms
+  `{VERIFIED 1, FLAGGED 5, UNCONFIRMED 1}`，动态静音
+  `{VERIFIED 1, FLAGGED 4, UNCONFIRMED 2}`；两种分段的 item3 都变成
+  两次完整复述的 `VERIFIED`。剩余失败集中在 ASR 词错（分闸→分叉、
+  装设→装饰/装置、开关→开管/反管、312→310/3123），其中“分叉”与“分闸”
+  拼音差异大，吸附按设计不会修。默认保留动态静音：用户实跑的节奏
+  （两条一并段）更接近它，合并的代价已由段内计数兜住。
 
 ### 11.8 W7 已知取舍
 
-- **同一 VAD 段里连续念两遍完整内容只计一次**。不自动把“一段里同一句
-  出现两次”算两次，避免 ASR 重复输出/回声造成假通过；代价是需要再念一次。
+- **同一 VAD 段里完整念两遍按两次计**（W9 起）。判定依据是内容而不是段数：
+  每一遍都要独立匹配成 `FULL`，半句不完整的前缀不升级。风险是 ASR 自身的
+  重复输出（同一句被解码两遍）也会被计两次；关掉
+  `aligner.count_in_segment_repeats` 可退回“一段一次”。
+- **同一段里连着念了两条不同内容**时，对齐器只按最佳匹配计一条，另一条
+  不会在同一段内被拆出来计数；这两条需要在后续段里重新念到。
 - **不区分说话人**。同一个人自己念两遍也能通过；这是“只校验内容”的直接
   结果，用户已明确接受。
 - **完整矛盾默认不可撤销**。远场 ASR 听岔也会触发 FAILED；需要允许后续
@@ -903,3 +937,92 @@ complete_coverage`（默认 0.7）才按完整矛盾处理。
 - **完整/未完成靠覆盖率阈值区分**。极短票面或识别严重残缺时可能把
   “没念完”判成完整矛盾；阈值 `complete_coverage` 可调，保守方向是宁可
   FLAGGED 也不假通过。
+
+## 12. W10：一段多遍与逐遍复核
+
+**状态：已完成（2026-10-28）**
+
+### 12.1 现场问题与诊断
+
+用户用麦克风按真实节奏唱票 + 复诵，14 遍复述的最终结果是
+`{VERIFIED 1, FLAGGED 2, FAILED 2, UNCONFIRMED 2}`，但其内容本身是念对的。
+回放 `debug/mic` 音频后定位到三类问题：
+
+1. **一段并了多遍**：seg_006 长 26.5s，含 4 遍复述（第 5 条 ×2、第 6 条 ×2）。
+   原状态机“一段一个结论”，第 6 条整段只匹配到第 5 条，落 UNCONFIRMED。
+2. **VAD 调参救不了合并**：固定 800/1000ms 静音在同一份录音上仍得到 11 段，
+   这些换气停顿不被 FSMN 判为静音。“切长”只能靠判定层消化。
+3. **编号被听岔**：整段十几秒的重复内容让离线模型在后面的数字上退化
+   （“三幺两” → “3o两”/“三欧两”）。但模型对切片总长度敏感 —— 同一段音频
+   尾部多 0.18s 静音，句首的解码就从“三o两”变成“三五两”（振幅缩放几乎
+   无影响）。所以“逐遍重识别”不能无条件覆盖整段文本。
+
+麦克风/采集链路本身正常：峰值 0.604、RMS 0.0374、削波 0%、3kHz 以上能量
+2.61%。
+
+### 12.2 按检查词拆遍
+
+- `src/verify/aligner.py` 新增模块级 `split_recitations(text, markers)`，
+  与 `Adherer.adhere()` 共用同一组边界词：`aligner.recitation_markers`
+  （默认 检查/核对/确认/验明），配置在 `configs/default.yaml`。
+- 检查词之前的内容单独成片（通常是“好的”这类语气词，自然落成闲聊）；
+  没有检查词时只有一遍。
+- `SequentialAligner.feed_all()` 把一段文本逐遍 `_feed_one`，每遍独立
+  匹配、独立计数；`AlignEvent.span_index/span_count` 标出段内序号，
+  单遍段保持 `null`，输出与旧语义一致。
+- `src/pipeline.py` 的逐段行增加 `span_text/span_index/span_count`。
+
+### 12.3 逐遍复核（修复型）
+
+- 服务端 `_refine()` 在整段离线复核之后，若文本能切成多遍，用
+  `streaming.proportional_slices()` 按每遍字数占比切音频（不做能量分析），
+  逐遍重识别，结果放进 `segment["reseg_text"]`；整段 `text` 始终是主证据。
+  某一遍识别失败（空文本）时退回整段文本里对应的那一遍。
+- `JudgePipeline._alternatives()` 把 `reseg_text` 再切成与整段一一对应的
+  列表；两边遍数不一致就不补，绝不张冠李戴。
+- 对齐器 `_repair_span()` 只在同时满足以下条件时采纳替代文本：
+  1. 整段结果是 REVIEW 类（`UNVERIFIABLE/PARTIAL/EXTRA/NO_EVIDENCE`）——
+     “没听清”才修；
+  2. 替代文本独立匹配为 `FULL`；
+  3. 整段结果已有明确指向时，替代文本必须指向同一条。
+  完整矛盾（`FAIL/CONFLICT`）绝不替换：同一段音频的第二次切分不能把明确
+  说错的编号洗成正确。
+- `AlignEvent.repaired` 留痕；控制台行首标 `〔逐遍复核〕`；
+  `mic_demo.py --save-audio` 的 segments.jsonl 记录 `reseg_text`。
+
+### 12.4 编号听岔不判矛盾
+
+纯数字编号听到非数字写法时判 `UNVERIFIABLE`，不判 `CONFLICT`：
+
+- 整段保住时是 `3o2`；
+- 被切碎时“3欧”落进限定词、编号只剩 `2`；把限定词和编号拼回去，长度与
+  票面一致且仍含非数字字符，同样认定没听清。
+
+明确听成另一个数字（票面 312、复述 310）不会命中这条规则，仍判
+`CONFLICT` —— 那是清楚的编号不一致。
+
+### 12.5 验收
+
+- 全量单测 **149 passed**（`python -m pytest -q`）。新增覆盖：
+  `split_recitations` 边界（前缀成片、无标记、自定义标记）；逐遍替代只救
+  REVIEW、明确矛盾绝不替换、不跨条目替换、遍数不一致不补、PASS 遍次忽略
+  替代；`proportional_slices` 全覆盖与退化权重；编号不可解析判
+  UNVERIFIABLE、明确错数字仍 CONFLICT。
+- `debug/mic/mic_16k.wav` 端到端回放（真实服务：400ms/块推送 → VAD →
+  流式 + 整段复核 + 逐遍复核 → 判定）：
+  `{VERIFIED 4, FLAGGED 3, FAILED 0, UNCONFIRMED 0}`。
+  item3 由整段的 “3o2…” 经逐遍复核救回 `VERIFIED`；item5/6/7 保持
+  `VERIFIED`（未被重识别拖累）；item1/2/4 保持 `FLAGGED`。
+  修复前同一份音频为
+  `{VERIFIED 1, FLAGGED 2, FAILED 2, UNCONFIRMED 2}`。
+
+### 12.6 已知取舍
+
+- **逐遍复核不是主证据**。模型对切片总长度敏感；无条件下用它替换整段
+  文本会把已判对的条目改坏（实测 item5 从 `VERIFIED` 退回 `FLAGGED`），
+  所以只做“修复”。
+- **切点按字数占比**，落在换气处是经验值，不做能量分析（向能量谷吸附反而
+  会吸进词中间的短暂低能量帧，把一遍复述切成两半）。
+- **通用设备后缀（开关/刀闸/母线）仍不独立吸附**（见 `adhere.py` 的护栏
+  说明）。编号同时听岔时设备可能抽不出来，这一遍落成闲聊而不是未完成
+  尝试；不影响结论（仍需后续正确复述），但报告里看不到尝试痕迹。

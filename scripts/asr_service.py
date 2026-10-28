@@ -48,10 +48,15 @@ from src.asr.streaming import (  # noqa: E402
     StreamingAsrEngine,
     StreamingSession,
     StreamingVad,
+    proportional_slices,
 )
 from src.asr.vad_stream import VadSegmenter  # noqa: E402
 from src.config import get as cfg_get  # noqa: E402
 from src.config import load_config  # noqa: E402
+from src.verify.aligner import (  # noqa: E402
+    DEFAULT_RECITATION_MARKERS,
+    split_recitations,
+)
 
 
 class Runtime:
@@ -68,6 +73,16 @@ class Runtime:
         self.segmenter = VadSegmenter(cfg)
         self.refine_with_offline = bool(
             cfg_get(cfg, "asr.streaming.refine_with_offline", False)
+        )
+        self.resegment_recitations = bool(
+            cfg_get(cfg, "asr.streaming.resegment_recitations", True)
+        )
+        markers = cfg_get(
+            cfg, "aligner.recitation_markers",
+            list(DEFAULT_RECITATION_MARKERS),
+        )
+        self.recitation_markers = tuple(
+            str(marker) for marker in markers if str(marker).strip()
         )
         self.session: StreamingSession | None = None
         self.stream_asr: StreamingAsrEngine | None = None
@@ -152,30 +167,93 @@ class Runtime:
         不管流式侧有没有听出字，只要拿到段音频就用离线文本覆盖 —— 现场
         实测流式模型在这批远场录音上漏字明显，判定必须吃离线结果；流式
         文本仍保留在 `stream_text` 里供前端做实时字幕对照。
+
+        切片起点必须用 `refine_start_ms`（VAD 起点减去句首预卷），不能
+        用 `start_ms`：流式识别器一直吃着预卷，离线复核若从 VAD 起点切，
+        就会把预卷里那几十到几百毫秒的句首音素切掉，两个模型看的不再是
+        同一段音频。预卷只保证输入一致，不保证某个字一定听对 —— VAD 边界
+        差几十毫秒就足以让识别结果换一个词，这是模型本身的边界敏感性。
+
+        段里并了多遍复述时还要再切一次：整段十几秒的重复内容会让离线
+        模型在第二遍之后的数字上退化（"三幺两"识别成 "3o两"/"三欧两"）。
+        按文本里每遍的字数占比切音频、逐遍重识别，结果放在 `reseg_text`
+        里，由客户端决定用不用 —— 只有整段复核"下不了结论"的那一遍才
+        换成它（见 aligner `_repair_span`）。整段文本始终是判定主证据。
         """
         if not self.refine_with_offline:
             return
         for segment in segments:
             try:
-                wave = self.session.wave_for(
-                    segment["start_ms"], segment["end_ms"]
-                )
+                start_ms = segment.get("refine_start_ms", segment["start_ms"])
+                wave = self.session.wave_for(start_ms, segment["end_ms"])
                 if len(wave) == 0:
                     continue
                 result = self.engine.transcribe(wave)
+                text, raw_text = result.text, result.raw_text
+                infer_seconds = result.infer_seconds
+                reseg_text = ""
+                if text and self.resegment_recitations:
+                    # 逐遍重识别失败不能把整段离线文本一起丢掉：退回整段
+                    # 复核结果，至少和关掉这个开关时一样。
+                    try:
+                        reseg_text, _, extra = self._resegment(
+                            wave, text, raw_text,
+                        )
+                    except Exception as exc:
+                        print(f"# 逐遍重识别失败（保留整段复核文本）："
+                              f"{type(exc).__name__}: {exc}",
+                              file=sys.stderr, flush=True)
+                    else:
+                        infer_seconds += extra
+                        if reseg_text == text:
+                            reseg_text = ""
             except Exception as exc:
                 print(f"# 离线复核失败（保留流式文本）：{type(exc).__name__}: {exc}",
                       file=sys.stderr, flush=True)
                 continue
-            if result.text:
+            if text:
                 segment["stream_text"] = segment.get("text", "")
-                segment["text"] = result.text
-                segment["raw_text"] = result.raw_text
-                segment["refine_seconds"] = round(result.infer_seconds, 4)
+                segment["text"] = text
+                segment["raw_text"] = raw_text
+                segment["refine_seconds"] = round(infer_seconds, 4)
                 segment["infer_seconds"] = round(
-                    segment["infer_seconds"] + result.infer_seconds, 4
+                    segment["infer_seconds"] + infer_seconds, 4
                 )
                 segment["refined"] = True
+                if reseg_text:
+                    segment["reseg_text"] = reseg_text
+                    segment["resegmented"] = True
+
+    def _resegment(
+        self, wave: np.ndarray, text: str, raw_text: str,
+    ) -> tuple[str, str, float]:
+        """按复述边界切开整段音频，逐遍重新识别。
+
+        切点按每遍文本的字数占比取，不做能量分析：实测比例位置本来就落在
+        换气处，再往能量谷上吸反而会吸进词中间的短暂低能量帧，把一遍复述
+        切成两半。子段识别失败（空文本）时退回整段文本里对应的那一遍，
+        至少不丢内容。
+
+        返回 (文本, 原始文本, 额外识别耗时)。没有切出多遍时原样返回。
+        """
+        spans = split_recitations(text, self.recitation_markers)
+        if len(spans) < 2:
+            return text, raw_text, 0.0
+        bounds = proportional_slices(len(wave), [len(span) for span in spans])
+        texts: list[str] = []
+        raw_texts: list[str] = []
+        extra = 0.0
+        for (start, end), span in zip(bounds, spans):
+            cut = wave[start:end]
+            if len(cut) == 0:
+                texts.append(span)
+                raw_texts.append(span)
+                continue
+            part = self.engine.transcribe(cut)
+            extra += part.infer_seconds
+            texts.append(part.text or span)
+            raw_texts.append(part.raw_text or span)
+        return "".join(texts), "".join(raw_texts), extra
 
     def transcribe(self, wave: np.ndarray) -> dict:
         result = self.engine.transcribe(wave)

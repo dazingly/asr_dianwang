@@ -1046,12 +1046,41 @@ class KirMatcher:
                 return FieldLevel.EXACT, "压板编号切分位置不同"
             return FieldLevel.CONFLICT, "设备编号不一致"
 
+        # 纯数字编号听出了非数字写法（3o2 / 把“3欧”拆成限定词再捡到“2”）：
+        # 这是 ASR 没听清，不是说了另一个编号。判 UNVERIFIABLE，让上层记
+        # 一次未完成尝试；判 CONFLICT 会把整条操作直接打死。
+        if tcore.isdigit() and self._id_unparsable(ticket, heard):
+            return FieldLevel.UNVERIFIABLE, "编号含无法比对的字符"
+
         if (ticket.id.has_separator and not heard.id.has_separator
                 and hcore.isdigit() and len(hcore) > len(tcore)
                 and hcore.endswith(tcore)):
             return FieldLevel.UNVERIFIABLE, "编号被归一化后粘连，无法比对"
 
         return FieldLevel.CONFLICT, "设备编号不一致"
+
+    def _id_unparsable(self, ticket, heard) -> bool:
+        """票面是纯数字编号，复述侧却出现了数字之外的写法。
+
+        两种形态都是“幺”被听岔：整段保住时是 `3o2`，被切碎时“3欧”落进
+        限定词、编号只剩 `2`。后者把限定词和编号拼回去，长度与票面一致
+        且仍含非数字字符，就认定这一遍没听清。
+
+        只说错了数字（票面 312、复述 310）不会命中这里 —— 那是明确的
+        编号不一致，必须判 CONFLICT。
+        """
+        hcore = normalize(heard.id.core)
+        if not hcore.isdigit():
+            return True
+        target_len = len(normalize(ticket.id.core))
+        for qualifier in heard.qualifiers:
+            text = normalize(qualifier)
+            if not any(ch.isdigit() for ch in text):
+                continue
+            rebuilt = text + hcore
+            if len(rebuilt) == target_len and not rebuilt.isdigit():
+                return True
+        return False
 
     def _plate_like(self, target) -> bool:
         """压板/把手类目标：编号带字母，且中心词是压板或把手。"""

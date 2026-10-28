@@ -8,7 +8,7 @@
 | 文档 | 用途 |
 |---|---|
 | [../README.md](../README.md) | 快速开始、数据与模型准备、两次完整复述语义、逐段输出字段、服务协议、代码结构、已知限制 |
-| [design/strict_verification_plan.md](design/strict_verification_plan.md) | 严格校验设计与 W1–W7 实施记录。§1–§10 为历史设计，**现行语义以 §11 为准** |
+| [design/strict_verification_plan.md](design/strict_verification_plan.md) | 严格校验设计与 W1–W7 实施记录及后续补强。§1–§10 为历史设计，**现行语义以 §11–§12 为准** |
 | [design/kir_schema_and_extraction.md](design/kir_schema_and_extraction.md) | KIR Schema、抽取语法、字段比较与判定规则；文首标注了与现行实现的差异 |
 
 ## 实录音频证据
@@ -27,7 +27,7 @@
 
 | 文件 | 说明 |
 |---|---|
-| [倒闸操作唱票复述校验系统技术介绍_更新版.docx](倒闸操作唱票复述校验系统技术介绍_更新版.docx) | 2026-09 的技术介绍，描述的是“槽位匹配 + 分数排序”旧方案。W7 已改为 KIR 逐字段严格比较与两次完整复述；引用前请以根 README 和 `strict_verification_plan.md` §11 为准 |
+| [倒闸操作唱票复述校验系统技术介绍_更新版.docx](倒闸操作唱票复述校验系统技术介绍_更新版.docx) | 2026-09 的技术介绍，描述的是“槽位匹配 + 分数排序”旧方案。W7 已改为 KIR 逐字段严格比较与两次完整复述；引用前请以根 README 和 `strict_verification_plan.md` §11–§12 为准 |
 
 ## 清理说明
 

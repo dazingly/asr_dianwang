@@ -34,11 +34,44 @@ from src.config import load_config
 from src.normalize.text_norm import strip_asr_tags
 
 
+def proportional_slices(
+    length: int, weights: list[int] | tuple[int, ...],
+) -> list[tuple[int, int]]:
+    """按权重把一段样本切成首尾相接的若干片。
+
+    用于 2-pass 的逐遍复核：整段离线文本里每个检查词后面的字数，近似
+    对应这一遍占用的说话时长，按占比切音频即可落在遍与遍之间的换气处。
+    返回的切片一定覆盖 [0, length) 且不重叠。
+    """
+    if not weights:
+        return [(0, length)]
+    total = sum(max(1, int(weight)) for weight in weights)
+    bounds: list[tuple[int, int]] = []
+    start, acc = 0, 0
+    for weight in weights[:-1]:
+        acc += max(1, int(weight))
+        cut = min(length, max(start, int(length * acc / total)))
+        bounds.append((start, cut))
+        start = cut
+    bounds.append((start, length))
+    return bounds
+
+
 @dataclass
 class StreamSegment:
     """一段已经定案的语音。没有 text 表示流式侧没给出有效文本。"""
     start_ms: int
     end_ms: int
+    # 2-pass 复核的切片起点：流式识别器实际吃到的音频起点，含句首预卷。
+    # start_ms 仍是 VAD 报的语音起点（角色判定按它切），但 VAD 起点通常比
+    # 真实起音晚几十到几百毫秒；离线复核若从 start_ms 切，句首音素就比
+    # 流式侧少听一截，两个模型看的是不同的问题片段。预卷至少保证复核和
+    # 流式吃同一段音频，差异只可能来自模型本身。
+    #
+    # 注意：VAD 边界本身对几十毫秒的扰动很敏感，同一段音频换个边界就可能
+    # 识别出别的字。所以复核结果不要拿来当"切对了"的证明，预卷的理由是
+    # 输入一致性，不是某个特定字能听对。
+    refine_start_ms: int = 0
     text: str = ""
     raw_text: str = ""
     infer_seconds: float = 0.0
@@ -54,6 +87,7 @@ class StreamSegment:
         return {
             "start_ms": self.start_ms,
             "end_ms": self.end_ms,
+            "refine_start_ms": self.refine_start_ms,
             "text": self.text,
             "raw_text": self.raw_text,
             "infer_seconds": round(self.infer_seconds, 4),
@@ -214,6 +248,13 @@ class StreamingVad:
         self.end_silence_ms = int(cfg_get(
             cfg, "vad.max_end_silence_time", 300
         ))
+        # funasr 1.4.2 的流式 VAD 默认走"动态静音"：句子开头等 2s，说到
+        # 5s 后等 1.5s，10s 后 1s，30s 后 800ms……比固定阈值更不容易把
+        # 一句复述从中间切断。此时 max_end_silence_time 不生效；只有
+        # dynamic_silence=false 才把它作为固定阈值传给 generate()。
+        self.dynamic_silence = bool(cfg_get(
+            cfg, "vad.dynamic_silence", True
+        ))
         self.max_utterance_ms = int(cfg_get(
             cfg, "vad.max_single_segment_time", 30000
         ))
@@ -239,6 +280,8 @@ class StreamingVad:
         return self._model
 
     def describe(self) -> str:
+        if self.dynamic_silence:
+            return "fsmn-vad(stream, 动态静音)"
         return f"fsmn-vad(stream, 静音{self.end_silence_ms}ms)"
 
 
@@ -246,6 +289,7 @@ class StreamingVad:
 class _Active:
     recognizer: StreamingRecognizer
     start: int          # 语音起点（样本）
+    audio_start: int    # 实际喂给 ASR 的起点（含句首预卷，样本）
     fed: int            # 已经喂到 ASR 的位置（样本）
     utterance_id: str
     first_text: bool = False
@@ -278,6 +322,9 @@ class StreamingSession:
         self.partial_enabled = bool(cfg_get(
             cfg, "asr.streaming.partial", True
         ))
+        # 与 StreamingVad 同一个开关：显式传给 generate()，避免"配置写
+        # 800ms、模型实际按动态调度跑"这种看不见的分叉。
+        self.dynamic_silence = bool(cfg_get(cfg, "vad.dynamic_silence", True))
         # 显式传入的时钟原点（测试/外部对表）在 reset 后保持不变；
         # 没传就每次 reset 重新取当前时刻。
         self._clock_origin = clock_origin
@@ -376,6 +423,7 @@ class StreamingSession:
         self.active = _Active(
             recognizer=self.asr.new_recognizer(),
             start=sample,
+            audio_start=feed_start,
             fed=feed_start,
             utterance_id=str(self.utterance),
         )
@@ -432,6 +480,7 @@ class StreamingSession:
         self._segments.append(StreamSegment(
             start_ms=round(active.start * 1000 / SAMPLE_RATE),
             end_ms=round(end * 1000 / SAMPLE_RATE),
+            refine_start_ms=round(active.audio_start * 1000 / SAMPLE_RATE),
             text=strip_asr_tags(text),
             raw_text=text,
             infer_seconds=active.recognizer.infer_seconds,
@@ -452,6 +501,11 @@ class StreamingSession:
         # vad 可以是 StreamingVad 包装器，也可以直接是带 generate 的模型
         # （单测用假的）。
         model = getattr(self.vad, "model", self.vad)
+        # 必须每块都显式告诉 funasr 用哪种静音判据：只写在 AutoModel
+        # 构造参数里时，generate() 仍会启用动态调度并覆盖它。
+        vad_kwargs: dict = {"dynamic_silence": self.dynamic_silence}
+        if not self.dynamic_silence:
+            vad_kwargs["max_end_silence_time"] = self._end_silence_ms()
         try:
             result = model.generate(
                 input=audio,
@@ -460,6 +514,7 @@ class StreamingSession:
                 is_final=final,
                 chunk_size=chunk_ms,
                 disable_pbar=True,
+                **vad_kwargs,
             )
         except Exception as exc:
             # VAD 偶尔在极短块上抛错；丢这一块比整条会话中断好，但要说清楚。

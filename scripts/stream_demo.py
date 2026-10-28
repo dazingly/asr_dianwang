@@ -46,11 +46,15 @@ from src.pipeline import (  # noqa: E402
     JudgePipeline,
     format_alert,
     format_event,
+    format_partial,
     format_pending,
     project_path,
     slice_segment,
 )
 from src.verify.aligner import EventKind  # noqa: E402
+
+
+_AUDIO_SUFFIXES = {".wav", ".m4a", ".mp3", ".flac", ".mp4", ".mov", ".mkv"}
 
 
 def resolve_dataset_pair(dataset: str | Path, ticket_name: str) -> tuple[Path, Path]:
@@ -63,7 +67,17 @@ def resolve_dataset_pair(dataset: str | Path, ticket_name: str) -> tuple[Path, P
         audio_dir / "full_audio.wav",
         audio_dir / "_full_audio.wav",
     ]
-    audio_path = next((path for path in candidates if path.exists()), candidates[0])
+    audio_path = next((path for path in candidates if path.exists()), None)
+    if audio_path is None:
+        # 手机/设备直出的一般是 m4a/mp4，文件名也不一定叫 full_audio。
+        # 按名字排序取第一个支持的音视频文件，保证同一目录每次选同一个。
+        audio_path = next(
+            (
+                path for path in sorted(audio_dir.glob("*"))
+                if path.suffix.lower() in _AUDIO_SUFFIXES
+            ),
+            candidates[0],
+        )
     if not ticket_path.exists():
         raise FileNotFoundError(f"操作票不存在: {ticket_path}")
     if not audio_path.exists():
@@ -162,6 +176,21 @@ def main(argv: list[str] | None = None) -> int:
         print()
 
     printed = 0
+    last_partial: dict[str, str] = {}
+
+    def show_partials(partials) -> None:
+        """未定段的实时字幕。段定案前也能看到识别在往前走。"""
+        if args.json:
+            return
+        for item in partials:
+            text = str(item.get("text") or "")
+            if not text:
+                continue
+            uid = str(item.get("utterance_id"))
+            if last_partial.get(uid) == text:
+                continue
+            last_partial[uid] = text
+            print(format_partial(item), flush=True)
 
     def flush(keep_last: int) -> None:
         """把已经定案的行打出去。
@@ -183,19 +212,23 @@ def main(argv: list[str] | None = None) -> int:
 
     def judge(info: dict) -> None:
         segment = slice_segment(wave, info["start_ms"], info["end_ms"])
-        heard = pipeline.process(info, segment)
-        if heard.event.kind is EventKind.HELD and not args.json:
-            print(format_pending(heard.index, segment, heard.event.message),
-                  flush=True)
+        for heard in pipeline.process(info, segment):
+            if heard.event.kind is EventKind.HELD and not args.json:
+                print(format_pending(heard.index, segment, heard.event.message),
+                      flush=True)
         flush(keep_last=1)
 
     service.reset()
     for block in AudioStream(wave, chunk_ms=args.chunk_ms, speed=args.speed):
-        for info in service.push(block):
+        reply = service.push_reply(block)
+        show_partials(reply.get("partial", []))
+        for info in reply["segments"]:
             judge(info)
 
     # 收尾：把 VAD 里还挂着没定案的最后一段逼出来，再让对齐器落地挂起段。
-    for info in service.flush():
+    reply = service.flush_reply()
+    show_partials(reply.get("partial", []))
+    for info in reply["segments"]:
         judge(info)
     report = pipeline.finalize()
     flush(keep_last=0)

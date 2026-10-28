@@ -13,9 +13,11 @@
 
 分段器只保留 FSMN 这一个。Silero 试过并否掉了：基准集（FLEURS-VAD-102）
 上它的误报率远低于 FSMN（9.41% vs 44.03%），但现场远场录音底噪高，条目
-之间的停顿达不到它的静音判据，整条操作被并成一段。而这条链路"切长"比
-"切短"代价大得多 —— 对齐器一段文本只认一条票（src/verify/aligner.py
-的 feed），一段吃掉好几条内容时只有一条能得分，其余落进"未确认"。
+之间的停顿达不到它的静音判据，整条操作被并成一段。"切长"仍有代价：对齐器
+会按检查词把一段文本拆成多遍（src/verify/aligner.py 的 split_recitations），
+所以不会像早期那样只认一条票；但一段音频里并进的内容越多，离线模型越容易
+在后半段的数字上退化（"三幺两" → "3o两"），逐遍重识别只是补救，不是
+主证据 —— 能切开的话，还是切开更好。
 """
 from __future__ import annotations
 
@@ -63,6 +65,10 @@ class VadSegmenter:
         self.min_speech_ms = overrides.get(
             "min_speech_ms", cfg_get(cfg, "vad.min_speech_ms", 300)
         )
+        # 同 StreamingSession：funasr 1.4.2 的 generate() 默认启用动态静音
+        # 调度，会覆盖构造时设的 max_end_silence_time。显式传参，让配置写
+        # 什么、实际就跑什么。
+        self.dynamic_silence = bool(cfg_get(cfg, "vad.dynamic_silence", True))
         self.device = overrides.get("device", cfg_get(cfg, "asr.device", "auto"))
         self._model = None
         self._stream_cache: dict = {}
@@ -86,11 +92,20 @@ class VadSegmenter:
             )
         return self._model
 
+    def _vad_kwargs(self) -> dict:
+        """显式固定/动态静音判据，避免构造参数被 generate 的默认调度覆盖。"""
+        kwargs: dict = {"dynamic_silence": self.dynamic_silence}
+        if not self.dynamic_silence:
+            kwargs["max_end_silence_time"] = self.max_end_silence_time
+        return kwargs
+
     # ------------------------------------------------------------------
     def segment(self, wave: np.ndarray, sample_rate: int = SAMPLE_RATE) -> list[Segment]:
         """离线切分整段音频。VAD 不可用时退回整段作为单个片段。"""
         try:
-            res = self.model.generate(input=wave, fs=sample_rate, cache={})
+            res = self.model.generate(
+                input=wave, fs=sample_rate, cache={}, **self._vad_kwargs()
+            )
         except Exception:
             return [Segment(0, int(len(wave) / sample_rate * 1000), wave)]
 
@@ -111,6 +126,8 @@ class VadSegmenter:
         return out
 
     def describe(self) -> str:
+        if self.dynamic_silence:
+            return "fsmn-vad(动态静音)"
         return f"fsmn-vad(静音{self.max_end_silence_time}ms)"
 
     # ------------------------------------------------------------------
@@ -133,6 +150,7 @@ class VadSegmenter:
             res = self.model.generate(
                 input=chunk, fs=sample_rate, cache=self._stream_cache,
                 is_final=False, chunk_size=chunk_ms or 200,
+                **self._vad_kwargs(),
             )
         except Exception:
             self._stream_offset_ms += chunk_ms
@@ -172,6 +190,7 @@ class VadSegmenter:
             res = self.model.generate(
                 input=silence, fs=SAMPLE_RATE, cache=self._stream_cache,
                 is_final=True, chunk_size=self.max_end_silence_time,
+                **self._vad_kwargs(),
             )
         except Exception:
             return []

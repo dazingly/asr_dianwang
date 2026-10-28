@@ -15,6 +15,7 @@
 """
 from __future__ import annotations
 
+import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -167,7 +168,8 @@ def load_audio(path: str | Path, target_sr: int = SAMPLE_RATE) -> np.ndarray:
 
     已是目标采样率的 wav 走 soundfile 快路径 —— torchaudio 要拖进 torch，
     光导入就 2 秒多，而演示客户端启动到打印第一行只花几百毫秒，不能耗在这。
-    其余情况（视频、其它采样率）仍交给 torchaudio 走 ffmpeg 解。
+    其余情况（m4a/mp4、其它采样率）先试 torchaudio，再退回系统 ffmpeg 解码
+    成 16k 单声道 f32 从管道读回。
     """
     try:
         import soundfile as sf
@@ -189,6 +191,25 @@ def load_audio(path: str | Path, target_sr: int = SAMPLE_RATE) -> np.ndarray:
         if sr != target_sr:
             wave = torchaudio.functional.resample(wave, sr, target_sr)
         return wave.squeeze(0).to(torch.float32).numpy()
+    except Exception:
+        pass
+
+    # 手机/设备直出的 m4a/mp4：soundfile 不认，torchaudio 2.11 起依赖
+    # TorchCodec（没装就会报 ImportError）。ffmpeg 是最通用的兜底：直接
+    # 解成 16k 单声道 f32 从管道读回，不落临时文件。
+    try:
+        proc = subprocess.run(
+            [
+                "ffmpeg", "-v", "error", "-i", str(path),
+                "-f", "f32le", "-ac", "1", "-ar", str(target_sr), "pipe:1",
+            ],
+            capture_output=True,
+            check=True,
+        )
+        if proc.stdout:
+            # copy()：frombuffer 返回只读视图，下游（torch.from_numpy）拿到
+            # 不可写数组会告警，甚至在某些版本里直接报错。
+            return np.frombuffer(proc.stdout, dtype="<f4").copy()
     except Exception:
         pass
 

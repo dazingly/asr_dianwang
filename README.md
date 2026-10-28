@@ -33,7 +33,7 @@ python scripts\asr_service.py
 看到这三行就是好了，这个窗口留着别关：
 
 ```
-# 就绪 37.7s（加载 7.0s + 预热 0.8s）｜Paraformer-Large @ cuda:0 (fp32)｜fsmn-vad(静音300ms)
+# 就绪 37.7s（加载 7.0s + 预热 0.8s）｜Paraformer-Large @ cuda:0 (fp32)｜fsmn-vad(动态静音)
 # 流式 ASR：Paraformer-Streaming @ cuda:0 (streaming)
 # 监听 127.0.0.1:8766，客户端：python scripts\stream_demo.py
 ```
@@ -55,18 +55,30 @@ python scripts\mic_demo.py --list-devices          # 先看输入设备
 python scripts\mic_demo.py                       # 默认麦克风，边念边判（每条 2 次）
 python scripts\mic_demo.py --confirmations 1     # 只要求 1 次
 python scripts\mic_demo.py --device 2 --report mic.json
+python scripts\mic_demo.py --save-audio debug\mic # 存音频，便于回放核对
 ```
 
 按 Ctrl-C 结束：会把队列里剩余音频喂完、VAD 收尾，再打印四态与提醒汇总。
 录音文件和麦克风两条路径共用 `src/pipeline.py` 的同一套判定，输出字段一致。
 
-跑之前留意三点：
+采集按设备**自己的默认采样率**打开（Windows 默认麦克风通常是 44.1k），再用
+多相滤波器重采样到 16k。不要强行让 MME 以 16k 打开：那会触发系统内部的
+44.1k→16k 转换，质量和延迟都不受我们控制。`--save-audio` 会保存实际送给
+识别服务的 `mic_16k.wav`、VAD 段 `seg_*_vad.wav`、2-pass 复核段
+`seg_*_refine.wav` 和 `segments.jsonl`，方便回放对照。
+
+跑之前留意四点：
 
 - 开头屏幕不动是**在导入 funasr 和加载模型**，不是卡住了。
 - 一段的结论**最多晚一段出现**。内容不完整的段会先挂起（控制台打一行 `... 挂起`），
   下一段到了拼起来才定案 —— 这是把被 VAD 切开的半句话救回来的代价，不是卡住了。
 - 流式模型只负责**定段和实时字幕**，段定案后会用离线模型再听一遍（2-pass）才判定。
-  远场录音上纯流式漏字明显，不能直接拿来做严格校验。
+  复核切片从 VAD 起点减去 `preroll_ms`（默认 400ms）开始，和流式识别器实际吃到的
+  音频一致，不会因为 VAD 起点比真实起音晚而切掉句首音素。
+- 一段里并进多遍复述（唱票和复诵只隔一次换气）时，按 `检查/核对/确认/验明`
+  切成多遍逐遍判定，控制台用 `1/2` 标出段内序号。整段复核没听清编号的那一遍，
+  会用“逐遍复核”（按字数占比切开音频再识别一次）补判，行首标 `〔逐遍复核〕`；
+  它只补“没听清”，不会把明确说错的编号改判成正确。
 
 ## 文档
 
@@ -74,7 +86,7 @@ python scripts\mic_demo.py --device 2 --report mic.json
 |---|---|
 | [README.md](README.md) | 本文：运行方式、判定语义、输出字段、代码结构、已知限制 |
 | [docs/README.md](docs/README.md) | 文档索引：当前说明、实录音频证据、设计依据、历史资料 |
-| [docs/design/strict_verification_plan.md](docs/design/strict_verification_plan.md) | 严格校验设计与 W1–W7 实施记录；现行语义见 §11 |
+| [docs/design/strict_verification_plan.md](docs/design/strict_verification_plan.md) | 严格校验设计与 W1–W7 实施记录及后续补强；现行语义见 §11–§12 |
 | [docs/design/kir_schema_and_extraction.md](docs/design/kir_schema_and_extraction.md) | KIR Schema、抽取规则、字段比较规则 |
 | [docs/corpus_analysis/report.md](docs/corpus_analysis/report.md) | 944 条去重条目的语料分析（设计依据，只读） |
 | [docs/evidence/w7_twice_confirmation_report.json](docs/evidence/w7_twice_confirmation_report.json) | W7 小留 ticket1 实录音频的条目级报告 |
@@ -121,8 +133,9 @@ python scripts\stream_demo.py --dataset data/你的站点 --ticket ticket1 --ass
 黄堽线312-3刀闸
 ```
 
-**录音**必须是 16k 单声道 wav。设备录的是带音轨的视频也能用（`load_audio` 会调
-ffmpeg 抽音轨），但当前数据是 wav。
+**录音**优先放 `full_audio.wav`（16k 单声道）。设备/手机直出的 `m4a/mp4/mp3`
+也能用：目录里没有 `full_audio.wav` 时，`stream_demo.py` 按文件名排序取第一个
+支持的音视频文件，`load_audio` 调系统 `ffmpeg` 解码成 16k 单声道。
 
 ## 环境准备
 
@@ -179,11 +192,15 @@ KIR 把票面条目拆成关键字段（动作、目标设备/编号/电压、�
 
 | 本段结论 | 是否计数 | 条目状态变化 |
 | --- | --- | --- |
-| `FULL` | +1 | 未达次数 `CONFIRMED`；达到次数 `VERIFIED` |
+| `FULL` | +1（同一段里完整念了几遍就加几） | 未达次数 `CONFIRMED`；达到次数 `VERIFIED` |
 | `PARTIAL` / `EXTRA` / `UNVERIFIABLE` | 不计数 | 记一次未完成尝试，保持 `PENDING`，不立即报警 |
 | 完整 `CONFLICT` | 不计数 | `FAILED` + ERROR |
 | 未完成 `CONFLICT`（没念完的口误） | 不计数 | `ABORTED_CONFLICT` WARN 留痕，不直接失败 |
 | `NO_EVIDENCE`（闲聊/无关） | 不计数 | 不占次数，不影响任何条目 |
+
+纯数字编号听到非数字写法（“312”被听成 `3o2` / `3欧2`）判 `UNVERIFIABLE`
+（没听清），不是 `CONFLICT`（说错了）；明确听成另一个数字（312→310）仍然判
+`CONFLICT`，因为那是清楚的错误。
 
 “完整念错”和“没念完”用票面覆盖率区分：出现矛盾且有缺失字段时，
 票面覆盖率达到 `complete_coverage: 0.7` 才算完整念错；否则按重读中的口误
@@ -202,6 +219,13 @@ KIR 把票面条目拆成关键字段（动作、目标设备/编号/电压、�
   前半句、把完整段计一次，不能拼合后吞掉一次完整复述。同一段里“没念完 +
   完整重读”时，从该条内容再次出现的位置截断后缀重做 KIR 匹配，后缀 `FULL`
   才计数；整段最佳结果是完整矛盾时，不会被后缀 `FULL` 覆盖。
+- **一段里并了多遍复述**：唱票和复诵之间只隔一次换气时 VAD 会并进同一段。
+  文本里出现几个检查词（`检查/核对/确认/验明`）就切成几遍，逐遍独立匹配、
+  独立计数；吸附也按同样的边界分段执行，保证第二遍的听错同样被归一化。
+  没有多个检查词时，再退回“按内容递归切开”的重读/粘连处理。
+- **逐遍复核是修复而不是替换**：整段复核的结果始终是主证据。只有它判成
+  “没听清”那一类（`UNVERIFIABLE/PARTIAL/EXTRA/NO_EVIDENCE`）时，才用逐遍
+  重识别的文本补判；整段结果是完整矛盾时绝不替换。
 
 ### 四态与提醒
 
@@ -241,6 +265,8 @@ KIR 把票面条目拆成关键字段（动作、目标设备/编号/电压、�
 | `asr_text` | 这一段最终用于判定的文本（2-pass 后是离线复核文本） |
 | `asr_raw` | 模型原始输出（含标签，未剥离） |
 | `judged_text` | 拼合判定的段实际参与比对的文本（没拼合时为 null） |
+| `span_text` / `span_index` / `span_count` | 一个 VAD 段并了多遍复述时，这一行对应其中哪一遍（单遍段为 null） |
+| `repaired` | 这一遍的结论吃的是逐遍复核文本（整段复核“没听清”时的第二次机会） |
 | `adhered_text` / `rewrites` | 吸附改写后的文本，以及逐条改写明细（听成什么 → 吸附成什么） |
 | `role` / `role_label` / `role_confidence` / `role_source` | 唱票人 / 操作人 / 未定，以及判定置信度和来源（仅供展示，不参与判定） |
 | `infer_seconds` | 本段识别耗时（2-pass 时含流式累计与离线复核） |
@@ -260,7 +286,8 @@ KIR 把票面条目拆成关键字段（动作、目标设备/编号/电压、�
 服务协议（TCP，一行 JSON 一个请求，二进制 PCM 紧跟）：`ping` 返回 `asr` /
 `asr_stream` / `vad` / 启动耗时；`push` 返回 `segments`（含 `text` / `raw_text` /
 `infer_seconds`，2-pass 时额外带 `stream_text` / `refine_seconds` / `refined`，
-以及诊断字段 `final_latency_ms` / `final_infer_ms`）与 `partial`（未定段实时字幕，
+逐遍复核时再带 `reseg_text` / `resegmented`，以及诊断字段
+`final_latency_ms` / `final_infer_ms`）与 `partial`（未定段实时字幕，
 不参与判定）；`flush` 收尾；`reset` 清空会话。低层入口 `stream_reset` /
 `stream_push` / `stream_end` 供前端直连。
 
@@ -305,13 +332,24 @@ docs/                    设计文档、语料分析与实录音频证据
 - **角色判定只作展示**。靠近场/远场能量差，前几段基线未稳时标"未定"；角色
   不参与通过/失败，也不影响计数。代价是**同一个人自己把一条内容念两遍也能通过**
   —— 当前只校验“内容完整正确出现了两次”，不校验说话人。
-- **同一 VAD 段里连续念两遍完整内容，只计一次**。系统不把“一段里同一句出现
-  两次”自动当成两次确认（避免 ASR 重复输出/回声被误算），需要下一段再完整
-  复述一次。这是偏保守的取舍，不会造成假通过。
+- **同一 VAD 段里完整念两遍按两次计**。唱票与复诵之间只隔一次换气时，VAD
+  会把两个人并进同一段；系统先按检查词切成多遍，再按内容逐遍匹配，每遍都
+  必须独立 `FULL` 才计数。风险是 ASR 把同一遍重复输出或录进回声；实测未出现。
+  若现场出现，设 `aligner.count_in_segment_repeats: false` 退回“一段最多计一次”
+  的保守口径。
+- **同一段里连着念了两条不同内容**时，只有两边都以检查词开头才会被切成两遍；
+  否则对齐器只按最佳匹配计一条，另一条要靠它自己的下一遍复述补上。
+- **模型对切片总长度敏感**。同一段音频、同一切分方式下识别是确定的，但切片
+  尾部多 0.2 秒静音就可能改变开头数字的解码（“三幺两” ↔ “三o两”）。所以
+  逐遍复核只能当“第二次机会”：无条件下用它替换整段文本，会把已经判对的条目
+  改坏（实测 item5 从 `VERIFIED` 退回 `FLAGGED`）。
 - **完整矛盾默认不可撤销**。`failure_is_final: true` 时说错一次就保持 `FAILED`，
   后面再念对也不会洗白。远场 ASR 把某个编号听岔时也会触发；需要允许后续纠正
   就设为 `false`，或在报告里人工回听确认。
 - **设备编号仍是主要误报来源**。远场语音里"312-1"和"312-3"这类只差一个音节的
   编号最容易被听岔，虽然已用逐位比对兜住（不达阈值直接判矛盾），但听错时仍需人工回听。
-- **段尾延迟**：纯流式收尾 p50 87ms、p95 257ms（VAD 200ms 分块 + 300ms 尾静音
-  量化）；2-pass 的端到端出结论时间再叠加一次离线复核。
+- **段尾延迟与静音判据**：纯流式推理本身 p50 约 87ms；端点判定默认走
+  `vad.dynamic_silence: true`，funasr 按动态调度等静音（一句开头 2s，说到
+  5s 后 1.5s、10s 后 1s、30s 后 800ms……），比固定阈值更不容易把一条复述
+  从中间切断。设 `dynamic_silence: false` 时 `max_end_silence_time`（默认
+  800ms）才作为固定阈值生效。2-pass 的端到端出结论时间再叠加一次离线复核。

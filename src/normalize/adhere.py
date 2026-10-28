@@ -50,6 +50,12 @@ _DIGIT_RUN = re.compile(r"\d+")
 # 被判成"说错了"（矛盾，直接不通过）。实测丹东 ticket7 第 6 条就是这么被冤枉的。
 _LEXICON_SOURCES = (
     ("objects", "object"),
+    # 修饰词（三相/单相）和独立设备（接地线）：前者是纯同音字错误
+    # （三项/三厢），后者带 #编号，数字护栏保证吸附不会改编号。仍然
+    # 不收录 device_suffixes —— 通用后缀不承载身份，修它反而会造出
+    # 假设备，原因见下方注释。
+    ("qualifiers", "qualifier"),
+    ("devices", "device"),
     ("handles", "handle"),
     ("positions", "position"),
     ("actions", "action"),
@@ -158,6 +164,41 @@ class Adherer:
         if not norm:
             return AdhereResult(norm)
 
+        # 一个 VAD 段里可能连着念了同一条两遍（唱票 + 复诵）。每遍都要
+        # 独立吸附：下面的对齐每个目标词只改写最佳的一处，整段一起跑的话
+        # 第二遍会原样留在那里，既洗不掉听错，也会让段内计数认不出第二次。
+        # 按检查词切开逐段吸附，再把结果原样拼回去。
+        spans = self._check_spans(norm)
+        if len(spans) == 1:
+            return self._adhere_span(norm)
+
+        parts: list[str] = []
+        rewrites: list[Rewrite] = []
+        for start, end in spans:
+            piece = self._adhere_span(norm[start:end])
+            parts.append(piece.text)
+            rewrites.extend(
+                Rewrite(r.start + start, r.end + start, r.heard, r.term,
+                        r.category, r.score)
+                for r in piece.rewrites
+            )
+        rewrites.sort(key=lambda r: r.start)
+        return AdhereResult("".join(parts), rewrites)
+
+    def _check_spans(self, norm: str) -> list[tuple[int, int]]:
+        """按"检查/核对/确认…"把一段话切成若干次复述。"""
+        starts = {0}
+        for needle in self._needles:
+            if needle.category != "check_type":
+                continue
+            pos = norm.find(needle.term)
+            while pos != -1:
+                starts.add(pos)
+                pos = norm.find(needle.term, pos + 1)
+        ordered = sorted(starts)
+        return list(zip(ordered, ordered[1:] + [len(norm)]))
+
+    def _adhere_span(self, norm: str) -> AdhereResult:
         tokens = self._tokenize(norm)
         haystack_digits = _digits(norm)
         taken = [False] * len(norm)
@@ -166,36 +207,48 @@ class Adherer:
         for needle in self._needles:
             if needle.digits and not _subsequence(needle.digits, haystack_digits):
                 continue
-            aligned = _align(needle.tokens, tokens)
-            if aligned is None:
-                continue
-            cost, start, end = aligned
+            # 同一个目标词在一段里可能出现多次：唱票 + 复诵被并进同一段，
+            # 或者一条里两次提到同一设备。逐个改写，不能只改最佳的一处 ——
+            # 第二遍原样留着听错，段内计数就认不出它是一次独立复述。
+            cursor = 0
+            while cursor < len(norm):
+                aligned = _align(needle.tokens, tokens[cursor:])
+                if aligned is None:
+                    break
+                cost, start, end = aligned
+                start += cursor
+                end += cursor
 
-            if needle.digits:
-                # 先把跨度扩到数字组的边界：对齐可能从半个编号中间切开，
-                # 那样比出来的数字是没有意义的
-                start, end = _expand_to_digits(norm, start, end)
-            score = 1.0 - cost / max(len(needle.tokens), end - start)
-            if score < self.threshold:
-                continue
+                if needle.digits:
+                    # 先把跨度扩到数字组的边界：对齐可能从半个编号中间切开，
+                    # 那样比出来的数字是没有意义的
+                    start, end = _expand_to_digits(norm, start, end)
+                score = 1.0 - cost / max(len(needle.tokens), end - start)
+                if score < self.threshold:
+                    # 最像的一处都不够像，后面不会有更好的。
+                    break
 
-            heard = norm[start:end]
-            if _digits(heard) != needle.digits:
-                # 被替换的片段和写进去的靶子，数字必须一模一样 —— 不许增、不许删、
-                # 不许改位。这一条同时挡住两个方向的错：
-                #   "黄冈线310开关" 不许变成 "黄堽线312开关"（改了编号）
-                #   "2号" 不许变成 "良好"（两个音节一模一样，可数字没了）
-                # 数字在本领域就是设备编号，吸附没有资格动它。
-                continue
-            if any(taken[start:end]):
-                continue
-            for i in range(start, end):
-                taken[i] = True
+                heard = norm[start:end]
+                if _digits(heard) != needle.digits:
+                    # 被替换的片段和写进去的靶子，数字必须一模一样 —— 不许增、
+                    # 不许删、不许改位。这一条同时挡住两个方向的错：
+                    #   "黄冈线310开关" 不许变成 "黄堽线312开关"（改了编号）
+                    #   "2号" 不许变成 "良好"（两个音节一模一样，可数字没了）
+                    # 数字在本领域就是设备编号，吸附没有资格动它。
+                    cursor = max(cursor + 1, start + 1)
+                    continue
+                if any(taken[start:end]):
+                    cursor = max(cursor + 1, start + 1)
+                    continue
+                for i in range(start, end):
+                    taken[i] = True
 
-            if heard != needle.term:
-                rewrites.append(
-                    Rewrite(start, end, heard, needle.term, needle.category, score)
-                )
+                if heard != needle.term:
+                    rewrites.append(
+                        Rewrite(start, end, heard, needle.term,
+                                needle.category, score)
+                    )
+                cursor = max(cursor + 1, end)
 
         if not rewrites:
             return AdhereResult(norm)
@@ -297,8 +350,12 @@ def _read_asset_lines(path: str | Path | None) -> list[str]:
     if not target.exists():
         return []
     with open(target, "r", encoding="utf-8") as stream:
+        # 注释行是 "# "（井号+空格）；不能按"以 # 开头"过滤，否则
+        # "#4接地线" 这类设备全称会被当成注释丢掉。
         return [
             line.strip()
             for line in stream
-            if line.strip() and not line.startswith("#")
+            if line.strip()
+            and line.strip() != "#"
+            and not line.strip().startswith(("# ", "#\t"))
         ]

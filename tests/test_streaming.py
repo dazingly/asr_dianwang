@@ -13,6 +13,7 @@ import numpy as np
 from src.asr.streaming import (
     StreamingRecognizer,
     StreamingSession,
+    proportional_slices,
 )
 
 RATE = 16000
@@ -53,10 +54,12 @@ class FakeVadModel:
         self.partial_end_at_ms = partial_end_at_ms
         self.started = False
         self.ended = False
+        self.kwargs: list[dict] = []
 
     def generate(self, input, fs, cache, is_final, chunk_size,
-                 disable_pbar=False):
+                 disable_pbar=False, **kwargs):
         self.calls.append(len(input))
+        self.kwargs.append(dict(kwargs))
         if is_final:
             if self.partial_end_at_ms is not None and not self.ended:
                 self.ended = True
@@ -206,7 +209,7 @@ def test_finish_flushes_active_segment_without_vad_end() -> None:
 def test_missing_vad_start_does_not_break_the_session() -> None:
     class EndOnlyVad(FakeVadModel):
         def generate(self, input, fs, cache, is_final, chunk_size,
-                     disable_pbar=False):
+                     disable_pbar=False, **kwargs):
             return [{"value": [[-1, 400]]}]
 
     asr = FakeAsrEngine()
@@ -244,3 +247,91 @@ def test_wave_for_returns_original_samples() -> None:
     piece = session.wave_for(0, 100)
     assert len(piece) == 1600
     assert np.allclose(piece, wave[:1600])
+
+
+def test_proportional_slices_cover_whole_wave_without_gaps() -> None:
+    # 逐遍复核按字数占比切音频：首尾相接、不重不漏，最后一片必须到结尾。
+    bounds = proportional_slices(1000, [10, 30, 20])
+
+    assert bounds[0][0] == 0
+    assert bounds[-1][1] == 1000
+    assert all(left[1] == right[0] for left, right in zip(bounds, bounds[1:]))
+    assert [b - a for a, b in bounds] == [166, 500, 334]
+
+
+def test_proportional_slices_handles_degenerate_weights() -> None:
+    assert proportional_slices(100, []) == [(0, 100)]
+    # 权重为 0 的遍次不能切出零长度片，按 1 处理。
+    bounds = proportional_slices(100, [0, 0, 0])
+    assert bounds == [(0, 33), (33, 66), (66, 100)]
+
+
+# ---------------------------------------------------------------------------
+# 2-pass 复核与 VAD 静音判据
+# ---------------------------------------------------------------------------
+
+
+class DelayedStartVadModel(FakeVadModel):
+    """VAD 到 800ms 才报起点、1200ms 报终点，模拟真实 VAD 的起点滞后。"""
+
+    def generate(self, input, fs, cache, is_final, chunk_size,
+                 disable_pbar=False, **kwargs):
+        self.calls.append(len(input))
+        self.kwargs.append(dict(kwargs))
+        total_ms = sum(self.calls) * 1000 // RATE
+        if is_final:
+            return [{"value": []}]
+        if not self.started and total_ms >= 800:
+            self.started = True
+            return [{"value": [[800, -1]]}]
+        if self.started and not self.ended and total_ms >= 1200:
+            self.ended = True
+            return [{"value": [[-1, 1200]]}]
+        return [{"value": []}]
+
+
+def test_segment_refine_start_includes_preroll() -> None:
+    asr = FakeAsrEngine()
+    vad_model = DelayedStartVadModel(end_at_ms=None)
+    session = StreamingSession(asr, FakeVad(vad_model), _config(),
+                               clock_origin=0.0)
+
+    result = session.push(np.zeros(32000, dtype=np.float32))
+
+    assert len(result["segments"]) == 1
+    segment = result["segments"][0]
+    # VAD 起点是 800ms；2-pass 复核要从 400ms 起切，和流式识别器吃到
+    # 的音频完全一致，不能把句首 400ms 预卷切掉。
+    assert (segment["start_ms"], segment["end_ms"]) == (800, 1200)
+    assert segment["refine_start_ms"] == 400
+    # 实际喂给识别器的样本数 = 1200ms - 400ms。
+    assert sum(length for length, final in asr.model.calls if not final) == 9600
+    assert asr.model.calls[-1][0] == 3200  # 1200-400ms 去掉一个 600ms stride
+
+
+def test_vad_dynamic_silence_is_passed_explicitly() -> None:
+    vad_model = FakeVadModel(end_at_ms=400)
+    session = StreamingSession(FakeAsrEngine(), FakeVad(vad_model), _config(),
+                               clock_origin=0.0)
+
+    session.push(np.zeros(6400, dtype=np.float32))
+
+    # funasr 只在 generate() 收到显式参数时才不启用动态调度；构造参数
+    # 不够。这里把"默认走动态"钉死成显式行为。
+    assert vad_model.kwargs[-1] == {"dynamic_silence": True}
+
+
+def test_vad_fixed_silence_passes_threshold() -> None:
+    cfg = _config()
+    cfg["vad"].update({"dynamic_silence": False, "max_end_silence_time": 900})
+    vad_model = FakeVadModel(end_at_ms=400)
+    vad = FakeVad(vad_model)
+    vad.end_silence_ms = 900
+    session = StreamingSession(FakeAsrEngine(), vad, cfg, clock_origin=0.0)
+
+    session.push(np.zeros(6400, dtype=np.float32))
+
+    assert vad_model.kwargs[-1] == {
+        "dynamic_silence": False,
+        "max_end_silence_time": 900,
+    }

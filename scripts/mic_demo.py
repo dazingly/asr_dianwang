@@ -9,11 +9,20 @@
     python scripts\mic_demo.py --confirmations 1  # 只要求 1 次（调试用）
     python scripts\mic_demo.py --list-devices   # 看有哪些输入设备
     python scripts\mic_demo.py --device 2       # 指定设备
+    python scripts\mic_demo.py --save-audio debug\mic  # 存音频，便于回放核对
 
 按 Ctrl-C 结束：会把队列里剩下的音频喂完、让 VAD 收尾，再打印四态报告。
 
-采集参数固定 16kHz 单声道 float32、400ms 一块，与录音推流演示一致。
-声音设备不支持 16kHz 时请换设备；这里不做重采样，避免引入额外误差。
+采集按设备自己的默认采样率打开（Windows 默认麦克风通常是 44.1k/48k），
+再用多相滤波器重采样到 16kHz。不要强行让 MME 以 16kHz 打开：那会触发
+系统内部的 44.1k→16k 转换，质量和延迟都不受我们控制。WASAPI 设备通常
+只接受原生 48kHz，用 `--device` 指过去即可。
+
+`--save-audio` 会保存三样东西，用于回放对比：
+  - mic_16k.wav：实际送给识别服务的 16kHz 音频；
+  - segments/seg_*_vad.wav：VAD 段（角色判定用的切片）；
+  - segments/seg_*_refine.wav：2-pass 复核切片（含句首预卷）；
+  - segments.jsonl：每段的识别文本、判定结果与对应的 wav 文件。
 """
 from __future__ import annotations
 
@@ -25,9 +34,11 @@ import queue
 import sys
 import time
 from collections import deque
+from math import gcd
 from pathlib import Path
 
 import numpy as np
+import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -40,6 +51,7 @@ from src.pipeline import (  # noqa: E402
     JudgePipeline,
     format_alert,
     format_event,
+    format_partial,
     format_pending,
     project_path,
 )
@@ -87,6 +99,12 @@ class RollingAudio:
         return np.concatenate(parts)
 
 
+def _resample_ratio(source_sr: int) -> tuple[int, int]:
+    """返回 (up, down)，满足 source_sr * up / down == SAMPLE_RATE。"""
+    divisor = gcd(SAMPLE_RATE, source_sr)
+    return SAMPLE_RATE // divisor, source_sr // divisor
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     cfg = load_config()
     parser = argparse.ArgumentParser(description="麦克风实时演示：逐段打印识别与判定")
@@ -100,6 +118,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="列出音频设备后退出")
     parser.add_argument("--block-ms", type=int, default=400,
                         help="每次采集/推送的音频长度")
+    parser.add_argument("--samplerate", type=int, default=0,
+                        help="采集采样率；缺省用设备默认采样率（推荐，避免"
+                             "系统把 44.1k 硬转成 16k）")
+    parser.add_argument("--save-audio", default=None, metavar="DIR",
+                        help="保存采集音频、逐段 WAV 与 segments.jsonl")
     parser.add_argument("--host", default=cfg_get(cfg, "service.host", "127.0.0.1"))
     parser.add_argument("--port", type=int, default=int(cfg_get(cfg, "service.port", 8766)))
     parser.add_argument("--json", action="store_true",
@@ -141,11 +164,90 @@ def main(argv: list[str] | None = None) -> int:
     dropped = 0
     overflows = 0
 
+    # 按设备原生采样率采集，再自己重采样到 16k。默认麦克风走 MME 时
+    # 默认是 44.1k；强行以 16k 打开会让 MME 内部做 44.1→16 的转换，
+    # 质量和延迟都不受控。WASAPI 设备通常只接受原生 48k，同样走这里。
+    capture_sr = int(args.samplerate or 0)
+    if capture_sr <= 0:
+        try:
+            target = args.device if args.device is not None else sd.default.device[0]
+            capture_sr = int(round(float(
+                sd.query_devices(target)["default_samplerate"]
+            )))
+        except Exception:
+            capture_sr = SAMPLE_RATE
+    if capture_sr <= 0:
+        capture_sr = SAMPLE_RATE
+    up, down = _resample_ratio(capture_sr)
+    resampling = up != down
+    resample_poly = None
+    if resampling:
+        try:
+            from scipy.signal import resample_poly as _resample_poly
+        except Exception as exc:
+            print(f"# 需要 scipy 才能把 {capture_sr}Hz 重采样到 16kHz：{exc}",
+                  file=sys.stderr)
+            return 2
+        resample_poly = _resample_poly
+
+    save_dir = Path(args.save_audio).expanduser() if args.save_audio else None
+    raw_wav = None
+    seg_jsonl = None
+    if save_dir:
+        try:
+            save_dir.mkdir(parents=True, exist_ok=True)
+            (save_dir / "segments").mkdir(exist_ok=True)
+        except OSError as exc:
+            print(f"# 不能创建保存目录 {save_dir}：{exc}", file=sys.stderr)
+            return 2
+
+    stats = {"n": 0, "sum_sq": 0.0, "peak": 0.0, "clip": 0}
+    diag_parts: list[np.ndarray] = []
+    diag_samples = 0
+    diag_cap = 30 * SAMPLE_RATE
+
+    def track(block: np.ndarray) -> None:
+        """累计电平统计与最多 30s 的诊断音频（判断是否高频缺失）。"""
+        nonlocal diag_samples
+        wave = np.asarray(block, dtype=np.float32).reshape(-1)
+        if not wave.size:
+            return
+        stats["n"] += int(wave.size)
+        stats["sum_sq"] += float(np.dot(wave, wave))
+        peak = float(np.max(np.abs(wave)))
+        if peak > stats["peak"]:
+            stats["peak"] = peak
+        stats["clip"] += int(np.count_nonzero(np.abs(wave) >= 0.999))
+        if diag_samples < diag_cap:
+            part = wave[:diag_cap - diag_samples]
+            diag_parts.append(part.copy())
+            diag_samples += int(part.size)
+
+    def audio_summary() -> str:
+        if not stats["n"]:
+            return ""
+        rms = (stats["sum_sq"] / stats["n"]) ** 0.5
+        clip_pct = stats["clip"] / stats["n"] * 100
+        line = (f"# 采集电平：峰值 {stats['peak']:.3f}｜RMS {rms:.4f}"
+                f"｜削波 {clip_pct:.2f}%")
+        if diag_parts:
+            wave = np.concatenate(diag_parts)
+            spectrum = np.abs(np.fft.rfft(wave * np.hanning(wave.size))) ** 2
+            freqs = np.fft.rfftfreq(wave.size, 1 / SAMPLE_RATE)
+            hf = float(
+                spectrum[freqs >= 3000].sum()
+                / max(float(spectrum.sum()), 1e-12) * 100
+            )
+            line += f"｜3kHz 以上能量 {hf:.2f}%"
+        return line
+
     def callback(indata, frames, time_info, status) -> None:
         nonlocal dropped, overflows
         if status:
             overflows += 1
         block = np.asarray(indata, dtype=np.float32).reshape(-1).copy()
+        if resampling:
+            block = resample_poly(block, up, down).astype(np.float32, copy=False)
         try:
             blocks.put_nowait(block)
         except queue.Full:
@@ -170,10 +272,40 @@ def main(argv: list[str] | None = None) -> int:
 
     def judge(info: dict) -> None:
         segment = _segment_from_rolling(info)
-        heard = pipeline.process(info, segment)
-        if heard.event.kind is EventKind.HELD and not args.json:
-            print(format_pending(heard.index, segment, heard.event.message),
-                  flush=True)
+        vad_wav = refine_wav = None
+        if save_dir:
+            index = len(pipeline.heard) + 1
+            stem = f"seg_{index:03d}_{segment.start_ms}_{segment.end_ms}"
+            vad_path = save_dir / "segments" / f"{stem}_vad.wav"
+            sf.write(str(vad_path), np.clip(segment.wave, -1.0, 1.0),
+                     SAMPLE_RATE, subtype="PCM_16")
+            vad_wav = str(vad_path)
+            refine_start = int(info.get("refine_start_ms", segment.start_ms))
+            if refine_start != segment.start_ms:
+                refine_path = save_dir / "segments" / f"{stem}_refine.wav"
+                sf.write(
+                    str(refine_path),
+                    np.clip(rolling.slice(refine_start, segment.end_ms),
+                            -1.0, 1.0),
+                    SAMPLE_RATE, subtype="PCM_16",
+                )
+                refine_wav = str(refine_path)
+        # 一个 VAD 段可能并着好几遍复述，逐遍判定、逐遍记一行。
+        for heard in pipeline.process(info, segment):
+            if seg_jsonl is not None:
+                record = heard.row()
+                record["stream_text"] = info.get("stream_text")
+                # 逐遍复核文本（整段复核下不了结论时对齐器的第二次机会）。
+                # 存下来才能回放核对"这一遍为什么被判成〔逐遍复核〕"。
+                record["reseg_text"] = info.get("reseg_text")
+                record["refine_start_ms"] = info.get("refine_start_ms")
+                record["vad_wav"] = vad_wav
+                record["refine_wav"] = refine_wav
+                seg_jsonl.write(json.dumps(record, ensure_ascii=False) + "\n")
+                seg_jsonl.flush()
+            if heard.event.kind is EventKind.HELD and not args.json:
+                print(format_pending(heard.index, segment, heard.event.message),
+                      flush=True)
         flush(keep_last=1)
 
     def _segment_from_rolling(info: dict):
@@ -186,17 +318,24 @@ def main(argv: list[str] | None = None) -> int:
                   flush=True)
         return Segment(start, end, wave)
 
+    def consume(block: np.ndarray) -> None:
+        """一块 16k 音频的完整处理：统计/存档 → 推服务 → 判定。"""
+        track(block)
+        if raw_wav is not None:
+            raw_wav.write(np.clip(block, -1.0, 1.0))
+        rolling.append(block)
+        reply = service.push_reply(block)
+        show_partials(reply.get("partial", []))
+        for info in reply["segments"]:
+            judge(info)
+
     def drain() -> None:
         while True:
             try:
                 block = blocks.get_nowait()
             except queue.Empty:
                 return
-            rolling.append(block)
-            reply = service.push_reply(block)
-            show_partials(reply.get("partial", []))
-            for info in reply["segments"]:
-                judge(info)
+            consume(block)
 
     def show_partials(partials) -> None:
         if args.json:
@@ -209,23 +348,33 @@ def main(argv: list[str] | None = None) -> int:
             if last_partial.get(uid) == text:
                 continue
             last_partial[uid] = text
-            latency = item.get("first_text_latency_ms")
-            tail = f"（首字 {latency:.0f}ms）" if latency else ""
-            print(f"  … 实时 #{uid} "
-                  f"{item.get('audio_start_ms', 0) / 1000:6.2f}s {text}{tail}",
-                  flush=True)
+            print(format_partial(item), flush=True)
 
-    block_frames = max(1, int(SAMPLE_RATE * args.block_ms / 1000))
+    block_frames = max(1, int(capture_sr * args.block_ms / 1000))
     try:
         stream = sd.InputStream(
-            samplerate=SAMPLE_RATE, channels=1, dtype="float32",
+            samplerate=capture_sr, channels=1, dtype="float32",
             blocksize=block_frames, device=args.device, callback=callback,
         )
     except Exception as exc:
         print(f"# 打不开输入设备 {args.device!r}：{exc}\n"
-              f"# 用 --list-devices 看可用设备，或换一台支持 16kHz 的设备。",
-              file=sys.stderr)
+              f"# 用 --list-devices 看可用设备，或用 --samplerate 指定"
+              f"设备支持的采样率。", file=sys.stderr)
         return 2
+
+    if save_dir:
+        try:
+            raw_wav = sf.SoundFile(
+                str(save_dir / "mic_16k.wav"), mode="w",
+                samplerate=SAMPLE_RATE, channels=1, subtype="PCM_16",
+            )
+            seg_jsonl = open(save_dir / "segments.jsonl", "w", encoding="utf-8")
+        except Exception as exc:
+            stream.close()
+            if raw_wav is not None:
+                raw_wav.close()
+            print(f"# 不能写保存文件到 {save_dir}：{exc}", file=sys.stderr)
+            return 2
 
     if not args.json:
         device = stream.device
@@ -234,10 +383,14 @@ def main(argv: list[str] | None = None) -> int:
             device_name = info["name"]
         except Exception:
             device_name = str(device)
+        capture_desc = f"{capture_sr}Hz"
+        if resampling:
+            capture_desc += f" → {SAMPLE_RATE}Hz 重采样"
         print(f"# 麦克风实时演示｜{pipeline.ticket.substation}｜"
               f"{Path(args.ticket).name}")
-        print(f"# 设备：{device_name}｜16kHz 单声道｜{args.block_ms}ms/块"
-              f"｜{service.info['asr']}｜流式 {service.info.get('asr_stream', 'off')}")
+        print(f"# 设备：{device_name}｜{capture_desc} 单声道｜"
+              f"{args.block_ms}ms/块｜{service.info['asr']}｜"
+              f"流式 {service.info.get('asr_stream', 'off')}")
         print(f"# Ctrl-C 结束并输出四态报告｜共 {len(pipeline.ticket)} 条操作")
         print()
 
@@ -246,11 +399,7 @@ def main(argv: list[str] | None = None) -> int:
         with stream:
             while True:
                 block = blocks.get()
-                rolling.append(block)
-                reply = service.push_reply(block)
-                show_partials(reply.get("partial", []))
-                for info in reply["segments"]:
-                    judge(info)
+                consume(block)
                 flush(keep_last=1)
     except KeyboardInterrupt:
         if not args.json:
@@ -268,6 +417,10 @@ def main(argv: list[str] | None = None) -> int:
     report = pipeline.finalize()
     flush(keep_last=0)
     service.close()
+    if raw_wav is not None:
+        raw_wav.close()
+    if seg_jsonl is not None:
+        seg_jsonl.close()
 
     if args.report:
         Path(args.report).write_text(
@@ -281,6 +434,11 @@ def main(argv: list[str] | None = None) -> int:
         print()
         print(f"# 结束：{len(pipeline.heard)} 段｜{counts}｜"
               f"识别 {pipeline.total_infer:.2f}s")
+        summary = audio_summary()
+        if summary:
+            print(summary)
+        if save_dir:
+            print(f"# 音频已保存：{save_dir}")
         # 收尾补发的提醒不属于任何一段语音，从终态报告里打出来。
         for alert in report.get("alerts", []):
             print(format_alert(alert))

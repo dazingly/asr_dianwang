@@ -168,17 +168,29 @@ def test_restart_across_vad_segments_counts_once(engine) -> None:
     assert aligner.feed(ticket).kind is EventKind.VERIFIED
 
 
-def test_same_segment_restart_counts_once(engine) -> None:
+def test_same_segment_two_full_recitations_count_twice(engine) -> None:
     ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
     aligner = _aligner(engine, ticket)
 
     event = aligner.feed(ticket + ticket)
 
-    # 整段重复不应当把一次完整复述吞掉（正常匹配可能是 EXTRA/PARTIAL，
-    # 重读后缀应能截出后半段的完整复述）。
-    assert event.kind is EventKind.CONFIRMED, event.message
+    # 唱票和复诵只隔一次换气时 VAD 会并进同一段；两遍都完整念对了，
+    # 就必须计两次，否则严格校验永远等不到第二次。
+    assert event.kind is EventKind.VERIFIED, event.message
+    assert aligner.records[0].confirmations == 2
+    assert aligner.records[0].state is ItemState.VERIFIED
+
+
+def test_same_segment_half_then_full_counts_once(engine) -> None:
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    aligner = _aligner(engine, ticket)
+
+    event = aligner.feed("检查黄堽线312开关" + ticket)
+
+    # 前半句没念完、后面完整重读：只算一次完整复述。
     assert aligner.records[0].confirmations == 1
     assert aligner.records[0].state is ItemState.PENDING
+    assert event.kind is EventKind.CONFIRMED
 
     assert aligner.feed(ticket).kind is EventKind.VERIFIED
 
