@@ -5,8 +5,8 @@
 相同（src/pipeline.py 的 JudgePipeline）。
 
     python scripts\asr_service.py               # 先起服务
-    python scripts\mic_demo.py                  # 默认麦克风
-    python scripts\mic_demo.py --mode dual      # 双人校验
+    python scripts\mic_demo.py                  # 默认麦克风，每条需 2 次完整复述
+    python scripts\mic_demo.py --confirmations 1  # 只要求 1 次（调试用）
     python scripts\mic_demo.py --list-devices   # 看有哪些输入设备
     python scripts\mic_demo.py --device 2       # 指定设备
 
@@ -104,8 +104,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--port", type=int, default=int(cfg_get(cfg, "service.port", 8766)))
     parser.add_argument("--json", action="store_true",
                         help="逐段输出一行 JSON（不打印实时字幕）")
-    parser.add_argument("--mode", choices=["single", "dual"], default=None,
-                        help="覆盖 aligner.mode")
+    parser.add_argument("--confirmations", type=int, default=None,
+                        help="每条操作项需要几次完整复述（覆盖 "
+                             "aligner.required_confirmations）")
     parser.add_argument("--report", default=None,
                         help="结束后把条目级四态报告写到该文件（JSON）")
     return parser.parse_args(argv)
@@ -125,8 +126,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     cfg = copy.deepcopy(load_config())
-    if args.mode:
-        cfg.setdefault("aligner", {})["mode"] = args.mode
+    if args.confirmations is not None:
+        cfg.setdefault("aligner", {})["required_confirmations"] = max(
+            1, args.confirmations,
+        )
     asset_path = project_path(args.asset_list)
     if asset_path.exists():
         cfg.setdefault("paths", {})["asset_list"] = str(asset_path)
@@ -272,12 +275,15 @@ def main(argv: list[str] | None = None) -> int:
         )
     if not args.json:
         counts = "／".join(
-            f"{state}{report['state_counts'].get(state, 0)}"
+            f"{state} {report['state_counts'].get(state, 0)}"
             for state in ("VERIFIED", "FLAGGED", "FAILED", "UNCONFIRMED")
         )
         print()
         print(f"# 结束：{len(pipeline.heard)} 段｜{counts}｜"
               f"识别 {pipeline.total_infer:.2f}s")
+        # 收尾补发的提醒不属于任何一段语音，从终态报告里打出来。
+        for alert in report.get("alerts", []):
+            print(format_alert(alert))
         if dropped or overflows:
             print(f"# 注意：队列溢出丢弃 {dropped} 块，设备状态告警 {overflows} 次")
     return 0

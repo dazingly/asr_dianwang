@@ -1,5 +1,0 @@
-audio_seconds 179.67
-segments 35 with_text 35
-final_latency_ms n 35 p50 87.0 p95 257.0 max 315.0
-final_infer_ms n 35 p50 163.6 p95 264.5 max 321.9
-infer_seconds_total 37.08

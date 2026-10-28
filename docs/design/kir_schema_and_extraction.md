@@ -1,6 +1,9 @@
-# 倒闸唱票复述校验：KIR Schema 与抽取规则设计
+# 倒闸唱票复述校验：KIR Schema 与抽取规则
 
-> 状态：P1/P2 已落地（`src/ticket/kir.py`、`configs/kir.yaml`、`tests/test_kir_extract.py`、`scripts/export_kir.py`）；P3 matcher 尚未实现。
+> 状态：P1–P5 已落地（2026-10-27）。现行代码是 `src/ticket/kir.py`（抽取）、
+> `src/verify/kir_matcher.py`（逐字段比较）、`configs/kir.yaml`（词表规则）；
+> W7 起对齐器按“每条操作项累计两次完整复述”计数，角色不参与判定。
+> 本文保留设计推演，**与现行实现不一致处以 §2.2.1、§5 的“现行实现”标注为准**。
 > 依据：[语料分析报告](../corpus_analysis/report.md)（155 个 JSON / 107 张内容去重票 / 944 条唯一条目 / 16 个站）。
 > 目标：把“只校验关键信息”落成可实现的 KIR 数据结构、抽取语法和判定规则。
 
@@ -100,16 +103,19 @@ class IdKey:
 
 比较规则：
 
+**现行实现**（`src/verify/kir_matcher.py::_id_level`）：
+
 | 情况 | 结果 | 例子 |
 |---|---|---|
 | `core` 不同 | **CONFLICT** | `312-1` vs `312-3`、`#4` vs `#8`、`1CLP2` vs `1CLP3` |
-| `core` 相同，两侧都有连字符，`segments` 不同 | **CONFLICT**（编号有歧义） | `31-2` vs `3-12` |
-| `core` 相同，一侧无连字符 | **FORMAT → REVIEW**（ASR 省略连字符） | `312-1` vs `3121` |
-| `core` 相同，两侧段结构相同 | **HIT** | `312-1` vs `312-1`、`#4` vs `4号` |
+| `core` 相同 | **EXACT** | `312-1` vs `312-1`、`312-1` vs `3121`、`#4` vs `4号` |
+| 压板/把手两侧编号切分点不同，但“编号+数字限定词”完整串相同 | **EXACT**（附注“压板编号切分位置不同”） | `6YLP1102-1` vs `6YLP11` + 限定词 `021` |
+| 票面带连字符、复述侧无连字符，且复述数字串更长并以票面 core 结尾 | **UNVERIFIABLE**（归一化后粘连，无法可靠比对） | 母线分段 `Ⅱ320-2` → `23202` |
+| 其余 | **CONFLICT** | — |
 
-> 这是对旧实现 A1/A4 缺口的修正：`alnum_identity` 只去连字符会把 `31-2` 和 `3-12` 误判成同一台设备；直接把连字符当硬边界又会让 ASR 省略连字符时全部误杀。`IdKey` 同时保留“拼接核心”和“分段结构”，把“格式差异”与“设备差异”分开。
+> `IdKey` 仍保留 `segments`，但现行判定只比较拼接后的 `core`：`31-2` 与 `3-12` 的 core 都是 `312`，因此视为同一编号。这是为了避免 ASR 省略/漂移连字符时大面积误杀；代价是两类编号并存的站点无法仅靠语音区分（见 §7 风险表）。
 >
-> 可选台账可以消解折叠歧义：若台账里同时存在 `312-1` 和 `3121`，折叠形式不再是格式差异，直接 **CONFLICT**；台账只有其中一个时，仍按 **FORMAT → REVIEW**。没有台账时保持 REVIEW，不静默通过。
+> 设计早期设想的“两侧都有连字符且分段结构不同 → CONFLICT”和“台账消解折叠歧义”没有落地：当前匹配层不读台账。压板编号的切分漂移用“完整数字串”兜住，归一连字符粘连用 UNVERIFIABLE 兜住，不做静默纠错。
 
 #### 2.2.2 设备身份比较
 
@@ -156,7 +162,10 @@ class IdKey:
 - 复述比票面更笼统（票面 `软压板`，复述 `压板`）→ **MISSING**，严格 FAIL。
 - 不同分支（`刀闸` vs `开关`）→ **CONFLICT**。
 
-> 默认把“更具体”放灰区而不是直接通过：票面写的是笼统词，复述补充了具体类型，不能证明复述错误，但也不能证明它和票面完全一致。配置 `strict.suffix_specialization: review|pass|fail` 可调。
+> 现行实现用 `configs/kir.yaml` 的 `suffix_hierarchy` 判断子父关系：
+> 更具体/更笼统不判设备类型矛盾，缺失具体类型记 `PARTIAL`；不同分支
+> （刀闸 vs 开关）仍是 `CONFLICT`。没有单独的 `strict.suffix_specialization`
+> 开关。
 
 **修饰词组**（同组不同值 → CONFLICT）：
 
@@ -264,10 +273,10 @@ class State:
 
 关键判定：
 
-- `检查…确已拉开` 与 `检查…拉开`：票面 confirmation `确已`，复述 `拉开` 无 confirmation → MISSING → 严格 FAIL。这是第 3 条“拉开”和第 4 条“检查…确已拉开”不能互相顶替的机制。
-- `检查…确在分闸位置` 与 `分闸位置`：缺 `确在` → FAIL。
-- `确无电压` 与 `无电压`：缺 `确` → FAIL。
-- `正常` 与 `无异常`：默认 CONFLICT（标准术语不互为同义词）；`strict.allow_condition_synonyms: false`。
+- `检查…确已拉开` 与 `检查…拉开`：票面 confirmation `确已`，复述 `拉开` 无 confirmation → `PARTIAL`（不计数）。这是第 3 条“拉开”和第 4 条“检查…确已拉开”不能互相顶替的机制。
+- `检查…确在分闸位置` 与 `分闸位置`：缺 `确在` → `PARTIAL`。
+- `确无电压` 与 `无电压`：缺 `确` → `PARTIAL`。
+- `正常` 与 `无异常`：`CONFLICT`（标准术语不互为同义词）；没有同义词放宽开关，确需混用应进 KIR 词表。
 - `正确` 与 `正常`：CONFLICT。
 - `符合` 与 `具备`：CONFLICT。
 - `分闸位置` 与 `分闸`：`位置` 是形式词，核心状态 `分闸` 相同 → HIT；但 `分闸` 作为对象（`分闸回路`）时由 group 区分，不走状态比较。
@@ -669,6 +678,13 @@ OTHER:      UNPARSEABLE
 
 ### 4.1 字段结果
 
+> §4 是设计期的语义模型。现行代码使用 `FieldLevel`
+> （`EXACT / EQUIVALENT / PARTIAL / EXTRA / CONFLICT / UNVERIFIABLE`）
+> 和 `MatchLevel`（`FULL / PARTIAL / EXTRA / UNVERIFIABLE / CONFLICT /
+> NO_EVIDENCE`），字段名与判定入口见 §4.6 和 §5.1。
+
+设计期枚举：
+
 ```python
 class Outcome(str, Enum):
     HIT = "HIT"
@@ -700,11 +716,11 @@ class Outcome(str, Enum):
 ### 4.3 Action 匹配
 
 - 同 kind + 同值（模糊音）→ HIT。
-- 同 kind + 不同值 → CONFLICT。
+- 同 kind + 不同值：执行/转换类（拉开 vs 合上）→ CONFLICT；
+  检查类（检查 vs 验明/核对）→ PARTIAL（换说法算漏说，不判说错）。
 - 不同 kind → CONFLICT。
-- 票面无、复述有 → EXTRA（默认 FAIL）。
+- 票面无、复述有 → EXTRA。
 - 否定不同 → CONFLICT。
-- `检查` vs `验明`/`核对`：默认 CONFLICT；`strict.allow_check_synonyms: false`。
 
 ### 4.4 State 匹配
 
@@ -724,187 +740,134 @@ class Outcome(str, Enum):
 - Place：模糊音；票面有、复述无 → MISSING；不同 → CONFLICT；复述多出 → EXTRA（WARN）。
 - Scope：电压 + 名称；电压不同 → CONFLICT；缺 → MISSING。
 
-### 4.6 判定聚合
+### 4.6 判定聚合（现行）
+
+字段比较完先算证据权重 `matched`（动作命中 1、目标配对 2、状态 0.5…，
+权重见 `configs/kir.yaml` 与 `KirMatcher`），再按固定优先级聚合成
+`MatchLevel`：
 
 ```python
-def decide(outcomes, ticket_quality, strict):
-    if ticket_quality.severity == "BLOCK":
-        return "TICKET_ISSUE"
-
-    if any(o.outcome == CONFLICT for o in outcomes):
-        return "FAIL"
-
-    if any(o.outcome == MISSING and o.required for o in outcomes):
-        return "FAIL" if strict.missing_required == "fail" else "REVIEW"
-
-    extra_policy = {
-        "target": strict.extra_target,
-        "action": strict.extra_action,
-        "quantity": strict.extra_quantity,
-        "range": strict.extra_quantity,
-        "state": strict.extra_state,
-        "place": strict.extra_place,
-        "qualifier": strict.extra_qualifier,
-    }
-    for o in outcomes:
-        if o.outcome == EXTRA and extra_policy.get(o.category, strict.extra_key_fact) == "fail":
-            return "FAIL"
-
-    if any(o.outcome in {FORMAT, SPECIALIZED, UNVERIFIABLE} for o in outcomes):
-        return "REVIEW"
-
-    if ticket_quality.severity == "TICKET_ISSUE":
-        return "REVIEW"
-
-    return "PASS"
+present = {field.level for field in fields}
+if CONFLICT in present and matched >= min_evidence:  # 默认 2.0
+    return CONFLICT
+if UNVERIFIABLE in present and matched > 0:
+    return UNVERIFIABLE
+if matched < min_evidence:
+    return NO_EVIDENCE
+if EXTRA in present:
+    return EXTRA
+if PARTIAL in present:
+    return PARTIAL
+return FULL
 ```
 
-默认策略（严格档）：
+- `FULL` 要求所有字段 `EXACT` 或 `EQUIVALENT`；
+- 明确矛盾优先于“票面可疑”，但必须过 `min_evidence`，避免几句闲聊共享
+  几个字就判“说错了”；
+- `NO_EVIDENCE` 交给对齐器当闲聊丢弃；
+- 没有相似度阈值，也没有按类别分别配置 `fail/review` 的 `strict` 段。
 
-```yaml
-strict:
-  missing_required: fail       # 票面有、复述没说到 = 不通过
-  extra_key_fact: fail         # 多说的关键信息 = 冲突
-  extra_target: fail
-  extra_action: fail
-  extra_quantity: fail
-  extra_state: fail
-  extra_place: review          # 场所补充可能是无害信息
-  extra_qualifier: review      # 修饰补充可能是无害信息
-  id_format_collapsed: review  # 3121 vs 312-1 = 灰区
-  suffix_specialization: review
-  allow_check_synonyms: false
-  allow_condition_synonyms: false
-  ticket_quality: flag         # 票面问题 → FLAGGED，不判 FAIL
-```
+对齐器只把 `FULL` 计为一次完整复述；`CONFLICT` 在票面覆盖率达到阈值时判
+`FAILED`；`PARTIAL` / `EXTRA` / `UNVERIFIABLE` 只算未完成尝试。
 
-> `extra_state: fail` 是用户“多说的关键信息 = CONFLICT”的直接落地。唯一的例外是 4.9 的多条目复述：如果多出的状态正好是下一条的 KIR，归到下一条，不算本条 EXTRA。
+### 4.7 角色聚合（已在 W7 删除）
 
-### 4.7 双人聚合
+设计期曾按唱票人/操作人分别攒证据，再聚合出条目状态。现场角色分类准确率
+不足，W7 起彻底删除：对齐器只数“内容完整正确出现了几次”，角色仅作报告
+元数据，提醒统一挂 `SYSTEM`。现行语义见 `strict_verification_plan.md` §11。
 
-每人（唱票人/操作人）各自得到 `PASS / REVIEW / FAIL / TICKET_ISSUE / NO_EVIDENCE`。条目聚合：
+### 4.8 分数只用于排序（现行）
 
-```python
-def aggregate(ev):
-    if any(e.verdict == "FAIL" for e in ev.values()):
-        return "FAILED"                     # 任一侧矛盾
-    if any(e.verdict == "TICKET_ISSUE" for e in ev.values()):
-        return "FLAGGED"                    # 票面待核对
-    sides = [e for e in ev.values() if e.verdict != "NO_EVIDENCE"]
-    if len(sides) == 2 and all(e.verdict == "PASS" for e in sides):
-        return "VERIFIED"                   # 两人都过
-    if sides:
-        return "FLAGGED"                    # 缺一人/一人灰区/角色不明
-    return "UNCONFIRMED"                    # 两侧都没证据
-```
+`KirMatchResult` 的 `level` 是判定本体；`matched` 是证据权重，只用于候选
+排序和拼合增益。引擎适配层把 `level` 映射成固定分数（FULL 1.0、PARTIAL /
+EXTRA 0.75、UNVERIFIABLE 0.70、CONFLICT 0.55、NO_EVIDENCE 0），对齐器
+用这个分数做：
 
-规则：
+- `best_match` 选窗口内条目（先按 MatchLevel 排序，再看 `matched`、
+  票面覆盖率、复述覆盖率）；
+- `chatter_threshold` 过滤闲聊；
+- `stitch_gain` 判断拼合是否值得采纳；
+- 报告展示。
 
-- 任一侧 `FAIL` → `FAILED`，即使另一侧 `PASS`。
-- 两侧都有证据且都 `PASS` → `VERIFIED`。
-- 只有一侧有证据 → `FLAGGED`（缺一人）。
-- 角色 `UNKNOWN` 的证据单独放匿名桶，只能聚合出 `FLAGGED`，不能升级/降级。
-- `TICKET_ISSUE` → `FLAGGED`，报告里注明“票面待核对”。
-- 迟到唱票 `PASS` 可把 `FLAGGED` 升为 `VERIFIED`；唱票 `FAIL` 可把 `VERIFIED` 降为 `FAILED`（矛盾证据不可被覆盖）。
-- 拼合只允许同角色（唱票半句 + 操作人半句不拼）。
+没有 `evidence_score = coverage - penalty` 这种连续打分公式，也没有可调
+的相似度阈值。
 
-### 4.8 分数只用于排序
+### 4.9 多条目复述（未实现）
 
-保留一个 `evidence_score` 供对齐器使用，但**不参与 PASS/FAIL**：
-
-```
-coverage = Σ weight(fact) * hit / Σ weight(fact)
-penalty  = 0.5 * conflicts / max(1, len(ticket_facts))
-evidence_score = max(0, coverage - penalty)
-```
-
-权重建议：target 3、action 2、state 2、transition 2、quantity 1、place 1、scope 1。
-
-用途：
-
-- `best_match` 选窗口内条目；
-- `chatter_threshold` 过滤闲聊（建议先设 0.2，再用录音校准）；
-- `stitch_gain` 判断拼合是否值得采纳（建议 0.08–0.10，校准）；
-- 报告排序。
-
-### 4.9 多条目复述
-
-一段语音可能同时包含第 3 条“拉开…”和第 4 条“检查…确已拉开”。处理规则：
-
-1. 先按标点/停顿切成子句；每个子句独立抽 KIR。
-2. 对窗口内条目做 `match_all`，保留 `evidence_score ≥ chatter_threshold` 的条目。
-3. 若连续两条都被覆盖，分别记证据，指针推进到最后一条。
-4. 若无法切开，选覆盖最高的一条，并在报告里标 `MULTI_ITEM_AMBIGUOUS`。
-5. 多出的“确已拉开”如果匹配下一条 KIR，归下一条，不在本条记 EXTRA。
-
-> 这一条是对齐器的工作，不改变 KIR schema；先作为 P1 实现，不阻塞主链路。
+一段语音可能同时包含第 3 条“拉开…”和第 4 条“检查…确已拉开”。设计期设想
+按标点切子句、分别抽 KIR、一次 `match_all` 落多条。当前实现没有做：一段
+语音只在窗口内选最佳的一条票面，多出来的内容会表现为 EXTRA 或不计数。
+这是已知限制，不是静默丢判定。
 
 ---
 
 ## 5. 代码落地
 
-### 5.1 新增模块
+### 5.1 模块落点（现行）
 
 | 文件 | 内容 |
 |---|---|
-| `src/ticket/kir.py` | `Kir`/`Target`/`Action`/`State`/`Transition`/`Quantity`/`Range`/`Quality` 数据类；`KirExtractor` |
-| `src/ticket/kir_quality.py` | 票面/ASR 质量闸门、OCR 词表、粘连电压处理 |
-| `src/verify/kir_matcher.py` | `KirMatcher`、字段结果、判定聚合；不含相似度阈值 |
+| `src/ticket/kir.py` | `Kir`/`Target`/`Action`/`State`/`Transition`/`Quantity`/`Range`/`Quality` 数据类；`KirExtractor`；票面/ASR 质量闸门、OCR 词表、粘连电压处理 |
+| `src/verify/kir_matcher.py` | `KirMatcher`、`FieldResult`、`MatchLevel`、判定聚合；不含相似度阈值 |
+| `src/verify/engine.py` | 把 `KirMatchResult` 适配成对齐器使用的 `EngineResult`（FULL→PASS、CONFLICT→FAIL、其余有证据→REVIEW） |
+| `src/verify/aligner.py` | 两次完整复述状态机：计数、挂起/拼合、重读后缀、跳项、提醒挂接 |
+| `src/verify/alerts.py` | 字段级提醒、OPEN/RESOLVED 生命周期、去重与快照 |
 | `configs/kir.yaml` | 动作/状态/后缀/修饰词/场所/范围/量词/互斥组/质量词表 |
-| `scripts/export_kir.py` | 把语料导成 KIR 草稿（JSONL/Markdown）供人工抽查 |
 | `tests/test_kir_extract.py` | 设备短语、编号、电压、状态、动作、质量闸门 |
-| `tests/test_kir_match.py` | 冲突/缺失/多余/格式/票面问题 |
-| `tests/test_aligner_dual.py` | 双人聚合 6 种组合 |
+| `tests/test_kir_matcher.py` | 冲突/缺失/多余/格式/票面问题、拼音等价、覆盖率方向 |
+| `tests/test_aligner_kir.py` | KIR 端到端：两次确认、重读、矛盾、收尾 |
+| `tests/test_aligner_confirmations.py` | 计数语义：重复、未完成尝试、跳项、strict 策略、角色仅元数据 |
+| `tests/test_alerts.py` | 提醒不变式、去重、RESOLVED、异常隔离 |
 
-### 5.2 现有模块改动
+> `scripts/export_kir.py`、`scripts/kir_shadow.py`、`tests/test_aligner_dual.py` 是设计/切换期的脚手架，已在 W6/W7 清理；`tests/test_kir_match.py` 的最终命名是 `tests/test_kir_matcher.py`。
+
+### 5.2 现有模块改动（现行）
 
 | 文件 | 改动 |
 |---|---|
-| `src/ticket/loader.py` | `OperationItem` 增加 `parse_text`、`kir`、`quality`；`load_ticket` 解析一次 KIR；保留 `norm`/`slots` 兼容旧路径 |
-| `src/verify/aligner.py` | 增加 `mode: single|dual`、per-role evidence、`_commit_dual`、KIR evidence_score；拼合同角色；`finalize/report` 输出 KIR 与票面质量 |
-| `scripts/stream_demo.py` | 使用 KIR matcher/aligner；输出每条 KIR、字段结果、双人证据、票面质量 |
-| `configs/default.yaml` | 增加 `strict` 段（见 4.6）、`kir.lexicon`、`matcher.engine: kir`、`aligner.mode: dual` |
-| `configs/lexicon.yaml` | 旧路径保留；新词表放 `configs/kir.yaml`，避免一次改动破坏旧 matcher |
-| `README.md` | 更新严格档、KIR 输出字段、票面质量说明 |
+| `src/ticket/loader.py` | `OperationItem` 增加 `norm`、`kir`；`load_ticket` 用同一抽取器解析一次 KIR。旧槽位字段已删除 |
+| `src/verify/aligner.py` | 以 `required_confirmations` 计数；删除 single/dual 模式、per-role evidence、`_commit_dual` 和旧角色聚合 |
+| `src/pipeline.py` | 判定链路（识别→吸附→角色→对齐→提醒）；逐段行输出 `record_state` / `confirmations` / `alerts` 等字段 |
+| `scripts/stream_demo.py` | 文件推流演示；`--confirmations` 覆盖次数，`--report` 落盘条目级报告 |
+| `scripts/mic_demo.py` | 麦克风实时演示；与文件推流共用 `JudgePipeline` |
+| `configs/default.yaml` | 现行参数：`kir.*`、`aligner.*`、`adhere.*`、`asr.streaming.*` |
+| `configs/lexicon.yaml` | 只服务吸附层（识别后纠听音错误），不参与 KIR 抽取 |
+| `README.md` | 运行方式、两次复述语义、四态/提醒契约、输出字段与已知限制 |
 
-### 5.3 兼容与回退
+### 5.3 回退开关（现行）
 
-1. **影子模式**：先只加 KIR 抽取和导出，不改变判定；人工抽查 KIR 草稿。
-2. **双跑**：KIR matcher 与旧 matcher 同时跑录音，比较条目状态；分歧逐条听录音。
-3. **切换**：`matcher.engine: kir` + `aligner.mode: dual` 成为演示默认；`strict.enabled: false` 可回退旧路径。
-4. **清理**：验证通过后，按“演示最小代码”原则删除旧相似度/adherence 路径，只保留 KIR + 双人聚合。
+| 需求 | 开关 |
+|---|---|
+| 回到“每条只要求 1 次完整复述” | `aligner.required_confirmations: 1` |
+| 允许说错后被后续复述纠正 | `aligner.failure_is_final: false` |
+| 关闭提醒输出（不改变判定） | `alerts.enabled: false` |
+| 关闭识别后吸附 | `adhere.enabled: false` |
+| 回到离线 ASR（关闭流式） | `asr.streaming.enabled: false` |
+
+旧相似度/槽位路径已在 W6 删除，没有 `matcher.engine: legacy` 或 `aligner.mode` 回退。
 
 ### 5.4 配置样例
 
 ```yaml
 kir:
-  lexicon: configs/kir.yaml
-
-matcher:
-  engine: kir          # kir | legacy
-
-strict:
-  enabled: true
-  missing_required: fail
-  extra_key_fact: fail
-  extra_target: fail
-  extra_action: fail
-  extra_quantity: fail
-  extra_state: fail
-  extra_place: review
-  extra_qualifier: review
-  id_format_collapsed: review
-  suffix_specialization: review
-  allow_check_synonyms: false
-  allow_condition_synonyms: false
-  ticket_quality: flag
+  strict: true
+  pinyin_equivalent: true
+  id_core_only: true
+  min_evidence: 2.0
 
 aligner:
-  mode: dual
-  dual_min_role_confidence: 0.5
-  chatter_threshold: 0.20
-  stitch_gain: 0.08
+  required_confirmations: 2
+  extra_repeat_policy: audit
+  failure_is_final: true
+  conflict_requires_complete: true
+  complete_coverage: 0.7
+  restart_aware: true
+
+alerts:
+  enabled: true
 ```
+
+完整参数见 `configs/default.yaml`。
 
 ---
 
@@ -912,7 +875,7 @@ aligner:
 
 ### 6.1 语料 KIR 导出 + 人工抽查
 
-- 用 `scripts/export_kir.py` 导出 944 条 KIR 草稿：`raw / family / actions / targets / states / transition / quantity / quality / required`。
+- 设计期用 `scripts/export_kir.py` 导出 944 条 KIR 草稿：`raw / family / actions / targets / states / transition / quantity / quality / required`。该脚本已完成使命，项目整理时删除；本节保留当时的验证口径。
 - 人工抽查 50–100 条，覆盖：
   - 检查/验明；
   - 由…转/切至/推至/拉至；
@@ -941,9 +904,9 @@ aligner:
 
 ### 6.3 单测清单
 
-- 编号：`312-1` vs `312-3` → CONFLICT；`312-1` vs `3121` → FORMAT；`31-2` vs `3-12` → CONFLICT；`#4` vs `4号` → HIT。
+- 编号：`312-1` vs `312-3` → CONFLICT；`312-1` vs `3121` → EXACT；`31-2` vs `3-12` → EXACT（已知限制，见 §7）；`#4` vs `4号` → HIT。
 - 电压：`110kv` vs `10kv` → CONFLICT；`1CLP235kV` → `1clp2 + 35kv`；`1-31KLP1110kV` 歧义标记。
-- 动作：`拉开` vs `合上` → CONFLICT；`停用` vs `投入` → CONFLICT；`检查` vs `验明` → CONFLICT。
+- 动作：`拉开` vs `合上` → CONFLICT；`停用` vs `投入` → CONFLICT；`检查` vs `验明` → PARTIAL（检查类动作换说法算漏说，不判说错）。
 - 状态：`远方` vs `就地` → CONFLICT；`确已拉开` vs `拉开` → MISSING；`未拉开` vs `确已拉开` → CONFLICT；`正常` vs `异常` → CONFLICT。
 - 对象：`电气位置指示` vs `机械位置指示` → CONFLICT；`母线保护` vs `母联保护` → CONFLICT。
 - 设备：`312-1刀闸` vs `312-1开关` → CONFLICT；`黄冈线` vs `黄堽线` → HIT；`负荷` vs `符合` → CONFLICT。
@@ -954,42 +917,49 @@ aligner:
 
 ### 6.4 真实录音回归
 
-- 小留 ticket1、丹东/间楼/马岭岗录音各跑一遍。
-- 对比旧 matcher：条目状态、事件序列、双人证据。
+- 当前随仓库保留的实录音频是小留 ticket1（35 段，7 条操作项）。设计期还跑过
+  丹东等站录音，但数据未随仓库分发。
+- W7 验收口径：`required_confirmations: 2`，条目级四态、提醒、逐条次数与重读。
 - 指标：
   - 混淆对（312-1/312-3、远方/就地、电气/机械、111-3/111-1）假通过 = 0；
   - 正确复述假拒绝 ≤ 2%；
   - 灰区率 ≤ 15%（严格档允许更高，但需可解释）；
   - 每个 FAIL 都能指出字段级原因。
+- W7 结果见 `docs/evidence/w7_twice_confirmation_report.json`（多数条目只完整
+  念了一次，另有两处编号被 ASR 听岔，因此没有条目达到两次确认）。
 
 ---
 
 ## 7. 风险与待确认项
 
-| 风险/决策 | 默认 | 说明 |
+| 风险/决策 | 现行行为 | 说明 |
 |---|---|---|
-| `3121` vs `312-1` | REVIEW | ASR 常省略连字符；判 FAIL 会大面积误杀；判 PASS 又可能放过真实不同编号。灰区最稳 |
+| `3121` vs `312-1` | EXACT | ASR 常省略连字符；判 FAIL 会大面积误杀，所以按同一编号处理 |
+| `31-2` vs `3-12` | EXACT（已知限制） | core 都是 `312`，语音层无法区分；若新站两类并存需单独处理 |
 | `压板` vs `软压板` | REVIEW | 票面笼统、复述更具体；不判错也不判全对 |
-| `正常` vs `无异常` | CONFLICT | 严格档不接受语义同义；如现场习惯混用，可配 `allow_condition_synonyms: true` |
-| 多说的状态/场所 | FAIL / REVIEW | 用户要求“多说的关键信息 = 冲突”；场所/修饰补充放 REVIEW，避免误杀 |
+| `正常` vs `无异常` | CONFLICT | 严格档不接受语义同义；同义写法应进词表，而不是放宽判定 |
+| 多说的状态/场所 | FAIL / REVIEW | 关键信息多出算冲突；场所/修饰补充放 REVIEW，避免误杀 |
 | 票面 OCR `场至`/`确环` | FLAGGED | 不自动纠错；受影响字段 UNVERIFIABLE；干净字段仍可 FAIL |
 | 复述无 KIR | REVIEW | ASR 没听清不等于操作人说错 |
-| 台账 | 可选 | 只做票面校验/歧义消解；不参与抽取前置 |
-| adherence | 关闭 | 严格档不重写复述；模糊拼音只做方言等价 |
-| 多条目复述 | P1 | 先按单条匹配；后续加 `match_all` |
-| 双人角色置信度 | 0.5 | 低于阈值归 UNKNOWN，条目 FLAGGED |
-| 型号粘连电压 `2KLP14PRS-75335kV` | UNVERIFIABLE | 型号 `PRS-753` 与 `35kV` 连写，编号/电压都抽不到；不静默纠错，P3 把受影响字段标灰 |
+| 台账 | 只服务吸附 | KIR 抽取和比较都不读台账；吸附层用台账纠 ASR 听音错误 |
+| adherence | 默认开启 | 先按读音改写字面，再做 KIR；数字/字母护栏，且不看票面 |
+| 多条目复述 | 按窗口最佳匹配 | 当前一条语音只落到一条票面；不自动拆成多条 |
+| 角色判定 | 仅元数据 | W7 起不参与计数；同一个人念两遍也能通过 |
+| 型号粘连电压 `2KLP14PRS-75335kV` | UNVERIFIABLE | 型号 `PRS-753` 与 `35kV` 连写，编号/电压都抽不到；不静默纠错 |
 | 省略中心词 `母线保护分图、电流差动软压板` | 保留但不对称 | 第一块压板抽成 OBJECT(`母线保护`)，`35kv` 保留在该目标上；不补造第二块压板的中心词 |
 | 省略中心词 `汇控柜隔离、接地控制电源空气开关` | 合并为一个目标 | 两块空气开关共享中心词；`隔离`、`接地控制电源` 都进 qualifiers，不补造第一个目标 |
 
 ---
 
-## 8. 实施顺序（建议）
+## 8. 实施顺序（历史记录）
 
-1. **P0 设计冻结**：本文件评审通过，确定 4.6 的严格策略和 7 的待确认项。
-2. **P1 KIR 抽取**：`src/ticket/kir.py` + `configs/kir.yaml` + `scripts/export_kir.py`；先不改判定。
+> 以下顺序已全部执行；P4 的“双人聚合”在 W7 被“每条两次完整复述”取代，
+> P6 已删除旧相似度/槽位路径。吸附层保留，作为识别后的听音纠错。
+
+1. **P0 设计冻结**：本文件评审通过，确定严格策略和待确认项。
+2. **P1 KIR 抽取**：`src/ticket/kir.py` + `configs/kir.yaml` + 导出脚本；先不改判定。
 3. **P2 人工抽查**：导出 944 条 KIR 草稿，抽查 50–100 条，修词表和语法。
 4. **P3 KIR 匹配**：`src/verify/kir_matcher.py` + 单测；影子模式双跑录音。
-5. **P4 双人聚合**：`aligner.mode: dual` + 双人测试；确认“双 PASS / 任一侧 FAIL / 缺一人 FLAGGED”。
-6. **P5 演示切换**：`stream_demo.py` 默认 KIR 严格档；保留 `strict.enabled: false` 回退。
-7. **P6 清理**：删除旧相似度/adherence 路径（如确认不再需要），保持演示最小代码。
+5. **P4 判定切换**：最初做 dual 双人聚合，W7 改为两次完整复述计数。
+6. **P5 演示切换**：`stream_demo.py` 默认 KIR 严格档；`required_confirmations: 1` 回到单次口径。
+7. **P6 清理**：删除旧相似度/槽位路径与脚手架脚本，保留演示最小代码。

@@ -94,6 +94,9 @@ class KirMatchResult:
     level: MatchLevel
     fields: list[FieldResult] = field(default_factory=list)
     matched: float = 0.0
+    # 票面被复述覆盖的比例。半句重读、完整念错都靠它区分：
+    # 半句只覆盖票面的一部分，完整念错覆盖了绝大部分（只是某个值不对）。
+    ticket_coverage: float = 0.0
     reasons: list[str] = field(default_factory=list)
     ticket: Kir | None = None
     heard: Kir | None = None
@@ -161,8 +164,7 @@ class KirMatcher:
     # 入口
     # ------------------------------------------------------------------
 
-    def match(self, item: OperationItem, utterance: str,
-              already_normalized: bool = False) -> KirMatchResult:
+    def match(self, item: OperationItem, utterance: str) -> KirMatchResult:
         """比较一条票面与一段复述。utterance 是否归一化过都不影响。"""
         ticket = item.kir or self.extractor.extract(item.raw, source="ticket")
         heard = self.extractor.extract(utterance or "", source="asr")
@@ -204,7 +206,9 @@ class KirMatcher:
         reasons = self._reasons(fields, level)
         return KirMatchResult(
             item=item, utterance=utterance, level=level, fields=fields,
-            matched=matched, reasons=reasons, ticket=ticket, heard=heard,
+            matched=matched,
+            ticket_coverage=self._overlap(self._ticket_norm(item), utterance),
+            reasons=reasons, ticket=ticket, heard=heard,
         )
 
     def best_match(self, items, utterance: str) -> KirMatchResult | None:
@@ -212,7 +216,7 @@ class KirMatcher:
         best: KirMatchResult | None = None
         best_key = None
         for item in items:
-            result = self.match(item, utterance, already_normalized=True)
+            result = self.match(item, utterance)
             key = self._rank_key(result)
             if best_key is None or key > best_key:
                 best, best_key = result, key

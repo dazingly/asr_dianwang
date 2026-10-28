@@ -3,6 +3,8 @@
 语料目录：`C:/Users/Shijiawei/xwechat_files/wxid_1v8sqw0ah6zg22_65a6/msg/file/2026-10/command`
 
 > 本报告只做模式统计与覆盖率测量，不修改语料，也不修改项目代码。
+> 生成报告的一次性分析脚本与 `stats.json` 已在项目整理时删除；本文件保留为
+> `configs/kir.yaml` 词表和 KIR 抽取规则的设计依据，不再作为可重复运行的入口。
 
 ## 1. 语料概览
 

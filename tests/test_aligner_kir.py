@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """aligner + KIR 引擎的端到端用例。
 
-判定层换成 KIR 后，对齐器的结论必须仍是四态语义：
-FULL -> PASS、CONFLICT -> FAIL、PARTIAL/UNVERIFIABLE -> REVIEW。
+判定层换成 KIR 后，对齐器只按"完整复述出现的次数"计数：
+FULL 计一次；PARTIAL/EXTRA/UNVERIFIABLE 只是未完成尝试；完整 CONFLICT
+判 FAILED，没念完的 CONFLICT 只留痕。
 """
 from __future__ import annotations
 
@@ -20,7 +21,7 @@ from src.verify.kir_matcher import KirMatcher
 KIR_CONFIG = Path(__file__).resolve().parents[1] / "configs" / "kir.yaml"
 
 
-def _config(mode: str = "dual") -> dict:
+def _config(**overrides) -> dict:
     return {
         "matcher": {
             "engine": "kir",
@@ -33,12 +34,19 @@ def _config(mode: str = "dual") -> dict:
             "min_evidence": 2.0,
         },
         "aligner": {
-            "mode": mode,
+            "required_confirmations": 2,
+            "extra_repeat_policy": "audit",
+            "failure_is_final": True,
+            "conflict_requires_complete": True,
+            "complete_coverage": 0.7,
+            "restart_aware": True,
             "lookahead": 2,
-            "lookback": 1,
+            "lookback": 2,
             "chatter_threshold": 0.45,
+            **overrides,
         },
         "verdict": {"review_threshold": 0.60, "pass_threshold": 0.82},
+        "alerts": {"enabled": True},
         "paths": {"dialect": "configs/dialect_heze.yaml"},
     }
 
@@ -56,67 +64,137 @@ def _ticket(*texts: str) -> Ticket:
     ])
 
 
+def _aligner(engine: KirEngine, *texts: str, **overrides) -> SequentialAligner:
+    return SequentialAligner(_ticket(*texts), _config(**overrides),
+                             matcher=engine)
+
+
 def test_build_engine_selects_kir() -> None:
     engine = build_engine(_config())
     assert isinstance(engine, KirEngine)
 
 
-def test_dual_full_match_on_both_sides_is_verified(engine) -> None:
+def test_two_full_recitations_verified(engine) -> None:
     text = "拉开110kV桥100开关"
-    aligner = SequentialAligner(_ticket(text), _config(), matcher=engine)
+    aligner = _aligner(engine, text)
 
-    aligner.feed(text, Role.CALLER)
-    event = aligner.feed(text, Role.OPERATOR)
+    first = aligner.feed(text, Role.CALLER)
+    assert first.kind is EventKind.CONFIRMED
+    assert first.confirmations == 1
+    assert aligner.records[0].state is ItemState.PENDING
 
-    assert event.kind is EventKind.VERIFIED
+    second = aligner.feed(text, Role.OPERATOR)
+    assert second.kind is EventKind.VERIFIED
+    assert aligner.records[0].confirmations == 2
     assert aligner.records[0].state is ItemState.VERIFIED
-    assert aligner.report()["items"][0]["evidence"]["OPERATOR"]["level"] == "FULL"
+    assert aligner.report()["items"][0]["state_basis"] == "2 次完整复述"
 
 
-def test_dual_operator_misread_id_fails(engine) -> None:
+def test_single_recitation_flagged_at_finalize(engine) -> None:
+    text = "拉开110kV桥100开关"
+    aligner = _aligner(engine, text)
+
+    aligner.feed(text)
+    aligner.finalize()
+
+    row = aligner.report()["items"][0]
+    assert row["state"] == "FLAGGED"
+    assert row["confirmations"] == 1
+    assert {a["code"] for a in row["alerts"]} == {"NEED_MORE_CONFIRMATIONS"}
+
+
+def test_complete_wrong_id_fails(engine) -> None:
     ticket = "拉开110kV桥100开关"
-    aligner = SequentialAligner(_ticket(ticket), _config(), matcher=engine)
+    aligner = _aligner(engine, ticket)
 
-    aligner.feed(ticket, Role.CALLER)
-    event = aligner.feed("拉开110kV桥200开关", Role.OPERATOR)
+    aligner.feed(ticket)
+    event = aligner.feed("拉开110kV桥200开关")
 
     assert event.kind is EventKind.FAILED
     assert aligner.records[0].state is ItemState.FAILED
+    row = aligner.report()["items"][0]
+    assert row["match_level"] == "CONFLICT"
+    assert row["confirmations"] == 1
+    assert aligner.report()["alert_counts"]["ERROR"] == 1
 
 
-def test_dual_one_side_only_is_flagged(engine) -> None:
-    text = "拉开110kV桥100开关"
-    aligner = SequentialAligner(_ticket(text), _config(), matcher=engine)
-
-    aligner.feed(text, Role.CALLER)
-    aligner.finalize()
-
-    record = aligner.records[0]
-    assert record.state is ItemState.FLAGGED
-    assert aligner.report()["items"][0]["state_basis"] == "缺复述证据"
-
-
-def test_single_mode_with_kir_still_passes(engine) -> None:
-    text = "拉开110kV桥100开关"
-    aligner = SequentialAligner(_ticket(text), _config("single"), matcher=engine)
-
-    event = aligner.feed(text, Role.OPERATOR)
-
-    assert event.kind is EventKind.VERIFIED
-    assert aligner.records[0].state is ItemState.VERIFIED
-
-
-def test_kir_partial_is_flagged_not_failed(engine) -> None:
+def test_incomplete_wrong_id_is_aborted_then_two_full_verified(engine) -> None:
     ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
-    aligner = SequentialAligner(_ticket(ticket), _config(), matcher=engine)
+    aligner = _aligner(engine, ticket)
 
-    aligner.feed(ticket, Role.CALLER)
-    event = aligner.feed("检查黄堽线312开关机械位置指示", Role.OPERATOR)
-    # 复述少了状态，先挂起等拼合；录音结束时按 PARTIAL 落地。
+    attempt = aligner.feed("检查黄堽线313开关")
+    assert attempt.kind is EventKind.ATTEMPT
+    assert aligner.records[0].state is ItemState.PENDING
+    assert aligner.records[0].aborted_conflicts
+    assert {a["code"] for a in attempt.alerts} == {"ABORTED_CONFLICT"}
+
+    aligner.feed(ticket)
+    event = aligner.feed(ticket)
+    assert event.kind is EventKind.VERIFIED
+    assert aligner.report()["alerts"] == []
+
+
+def test_partial_recitation_is_flagged_not_failed(engine) -> None:
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    aligner = _aligner(engine, ticket)
+
+    aligner.feed(ticket)
+    event = aligner.feed("检查黄堽线312开关机械位置指示")
+    # 复述少了状态，先挂起等拼合；录音结束时按未完成尝试落地。
     assert event.kind is EventKind.HELD
 
     aligner.finalize()
-    # 唱票侧先落过一次灰区，复述侧补上但仍是 PARTIAL：事件是重复复述，
-    # 条目状态保持灰区（不能说错，也不能算完全匹配）。
-    assert event.kind in (EventKind.FLAGGED, EventKind.REPEAT)
-    assert aligner.records[0].state is ItemState.FLAGGED
+    assert aligner.events[1].kind is EventKind.ATTEMPT
+    row = aligner.report()["items"][0]
+    assert row["state"] == "FLAGGED"
+    assert row["confirmations"] == 1
+    assert row["aborted_attempts"] == 1
+    assert {a["code"] for a in row["alerts"]} == {"NEED_MORE_CONFIRMATIONS"}
+
+
+def test_restart_across_vad_segments_counts_once(engine) -> None:
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    aligner = _aligner(engine, ticket)
+
+    first = aligner.feed("检查黄堽线312开关")
+    assert first.kind is EventKind.HELD
+
+    second = aligner.feed(ticket)
+    # 前半句落地为未完成尝试，完整段自己计一次。
+    assert aligner.events[0].kind is EventKind.ATTEMPT
+    assert second.kind is EventKind.CONFIRMED
+    assert aligner.records[0].confirmations == 1
+
+    assert aligner.feed(ticket).kind is EventKind.VERIFIED
+
+
+def test_same_segment_restart_counts_once(engine) -> None:
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    aligner = _aligner(engine, ticket)
+
+    event = aligner.feed(ticket + ticket)
+
+    # 整段重复不应当把一次完整复述吞掉（正常匹配可能是 EXTRA/PARTIAL，
+    # 重读后缀应能截出后半段的完整复述）。
+    assert event.kind is EventKind.CONFIRMED, event.message
+    assert aligner.records[0].confirmations == 1
+    assert aligner.records[0].state is ItemState.PENDING
+
+    assert aligner.feed(ticket).kind is EventKind.VERIFIED
+
+
+def test_report_has_completion_fields_and_no_role_evidence(engine) -> None:
+    text = "拉开110kV桥100开关"
+    aligner = _aligner(engine, text)
+    aligner.feed(text)
+    aligner.feed(text)
+
+    row = aligner.report()["items"][0]
+    assert row["confirmations"] == 2
+    assert row["required_confirmations"] == 2
+    assert row["extra_confirmations"] == 0
+    assert row["aborted_attempts"] == 0
+    assert row["restarts"] == 0
+    assert row["skipped"] is False
+    assert "evidence" not in row
+    assert "called" not in row

@@ -64,6 +64,21 @@ def test_identical_is_full(matcher, extractor) -> None:
     assert result.level is MatchLevel.FULL
     assert result.reasons == []
     assert result.conflicts == []
+    assert result.ticket_coverage == pytest.approx(1.0)
+
+
+def test_ticket_coverage_distinguishes_prefix_from_complete_conflict(
+        matcher, extractor) -> None:
+    # 对齐器用"票面被复述覆盖的比例"区分没念完和完整念错。方向不能反：
+    # 半句的 coverage 必须低，完整但某个值错的 coverage 必须高。
+    ticket = "检查黄堽线312开关机械位置指示确在分闸位置"
+    item = _item(extractor, ticket)
+
+    prefix = matcher.match(item, "检查黄堽线312开关")
+    wrong_full = matcher.match(item, "检查黄堽线313开关机械位置指示确在分闸位置")
+
+    assert prefix.ticket_coverage < 0.7
+    assert wrong_full.ticket_coverage >= 0.7
 
 
 def test_ground_wire_hash_and_hao_are_same_fact(matcher, extractor) -> None:

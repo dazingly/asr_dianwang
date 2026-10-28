@@ -36,9 +36,16 @@ class EngineResult:
     conflicts: list = field(default_factory=list)   # 元素都有 describe()
     matched: float = 0.0                            # 证据权重
     level: str | None = None                        # KIR MatchLevel
-    # 旧版逐段输出保留的字段。KIR 不提供，固定为 None/空，前端字段不变。
-    sentence_similarity: float | None = None
-    slot_results: list = field(default_factory=list)
+    # 票面被这段复述覆盖的比例。对齐器用它区分"没念完就重读"和"完整念错"。
+    # 非 KIR 引擎没有这个概念，默认按完整处理。
+    coverage: float = 1.0
+    # 这一段是不是从"重读起点"截断后匹配上的；仅用于报告和排查。
+    restarted: bool = False
+    restart_from: int | None = None
+    # 重读前缀如果本身已经是一次未完成的口误，把那次结果带在这里，
+    # 让对齐器留下 ABORTED_CONFLICT 证据（不影响后缀 FULL 计数）。
+    restart_aborted: "EngineResult | None" = None
+    # 原始 KIR 比较结果，供报告和提醒层取字段明细。
     raw: object | None = None
     # 这次匹配来自哪一段语音、说话人被判成什么角色。提醒层用它回放定位和
     # 归属，由对齐器在匹配后盖上；引擎本身不产生这三个字段。
@@ -54,8 +61,7 @@ class EngineResult:
 
 
 class MatchEngine(Protocol):
-    def match(self, item: OperationItem, utterance: str,
-              already_normalized: bool = False) -> EngineResult: ...
+    def match(self, item: OperationItem, utterance: str) -> EngineResult: ...
 
     def best_match(self, items, utterance: str) -> EngineResult | None: ...
 
@@ -100,11 +106,11 @@ class KirEngine:
             conflicts=result.conflicts,
             matched=result.matched,
             level=result.level.value,
+            coverage=result.ticket_coverage,
             raw=result,
         )
 
-    def match(self, item: OperationItem, utterance: str,
-              already_normalized: bool = False) -> EngineResult:
+    def match(self, item: OperationItem, utterance: str) -> EngineResult:
         return self._wrap(self.matcher.match(item, utterance))
 
     def best_match(self, items, utterance: str) -> EngineResult | None:

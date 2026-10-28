@@ -119,9 +119,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     # 不损失精度，代价只是段结束到被判定之间最多多等一个块的时间。
     parser.add_argument("--chunk-ms", type=int, default=400, help="每次喂给 VAD 的音频长度")
     parser.add_argument("--json", action="store_true", help="每段输出一行 JSON，不打印提示文本")
-    # 对齐模式临时覆盖，默认走配置文件（single）。
-    parser.add_argument("--mode", choices=["single", "dual"], default=None,
-                        help="覆盖 aligner.mode")
+    # 完整复述次数临时覆盖，默认走配置文件（2）。
+    parser.add_argument("--confirmations", type=int, default=None,
+                        help="每条操作项需要几次完整复述（覆盖 "
+                             "aligner.required_confirmations）")
     parser.add_argument("--report", default=None,
                         help="结束后把条目级四态报告写到该文件（JSON）")
     return parser.parse_args(argv)
@@ -135,8 +136,10 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(line_buffering=True)
 
     cfg = copy.deepcopy(load_config())
-    if args.mode:
-        cfg.setdefault("aligner", {})["mode"] = args.mode
+    if args.confirmations is not None:
+        cfg.setdefault("aligner", {})["required_confirmations"] = max(
+            1, args.confirmations,
+        )
     audio_path, ticket_path = resolve_dataset_pair(args.dataset, args.ticket)
     asset_path = project_path(args.asset_list)
     if asset_path.exists():
@@ -204,13 +207,17 @@ def main(argv: list[str] | None = None) -> int:
         )
     if not args.json:
         counts = "／".join(
-            f"{state}{report['state_counts'].get(state, 0)}"
+            f"{state} {report['state_counts'].get(state, 0)}"
             for state in ("VERIFIED", "FLAGGED", "FAILED", "UNCONFIRMED")
         )
         print()
         print(f"# 结束：{len(pipeline.heard)} 段｜{counts}｜"
               f"识别 {pipeline.total_infer:.2f}s "
               f"RTF {pipeline.total_infer / audio_seconds:.3f}")
+        # 收尾时补发的提醒（NEED_MORE_CONFIRMATIONS / NO_EVIDENCE）不属于
+        # 任何一段语音，只能从终态报告里打出来。
+        for alert in report.get("alerts", []):
+            print(format_alert(alert))
         # 全程 ≈ 音频/倍速 + 客户端启动就该收尾了；明显超出说明处理拖了后腿。
         print(f"# 全程 {time.monotonic() - _START:.1f}s"
               f"（音频 {audio_seconds / args.speed:.1f}s）")

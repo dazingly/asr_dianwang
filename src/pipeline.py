@@ -103,36 +103,27 @@ def segment_row(
         "event": event.kind.value,
         "message": event.message,
         "matched_seq": event.item.seq if event.item else None,
+        # 这张票当前校验到第几项 / 共几项；视频和前端直接读这一块。
+        "progress": event.progress.to_dict() if event.progress else None,
         # 严格校验的提醒契约：record_state 是这条判定落地后条目的四态，
         # alerts 是本段新产生/更新/解除的提醒，record_alerts 是该条目此刻
         # 全部 OPEN 提醒的幂等快照（前端直接覆盖，不必自己合并增量）。
         "record_state": event.record_state,
         "record_match_level": event.record_match_level,
+        # 完整复述进度：一条操作通常要 2 次（唱票 + 复诵）。前端可直接显示
+        # "1/2"；event 为 CONFIRMED 表示只完成了一部分。
+        "confirmations": event.confirmations,
+        "required_confirmations": event.required_confirmations,
+        "restarted": bool(match.restarted) if match else False,
+        "restart_from": match.restart_from if match else None,
+        "coverage": round(match.coverage, 4) if match else None,
         "alerts": list(event.alerts),
         "record_alerts": list(event.record_alerts),
         "score": round(match.score, 4) if match else None,
         "verdict": match.verdict.value if match else None,
-        "sentence_similarity": (
-            round(match.sentence_similarity, 4)
-            if match and match.sentence_similarity is not None else None
-        ),
         "reasons": list(match.reasons) if match else [],
         "conflicts": (
             [conflict.describe() for conflict in match.conflicts]
-            if match else []
-        ),
-        "slots": (
-            [
-                {
-                    "name": slot.slot.name,
-                    "expected": slot.slot.value,
-                    "outcome": slot.outcome.value,
-                    "score": round(slot.score, 4),
-                    "required": slot.required,
-                    "conflicting_value": slot.conflicting_value,
-                }
-                for slot in match.slot_results
-            ]
             if match else []
         ),
     }
@@ -293,8 +284,7 @@ class JudgePipeline:
         decision = self.role_classifier.observe(segment.wave)
         event = self.aligner.feed(
             adhered.text if adhered else result.text,
-            decision.role, role_confidence=decision.confidence,
-            audio_ms=segment.start_ms,
+            decision.role, audio_ms=segment.start_ms,
         )
         heard = Heard(
             len(self.heard) + 1, segment, decision, result, adhered, event,
@@ -328,6 +318,8 @@ def format_event(row: dict[str, Any]) -> str:
     text = row["judged_text"] or row["asr_text"]
     if row["judged_text"]:
         text = f"〔拼合〕{text}"
+    if row.get("restarted"):
+        text = f"〔重读〕{text}"
     if row["rewrites"]:
         text += "〔吸附:" + "；".join(
             f"{item['heard']}→{item['term']}" for item in row["rewrites"]

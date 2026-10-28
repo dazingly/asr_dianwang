@@ -42,7 +42,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG) -> dict[str, Any]:
 
 
 def get(cfg: dict[str, Any], dotted: str, default: Any = None) -> Any:
-    """按 "matcher.slot_hit_threshold" 这种点分路径取值。"""
+    """按 "aligner.required_confirmations" 这种点分路径取值。"""
     node: Any = cfg
     for part in dotted.split("."):
         if not isinstance(node, dict) or part not in node:

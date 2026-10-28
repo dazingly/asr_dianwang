@@ -24,20 +24,22 @@ if TYPE_CHECKING:  # pragma: no cover - 只用于类型提示
 
 
 class AlertLevel(str, Enum):
-    ERROR = "ERROR"   # 能确定说错了
-    WARN = "WARN"     # 没对上、没听清、缺一侧、被跳过
+    ERROR = "ERROR"   # 能确定完整地说错了
+    WARN = "WARN"     # 没对上、没听清、次数不够、被跳过
 
 
 class AlertCode(str, Enum):
     FIELD_CONFLICT = "FIELD_CONFLICT"
     FIELD_MISSING = "FIELD_MISSING"
     FIELD_EXTRA = "FIELD_EXTRA"
-    ROLE_MISSING = "ROLE_MISSING"
     NO_EVIDENCE = "NO_EVIDENCE"
     SKIPPED = "SKIPPED"
+    # 内容完整正确出现的次数还不够（流式过程中不报，收尾时结算）。
+    NEED_MORE_CONFIRMATIONS = "NEED_MORE_CONFIRMATIONS"
+    # 没念完/重读过程中出现的口误：留痕，但不按"完整念错"判失败。
+    ABORTED_CONFLICT = "ABORTED_CONFLICT"
     TICKET_QUALITY = "TICKET_QUALITY"
     ASR_QUALITY = "ASR_QUALITY"
-    ROLE_UNKNOWN = "ROLE_UNKNOWN"
 
 
 class AlertStatus(str, Enum):
@@ -236,8 +238,8 @@ class AlertSink:
 def drafts_from_result(seq: int, result: "EngineResult") -> list[AlertDraft]:
     """把一次匹配结果拆成字段级提醒。
 
-    KIR 结果有逐字段明细，直接按 FieldLevel 映射；legacy 结果只有
-    理由/冲突列表，按整条映射（严格模式应使用 KIR，legacy 只作回退）。
+    KIR 结果有逐字段明细，直接按 FieldLevel 映射；没有字段明细的结果
+    （测试桩或异常兜底）只有理由/冲突列表，按整条生成一条提醒。
     """
     from src.verify.kir_matcher import FieldLevel
 
@@ -266,7 +268,7 @@ def drafts_from_result(seq: int, result: "EngineResult") -> list[AlertDraft]:
             ))
         return drafts
 
-    # legacy：冲突/理由都是整句，没有字段路径，按冒号前的前缀归类。
+    # 无字段明细：冲突/理由都是整句，按冒号前的前缀归类。
     from src.verify.verdict import Verdict
 
     if result.verdict is Verdict.FAIL:
@@ -294,7 +296,7 @@ def drafts_from_result(seq: int, result: "EngineResult") -> list[AlertDraft]:
                 message=f"第{seq}条 {reason}",
             ))
         if not drafts:
-            # legacy 的 REVIEW 理论上都带理由；真为空时也不能静默。
+            # REVIEW 理论上都带理由；真为空时也不能静默。
             drafts.append(AlertDraft(
                 code=AlertCode.FIELD_MISSING,
                 field="overall",
@@ -325,22 +327,6 @@ def _prefix(text: str) -> str:
     return text.split(":", 1)[0].strip() if ":" in text else "overall"
 
 
-def role_missing(seq: int, role_label: str) -> AlertDraft:
-    return AlertDraft(
-        code=AlertCode.ROLE_MISSING,
-        field="role",
-        message=f"第{seq}条 缺少{role_label}证据",
-    )
-
-
-def role_unknown(seq: int) -> AlertDraft:
-    return AlertDraft(
-        code=AlertCode.ROLE_UNKNOWN,
-        field="role",
-        message=f"第{seq}条 角色未判准，证据只作灰区处理",
-    )
-
-
 def no_evidence(seq: int) -> AlertDraft:
     return AlertDraft(
         code=AlertCode.NO_EVIDENCE,
@@ -349,9 +335,40 @@ def no_evidence(seq: int) -> AlertDraft:
     )
 
 
-def skipped(seq: int) -> AlertDraft:
+def skipped(seq: int, count: int = 0, required: int = 0) -> AlertDraft:
+    if required:
+        detail = f"，仅完成 {count}/{required} 次完整复述"
+    else:
+        detail = "，没有复述记录"
     return AlertDraft(
         code=AlertCode.SKIPPED,
         field="item",
-        message=f"第{seq}条 被跳项越过，没有复述记录",
+        message=f"第{seq}条 被跳项越过{detail}",
+    )
+
+
+def need_more_confirmations(seq: int, count: int, required: int) -> AlertDraft:
+    return AlertDraft(
+        code=AlertCode.NEED_MORE_CONFIRMATIONS,
+        field="item",
+        message=(f"第{seq}条 还需 {max(0, required - count)} 次完整复述"
+                 f"（{count}/{required}）"),
+    )
+
+
+def aborted_conflict(
+    seq: int, result: "EngineResult",
+) -> AlertDraft:
+    """未完成尝试里的矛盾：留痕，但不是"完整念错"的 ERROR。"""
+    first = result.conflicts[0] if result.conflicts else None
+    expected = getattr(first, "expected", None) if first is not None else None
+    heard = getattr(first, "heard", None) if first is not None else None
+    detail = "；".join(result.reasons) or "未完成尝试中出现矛盾"
+    return AlertDraft(
+        code=AlertCode.ABORTED_CONFLICT,
+        field="overall",
+        expected=expected,
+        heard=heard,
+        message=(f"第{seq}条 未完成尝试中出现矛盾"
+                 f"（按重读留痕，不计数）：{detail}"),
     )

@@ -1,8 +1,16 @@
 # 严格校验剩余工作技术方案
 
-> 状态：已完成（P1/P2、W1–W6，2026-10-27）
+> 状态：已完成（P1/P2、W1–W7，2026-10-27）；2026-10-28 完成项目整理。
 > 前置：KIR 抽取与压板切分已落地，见 `kir_schema_and_extraction.md`
-> 范围：判定内核、双人聚合、前端提醒、流式 ASR、麦克风演示、旧路径清理
+> 范围：判定内核、两次完整复述、前端提醒、流式 ASR、麦克风演示、旧路径清理
+>
+> **语义变更提示**：W7 起，“按角色分别攒证据的 dual 模式”已被
+> “每条操作项累计两次完整正确复述”取代。§2.4、§3.2–§3.3、§5/W2
+> 及 W4/W5 的实施记录中仍保留 dual 的历史描述，现行语义以 **§11** 为准。
+>
+> 本文是**设计与实施记录**，不是使用说明。运行方式、数据格式和前端字段
+> 见根目录 `README.md`；W4/W5 的评测产物已在项目整理时删除，文中保留
+> 当时的结果数字，不再保留逐段 JSONL。
 
 ## 1. 目标与两条硬约束
 
@@ -18,6 +26,10 @@
 ### 1.2 提醒不阻塞
 
 **任何非完全匹配都必须产生一条前端可消费的提醒；提醒是旁路通知，不是闸门。**
+
+> W7 起提醒按**最终状态**发：过程中的未完成尝试只记进度，不逐次刷提醒；
+> 次数不足在收尾时合并为 `NEED_MORE_CONFIRMATIONS`。完整矛盾与未完成矛盾
+> 留痕仍当场发。
 
 - 提醒不改变控制流：不抛异常、不暂停推流、不等待前端应答、不拦截下一条操作。
 - 判定照常推进指针；一条失败或灰区不影响后续条目。
@@ -79,7 +91,11 @@ VERIFIED 是唯一不产生提醒的状态；其余三态必然带至少一条�
 "但凡不是完全匹配都要提醒"的落地方式 —— 不需要在提醒层再做一次判断，
 状态机本身已经把边界划死。
 
-### 2.4 双人聚合（W2）
+### 2.4 双人聚合（W2，历史；W7 已删除）
+
+> 本节描述的是 W2 的 dual 方案。实录音频上角色分类准确率不足，W7 已彻底
+> 移除按角色聚合，改为“只数内容完整正确的次数”。保留本节仅作设计演进记录，
+> **不要按此实现**。现行语义见 §11。
 
 单侧模式（`aligner.mode: single`）延续现有语义"谁说对都算"，但比较规则换成
 KIR。双人模式（`dual`）按角色分别保存证据，再聚合：
@@ -122,11 +138,11 @@ KIR。双人模式（`dual`）按角色分别保存证据，再聚合：
 
 ```json
 {
-  "alert_id": "3:OPERATOR:target[0].id:FIELD_CONFLICT",
+  "alert_id": "3:SYSTEM:target[0].id:FIELD_CONFLICT",
   "seq": 3,
   "level": "ERROR",
   "code": "FIELD_CONFLICT",
-  "role": "OPERATOR",
+  "role": "SYSTEM",
   "field": "target[0].id",
   "expected": "1clp10",
   "heard": "1clp12",
@@ -140,7 +156,8 @@ KIR。双人模式（`dual`）按角色分别保存证据，再聚合：
 
 - `alert_id` 是去重键：`seq:role:field:code`。同一键只维护一条，后续变化
   覆盖 `heard` 并重新发出。
-- `role` 在单侧模式为触发证据的角色；双人模式为具体某一侧。
+- W7 起 `role` 固定为 `SYSTEM`：角色已退出判定，避免角色错分导致同一条提醒
+  在两个角色桶里重复或漏发。
 - `audio_ms` 用语音段起始时间，不用墙钟时间，便于回放定位。
 - `expected/heard` 存归一化后的值；`message` 是给人看的中文。
 
@@ -151,12 +168,14 @@ KIR。双人模式（`dual`）按角色分别保存证据，再聚合：
 | `FIELD_CONFLICT` | ERROR | 字段 CONFLICT（编号/状态/方向/否定） |
 | `FIELD_MISSING` | WARN | 字段 PARTIAL（票面有、复述未说） |
 | `FIELD_EXTRA` | WARN | 字段 EXTRA（复述多出票面没有的关键事实） |
-| `ROLE_MISSING` | WARN | 双人模式缺唱票人或操作人一侧 |
+| `NEED_MORE_CONFIRMATIONS` | WARN | 有证据，但完整复述次数不足所需次数 |
+| `ABORTED_CONFLICT` | WARN | 未完成尝试里出现矛盾（没念完/重读中的口误），只留痕 |
 | `NO_EVIDENCE` | WARN | 条目结束仍没有有效复述 |
 | `SKIPPED` | WARN | 该条目被跳项越过 |
 | `TICKET_QUALITY` | WARN | 票面质量标记覆盖该字段（OCR_SUSPECT 等） |
 | `ASR_QUALITY` | WARN | 识别质量不足，字段无法验证（FRAGMENT/低信息） |
-| `ROLE_UNKNOWN` | WARN | 角色无法判定，证据归入匿名桶 |
+
+> `ROLE_MISSING` / `ROLE_UNKNOWN` 已随 dual 模式在 W7 删除。
 
 ERROR 只有一类：**能确定说错了**。其余一切都是 WARN —— 严格校验不等于
 把"没听清"也报成错误；提醒要让现场知道"这条没对上"，而不是制造恐慌。
@@ -201,14 +220,21 @@ ERROR 只有一类：**能确定说错了**。其余一切都是 WARN —— 严
   "matched_seq": 3,
   "record_state": "FLAGGED",
   "record_match_level": "PARTIAL",
+  "progress": {
+    "index": 3, "total": 10, "seq": 3, "state": "FLAGGED",
+    "confirmations": 1, "required_confirmations": 2, "finished": false
+  },
   "alerts": [ /* 本段新产生或更新的提醒 */ ],
   "record_alerts": [ /* 该条目当前全部 OPEN 提醒，便于前端幂等覆盖 */ ]
 }
 ```
 
 `record_alerts` 是幂等快照：前端不必自己合并增量，直接按 `matched_seq`
-覆盖该条目的提醒列表即可。后续若接独立前端/服务推送，同一份 alert 结构
-原样复用（SSE/WebSocket 都只是传输层）。
+覆盖该条目的提醒列表即可。`progress` 是与 `aligner.pointer` 同源的整票
+进度：`index` 指向第一条还没凑够完整复述的条目；后面的条目因前瞻被提前
+念到时进度不跳；全部条目都有结论后 `finished` 为 `true`、`index` 停在
+`total`。视频/前端直接读这个结构，不必自己数事件。后续若接独立前端/服务
+推送，同一份 alert 结构原样复用（SSE/WebSocket 都只是传输层）。
 
 **最终报告（终态）**
 
@@ -216,6 +242,10 @@ ERROR 只有一类：**能确定说错了**。其余一切都是 WARN —— 严
 {
   "state_counts": {"VERIFIED": 12, "FLAGGED": 3, "FAILED": 1, "UNCONFIRMED": 1},
   "alert_counts": {"ERROR": 1, "WARN": 6},
+  "progress": {
+    "index": 16, "total": 16, "seq": null, "state": null,
+    "confirmations": 0, "required_confirmations": 2, "finished": true
+  },
   "alerts": [ /* 终态仍 OPEN 的提醒 */ ],
   "items": [
     {
@@ -359,12 +389,13 @@ class AlignEvent:
 
 | 阶段 | 内容 | 依赖 | 回退开关 |
 |---|---|---|---|
-| W1 ✅ | KIR matcher + 单测 + 影子运行 | P1/P2 | `matcher.engine: legacy` |
-| W2 ✅ | aligner 适配 KIR + dual 双人聚合 | W1 | `aligner.mode: single` |
-| W3 | 提醒层 + 严格模式接入 stream_demo | W2 | `alerts.enabled: false` |
-| W4 | 流式 ASR（引擎/服务双喂/协议） | 无（可并行） | `asr.streaming.enabled: false` |
-| W5 | pipeline 抽取 + 麦克风演示 | W3/W4 | 保留文件推流脚本 |
-| W6 | 清理旧 matcher 路径 + 文档 | 全部 | 独立 commit |
+| W1 ✅ | KIR matcher + 单测 + 影子运行 | P1/P2 | 历史：`matcher.engine: legacy`（W6 已删） |
+| W2 ✅ | aligner 适配 KIR + dual 双人聚合（dual 已于 W7 删除） | W1 | 历史：`aligner.mode: single` |
+| W3 ✅ | 提醒层 + 严格模式接入 stream_demo | W2 | `alerts.enabled: false` |
+| W4 ✅ | 流式 ASR（引擎/服务双喂/协议） | 无（可并行） | `asr.streaming.enabled: false` |
+| W5 ✅ | pipeline 抽取 + 麦克风演示 | W3/W4 | 保留文件推流脚本 |
+| W6 ✅ | 清理旧 matcher 路径 + 文档 | 全部 | 独立 commit |
+| W7 ✅ | 两次完整复述，删除角色聚合 | W2/W3 | `required_confirmations: 1` |
 
 ### W1 KIR matcher
 
@@ -376,10 +407,11 @@ class AlignEvent:
   `FieldResult`、`MatchLevel`、`FieldLevel`。
 - `configs/default.yaml`：`matcher.engine`、`matcher.confusable_pairs`、
   `kir.strict/pinyin_equivalent/id_core_only/min_evidence`。
-- 新增 `tests/test_kir_matcher.py`、`scripts/kir_shadow.py`。
+- 新增 `tests/test_kir_matcher.py`；影子运行脚本 `scripts/kir_shadow.py`
+  已在 W6 清理时删除。
 
-**影子运行**：`scripts/kir_shadow.py` 对全部 1776 条语料做三类比较
-（self / normalized / sibling），差异写 `docs/kir_export/shadow_diff.jsonl`。
+**影子运行**：当时的脚本对全部 1776 条语料做三类比较
+（self / normalized / sibling）；差异文件未保留，结论见下表。
 
 **实测结果**
 
@@ -408,9 +440,12 @@ class AlignEvent:
   拼音等价、可混淆词对、质量标记 UNVERIFIABLE、压板 tail、连字符/罗马
   序号丢失、冒号丢失、设备名内动词。
 
-### W2 aligner 适配 + dual
+### W2 aligner 适配 + dual（dual 部分已被 W7 取代）
 
-**状态：已完成（2026-10-27）**
+**状态：已完成（2026-10-27）；dual 聚合已在 W7 删除，见 §11**
+
+> 下面保留的是 W2 当时的实现记录。`aligner.mode`、per-role 证据、
+> `UNATTRIBUTED`、`dual_min_role_confidence` 等均已不在当前代码中。
 
 **改动**
 
@@ -567,15 +602,15 @@ KIR dual 同一录音：FLAGGED 6、FAILED 1；缺侧发 `ROLE_MISSING`（按缺
    收尾幂等、VAD 定段、partial、短段丢弃、无 VAD end 时 eof 收尾、缺 start 不崩、
    reset 归零、`wave_for` 原始样本。
 
-**验收结果**（产物在 `docs/kir_export/`）
+**验收结果**（W4 逐段产物已在 2026-10-28 项目整理时删除，数字保留）
 
-| 场景 | 产物 | 结果 |
-|---|---|---|
-| 2-pass single 1x | `w4_kir_single.jsonl` | 35 行；事件/指针/四态/提醒全字段与 W3 **零差异**；`{VERIFIED 3, FAILED 1, FLAGGED 3}`、`{ERROR 2, WARN 5}`；仅第 31 段一处同音字（到闸/道闸） |
-| 2-pass dual 8x | `w4_kir_dual.jsonl` | 35 行；与 W3 dual **零字段差异**；`{FLAGGED 6, FAILED 1}`、`{ERROR 2, WARN 23}`；仅第 21 段一处同音字 |
-| 纯流式 single 1x | `w4_stream_only_single.jsonl` | 质量回归证据（见实施记录 1） |
-| 新服务 `enabled: false` | `w4_service_off.jsonl` | `asr_stream: off`；35 行与 W3 **零字段差异**，仅第 31 段同音字；回退开关有效 |
-| 段尾延迟 1x | `w4_latency.txt` | 35 段全部有文本；`final_latency_ms` p50 87 / p95 257 / max 315；其中纯收尾推理 `final_infer_ms` p50 164 / p95 265 / max 322 |
+| 场景 | 结果 |
+|---|---|
+| 2-pass single 1x | 35 行；事件/指针/四态/提醒全字段与 W3 **零差异**；`{VERIFIED 3, FAILED 1, FLAGGED 3}`、`{ERROR 2, WARN 5}`；仅第 31 段一处同音字（到闸/道闸） |
+| 2-pass dual 8x | 35 行；与 W3 dual **零字段差异**；`{FLAGGED 6, FAILED 1}`、`{ERROR 2, WARN 23}`；仅第 21 段一处同音字（dual 已在 W7 删除） |
+| 纯流式 single 1x | 质量回归证据（见实施记录 1） |
+| 新服务 `enabled: false` | `asr_stream: off`；35 行与 W3 **零字段差异**，仅第 31 段同音字；回退开关有效 |
+| 段尾延迟 1x | 35 段全部有文本；`final_latency_ms` p50 87 / p95 257 / max 315；其中纯收尾推理 `final_infer_ms` p50 164 / p95 265 / max 322 |
 
 - 段尾延迟：p50 87ms 达标（目标 <100ms）；p95 257ms 主要来自 VAD 200ms 分块与
   300ms 尾静音判定的量化，不是识别推理本身（推理 p50 164ms 已在延迟内）。
@@ -600,8 +635,8 @@ KIR dual 同一录音：FLAGGED 6、FAILED 1；缺侧发 `ROLE_MISSING`（按缺
 - 新增 `scripts/mic_demo.py`：sounddevice 16k 单声道、400ms 块、队列回调；
   `RollingAudio` 保留 60s 音频供角色判定按绝对毫秒切片；partial 打实时
   字幕（仅展示）；Ctrl-C 后把队列剩余音频喂完、flush、finalize，打印四态
-  与提醒汇总；`--list-devices` / `--device` / `--report` / `--mode`
-  与文件演示对齐。
+  与提醒汇总；`--list-devices` / `--device` / `--report` /
+  `--confirmations` 与文件演示对齐。
 - `requirements.txt` 加 `sounddevice>=0.4`（已在 asr_dianwang 环境安装
   0.5.6）。
 
@@ -613,7 +648,7 @@ KIR dual 同一录音：FLAGGED 6、FAILED 1；缺侧发 `ROLE_MISSING`（按缺
     四态 `{VERIFIED 3, FAILED 1, FLAGGED 3}`、提醒 `{ERROR 2, WARN 5}`。
   - 无麦克风环境下用录音模拟 mic 路径（`RollingAudio` + `push_reply` +
     `JudgePipeline`）：35 段、切片长度零误差、四态与提醒计数与文件路径
-    完全一致（`docs/kir_export/w5_mic_path.txt`）。
+    完全一致（当时的记录已在 2026-10-28 整理时删除）。
 - 设备冒烟：默认输入"麦克风阵列 (Realtek(R) Audio)"可按 16kHz 单声道
   float32、400ms 块打开并采集；环境未接现场音响，实际"对着麦克风念票"
   的端到端演示留待现场。
@@ -631,46 +666,55 @@ KIR dual 同一录音：FLAGGED 6、FAILED 1；缺侧发 `ROLE_MISSING`（按缺
 - 删除脚手架脚本：`scripts/export_kir.py`、`scripts/kir_shadow.py`、
   `scripts/generate_technical_intro.py`。`configs/kir.yaml` 是 KIR 抽取
   词表，保留。
-- `docs/kir_export/` 只留最终证据：single/dual 逐段 + 报告、纯流式质量
-  回归、段尾延迟、麦克风路径验证；语料分析保留三份可读报告。
+- 文档产物：W6 当时保留了 W4/W5 逐段评测；2026-10-28 项目整理进一步删除
+  这些旧产物，只保留 W7 实录音频报告（`docs/evidence/`）和可读的语料分析
+  报告（`docs/corpus_analysis/report.md`）。
 - README 已补齐：严格校验与四态/提醒契约、`--json` 新字段（`record_state` /
   `record_match_level` / `alerts` / `record_alerts`）、服务协议（segments /
   partial / 2-pass 字段）、流式模型下载（revision v2.0.4）、麦克风演示、
   已知限制（纯流式质量、延迟）。
 
-## 6. 配置项
+## 6. 配置项（现行）
+
+完整参数见 `configs/default.yaml`，这里只列与严格判定直接相关的部分：
 
 ```yaml
 matcher:
   confusable_pairs:
-    - ["负荷", "符合"]
+    - ["负荷", "符合"]       # 同音异形词，拼音等价放行前先在这里拦
 
 kir:
   strict: true                # VERIFIED 必须 FULL
   pinyin_equivalent: true     # 方言等价后完全相等
   id_core_only: true          # 编号只比 core，分隔符差异不判
-  extra_facts_are_nonmatch: true
+  min_evidence: 2.0           # 判 CONFLICT 所需最低证据权重
 
 aligner:
-  mode: single                # single | dual
-  dual_min_role_confidence: 0.5
+  required_confirmations: 2   # 每条操作项需要的完整正确复述次数
+  extra_repeat_policy: audit  # audit | strict
+  failure_is_final: true      # 说错后是否允许后续复述纠正
+  conflict_requires_complete: true
+  complete_coverage: 0.7      # 区分"完整念错"和"没念完"
+  restart_aware: true
+  max_restart_candidates: 12
+  lookahead: 2
+  lookback: 2
+  chatter_threshold: 0.45
+  stitch_gain: 0.10
 
 alerts:
-  enabled: true
-  emit_nonmatch: true         # 非完全匹配必发（严格校验硬要求）
-  emit_resolved: true
-  sink: stdout                # stdout | jsonl | null
+  enabled: true               # 关闭只影响提醒字段，不改变判定
 
 asr:
   streaming:
-    enabled: false
-    model_dir: models/Paraformer-Large-Online
-    revision: v2.0.4
+    enabled: true
+    model_dir: models/Paraformer-Streaming
     chunk_ms: 600
     encoder_chunk_look_back: 4
     decoder_chunk_look_back: 1
     partial: true
-    refine_with_offline: false
+    refine_with_offline: true # 2-pass：流式定段 + 离线复核文本
+
 service:
   buffer_seconds: 60
 ```
@@ -680,17 +724,19 @@ service:
 | 层 | 文件 | 关键断言 |
 |---|---|---|
 | KIR 比较 | `tests/test_kir_matcher.py` | 每类字段的 EXACT/PARTIAL/EXTRA/CONFLICT/UNVERIFIABLE；方言等价；压板 tail |
-| 对齐 | `tests/test_aligner_kir.py` | 挂起/拼合/重复/跳项在 KIR 模式下的语义 |
-| 双人 | `tests/test_aligner_dual.py` | 2.4 聚合表逐行覆盖 |
+| 对齐 | `tests/test_aligner_kir.py` | 两次完整复述、收尾不足、完整/未完成矛盾、跨段与同段重读 |
+| 计数语义 | `tests/test_aligner_confirmations.py` | 次数、幂等重复、跳项迟到补齐、audit/strict、角色仅元数据 |
 | 提醒 | `tests/test_alerts.py` | 不变式 1/2/4/5；去重；RESOLVED；sink 异常不影响判定 |
 | 回归 | `tests/test_kir_extract.py` | 既有 44 条保持全绿 |
-| 端到端 | 小留/丹东录音 | `--json` 逐段核对；回退开关一致性 |
+| 端到端 | 小留 ticket1 实录音频 | `--json` 逐段核对；`required_confirmations: 1/2` 两种口径；回退开关一致性 |
 
 **端到端验收清单**
 
-1. 同一录音跑 `legacy/single` 与基线逐字节一致。
-2. 跑 `kir/single`：每个非 VERIFIED 条目都有提醒，VERIFIED 条目零提醒。
-3. 跑 `kir/dual`：缺唱票人或操作人的条目全部 FLAGGED + ROLE_MISSING。
+1. 同一录音用同一份识别文本回放，条目状态/事件序列可复现。
+2. `required_confirmations: 2`：达到两次 FULL 的条目 VERIFIED 且零提醒；
+   只完成一次的条目收尾 FLAGGED + NEED_MORE_CONFIRMATIONS。
+3. 完整矛盾 → FAILED + 至少一条 ERROR；未完成矛盾 → ABORTED_CONFLICT WARN，
+   后续两次完整复述仍可 VERIFIED。
 4. 全程无阻断：任何 FAILED 之后语音继续处理，段数与音频切段数一致。
 5. `alerts.enabled: false` 与开启时条目状态一致。
 
@@ -702,12 +748,15 @@ service:
 | 方言等价表覆盖不足，同音字判 CONFLICT | `phonetic_key` 只做等价，规则增量进 `dialect_heze.yaml`；影子清单逐条归类 |
 | 严格后 FLAGGED 增多 | 这是语义目标；提醒按条目聚合，前端可折叠；终态报告为准 |
 | 提醒刷屏 | `alert_id` 去重、按字段一条、同键覆盖；`record_alerts` 幂等快照 |
-| 双人角色判不准 | 低于阈值进匿名桶，只抬到 FLAGGED；`dual_min_role_confidence` 是旋钮 |
+| 角色判不准 | W7 起角色退出判定，只作展示；提醒统一 SYSTEM |
+| ASR 听岔导致完整矛盾、默认不可撤销 | `failure_is_final: false` 允许后续纠正；报告保留矛盾原文供回听 |
+| 同一段连念两遍只计一次 | 保守取舍，宁可多要一次确认；不产生假通过 |
 | 流式文本与离线差异 | 条目级 diff + 逐个回放；`enabled: false` 即回退 |
 | 提醒逻辑拖慢实时链路 | 纯数据计算，O(1) 索引；sink 异常吞掉；实时验收看段尾延迟 |
 
-回退粒度：W1 = `engine: legacy`；W2 = `mode: single`；W3 =
-`alerts.enabled: false`；W4 = `streaming.enabled: false`；W6 独立 commit 可 revert。
+回退粒度：W3 = `alerts.enabled: false`；W4 = `streaming.enabled: false`；
+W7 = `required_confirmations: 1`（回到单次口径，但不是旧 dual）；W6 独立
+commit 可 revert。
 
 ## 9. 已知限制
 
@@ -720,8 +769,12 @@ service:
 - `负荷/符合` 这类同音异形词：靠 `confusable_pairs` 在书写层拦；未收录的
   词对仍可能等价放过。
 - 票面 38 条 TICKET_ISSUE 条目：结构上不可能 VERIFIED，全部走 WARN 提醒。
+- W7 计数口径：不区分说话人（同一人念两遍也算通过）；同一 VAD 段连念
+  两遍只计一次；完整矛盾默认不可撤销。详见 §11.8。
 
-## 10. 建议顺序
+## 10. 实施顺序（历史记录）
+
+> 以下顺序已在 2026-10-27 全部执行完毕；W2 的 dual 部分已被 W7 取代。
 
 1. **W1 + W2**（判定内核）：KIR matcher 和双人聚合决定提醒的内容和质量，
    先做；每步影子运行，不动现有演示判定。
@@ -731,3 +784,122 @@ service:
 
 提醒层是横切关注点，但最小实现放在 W3：它只依赖"条目状态 + 字段结果"，
 W1/W2 完成后接口稳定，W4 换成流式识别文本后无需改动。
+
+## 11. W7：两次完整复述（取代 dual）
+
+**状态：已完成（2026-10-27）**
+
+### 11.1 为什么删掉 dual
+
+现场验收发现角色分类器准确率不足：同一人的两遍复述常被标成同一角色，
+置信度低于阈值时又落入 UNKNOWN。dual 的语义要求“唱票一侧 + 操作人一侧
+都 FULL”，角色错分直接把本可通过的条目压成 FLAGGED/缺侧。用户明确要求
+放弃角色判定，改为只校验内容：
+
+> 对操作票中每一条，只校验其内容是否“完整、正确地念了两次”；闲聊不校验；
+> 同一条被重复唱票/复诵超过两次也要正确处理；第一遍没读完又开始重读
+> 也必须适用。
+
+### 11.2 计数单位与判定
+
+一次“完整复述”= 一段语音（或挂起后拼合的组合）经 KIR 比较为 `FULL`。
+VAD 碎片本身不计数；被 VAD 切开的同一句话拼合后算一次。
+
+| 本段结果 | 计数 | 说明 |
+|---|---|---|
+| `FULL` | +1 | 所有字段 EXACT/EQUIVALENT |
+| `PARTIAL` / `EXTRA` / `UNVERIFIABLE` | 0 | 未完成尝试；不推进指针、不立即报警 |
+| `CONFLICT` 且完整 | 0 | `FAILED`；完整矛盾不可被后续复述洗白（默认） |
+| `CONFLICT` 且不完整 | 0 | `ABORTED_CONFLICT` WARN，留痕；后续两次 FULL 可 VERIFIED |
+| `NO_EVIDENCE` | 0 | 闲聊/无关语音，静默丢弃 |
+
+“完整”的判据是**票面被复述覆盖的比例** `ticket_coverage`，不是
+“复述被票面覆盖”（方向不能反）：半句只覆盖票面一部分；完整念错覆盖了
+绝大部分，只是某个值不对。出现矛盾且存在缺失字段时，`ticket_coverage >=
+complete_coverage`（默认 0.7）才按完整矛盾处理。
+
+### 11.3 状态与收尾
+
+- 达到 `required_confirmations`（默认 2）且无完整矛盾 → `VERIFIED`；
+- 有确认/尝试但次数不足 → `FLAGGED` + `NEED_MORE_CONFIRMATIONS`；
+- 零证据 → `UNCONFIRMED` + `NO_EVIDENCE`；
+- 完整矛盾 → `FAILED` + `FIELD_CONFLICT`（ERROR）；
+- 被后续条目越过 → `skipped=True`，迟到补齐仍可升 `VERIFIED`，但不会把
+  执行指针拉回已越过的条目。
+
+### 11.4 重复与重读
+
+- **超过两次**：正确重复幂等，`extra_confirmations++`，不产生新提醒；
+  完整矛盾即使条目已 `VERIFIED` 也翻 `FAILED`。
+- **额外不完整重复**：`extra_repeat_policy: audit`（默认）只留痕；
+  `strict` 时降为 `FLAGGED`，等人工复核。
+- **说错后说对**：`failure_is_final: true`（默认）保持 `FAILED`；
+  `false` 时后续达到次数可纠正为 `VERIFIED`。
+- **跨 VAD 段重读**：前半句挂起；下一段自身 `FULL` 时，丢弃挂起半句、
+  直接计这一整段一次。不能先拼合再判，否则会把一次完整复述吞掉。
+- **同一段内重读**：整段不是 `FULL`、也不是完整矛盾时，用票面开头 4/5/6 字
+  或目标设备名在文本中再次出现的位置截断后缀，对后缀重做 KIR 匹配；
+  只接受 `FULL`。整段最佳结果是完整矛盾时，不得用后缀 `FULL` 覆盖。
+
+### 11.5 角色与提醒
+
+- 角色彻底退出判定；`AlignEvent.role` / 逐段行 `role` 仅作展示元数据。
+- 提醒统一 `role="SYSTEM"`，`alert_id` 形如
+  `1:SYSTEM:overall:ABORTED_CONFLICT`。
+- 新增提醒码：`NEED_MORE_CONFIRMATIONS`（WARN）、`ABORTED_CONFLICT`（WARN）；
+  删除 `ROLE_MISSING` / `ROLE_UNKNOWN`。
+- 不变式保持不变：VERIFIED ⇔ 零 OPEN；FAILED ⇒ 至少一条 ERROR；
+  `alerts.enabled: false` 不改变判定；升 VERIFIED 全部 RESOLVED；
+  提醒异常不影响判定。
+
+### 11.6 实现落点
+
+- `src/verify/kir_matcher.py`：`KirMatchResult.ticket_coverage`（票面覆盖）。
+- `src/verify/engine.py`：`EngineResult` 增加 `coverage` / `restarted` /
+  `restart_from` / `restart_aborted`。
+- `src/verify/aligner.py`：重写为计数状态机；`ItemRecord` 去掉 `called` /
+  `evidence`，增加 `confirmations` / `confirmation_indices` /
+  `confirmation_results` / `aborted_attempts` / `aborted_conflicts` /
+  `restarts` / `skipped` / `extra_weak`；`EventKind` 增加 `CONFIRMED` /
+  `ATTEMPT`，删除 `CALL` / `UNATTRIBUTED`；`report()` 增加
+  `required_confirmations` / `extra_repeat_policy` 及逐条计数、重读、
+  `state_basis` 字段。
+- `src/verify/alerts.py`：码表与 `SYSTEM` 统一。
+- `src/pipeline.py`：逐段行增加 `confirmations` / `required_confirmations` /
+  `restarted` / `restart_from` / `coverage`；重读行加 `〔重读〕`。
+- `scripts/stream_demo.py` / `mic_demo.py`：删除 `--mode`，新增
+  `--confirmations N`。
+- `configs/default.yaml`：见 §6 的 aligner 段。
+
+### 11.7 验收
+
+- 全量单测 **126 passed**（`python -m pytest -q`，约 1.5s）。
+  - `tests/test_aligner_confirmations.py`：两次 FULL→VERIFIED、一次收尾
+    FLAGGED、第三次幂等、完整矛盾不可撤销/可配置纠正、未完成矛盾不失败、
+    PARTIAL/闲聊不计数、跳项迟到补齐、跨段重读、同段后缀重读、重读前缀
+    口误留痕、完整矛盾不被后缀覆盖、audit/strict、角色仅元数据、
+    拼合行进度与提醒快照刷新。
+  - `tests/test_aligner_kir.py`：真实 KIR 端到端覆盖上述主路径。
+  - `tests/test_alerts.py`：不变式、NEED_MORE/ABORTED、HELD 快照、
+    `SYSTEM` 定位、开关与异常隔离。
+  - `tests/test_kir_matcher.py`：`ticket_coverage` 方向回归（半句 < 0.7，
+    完整念错 >= 0.7）。
+- 小留 `ticket1` 实录音频（35 段，默认 2 次）：
+  `{VERIFIED 0, FAILED 2, FLAGGED 3, UNCONFIRMED 2}`，
+  `alert_counts={ERROR: 3, WARN: 7}`，报告存于
+  `docs/evidence/w7_twice_confirmation_report.json`。本轮录音多数条目
+  只完整念了一次，且两处编号被 ASR 听岔（312→3123、312→310）触发完整
+  矛盾，所以没有条目达到两次——与录音内容一致，不是计数漏判。完整/未完成
+  矛盾、CONFIRMED、ATTEMPT、REPEAT、NEED_MORE 均按预期出现。
+
+### 11.8 W7 已知取舍
+
+- **同一 VAD 段里连续念两遍完整内容只计一次**。不自动把“一段里同一句
+  出现两次”算两次，避免 ASR 重复输出/回声造成假通过；代价是需要再念一次。
+- **不区分说话人**。同一个人自己念两遍也能通过；这是“只校验内容”的直接
+  结果，用户已明确接受。
+- **完整矛盾默认不可撤销**。远场 ASR 听岔也会触发 FAILED；需要允许后续
+  纠正时配置 `failure_is_final: false`，并保留 `heard` 原文供回听。
+- **完整/未完成靠覆盖率阈值区分**。极短票面或识别严重残缺时可能把
+  “没念完”判成完整矛盾；阈值 `complete_coverage` 可调，保守方向是宁可
+  FLAGGED 也不假通过。

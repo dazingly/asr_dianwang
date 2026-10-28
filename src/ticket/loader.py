@@ -6,8 +6,8 @@
     {"1": "检查110kV系统符合解环条件",
      "2": "将测控屏110kV桥100开关操作方式把手由“远方”切至“就地”位置", ...}
 
-加载时顺手做归一化和槽位抽取，这样后面的匹配和对齐拿到的都是已经解析好的
-结构，不用反复重算。
+加载时顺手做归一化和 KIR 抽取，这样后面的匹配和对齐拿到的都是已经解析好
+的结构，不用反复重算。
 """
 from __future__ import annotations
 
@@ -25,7 +25,6 @@ class OperationItem:
     seq: int
     raw: str
     norm: str = ""
-    parse_text: str = ""
     kir: Kir | None = None
 
     def __str__(self) -> str:
@@ -91,9 +90,7 @@ def load_ticket(path: str | Path,
         kir = k_ext.extract(raw, source="ticket") if k_ext else None
         items.append(
             OperationItem(
-                seq=seq, raw=raw, norm=norm,
-                parse_text=kir.parse_text if kir else "",
-                kir=kir,
+                seq=seq, raw=raw, norm=norm, kir=kir,
             )
         )
     return Ticket(
